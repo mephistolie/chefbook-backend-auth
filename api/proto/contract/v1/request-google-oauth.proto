@@ -4,6 +4,7 @@ package v1;
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
 message RequestGoogleOAuthRequest {
+  string redirectUrl = 1;
 }
 
 message RequestGoogleOAuthResponse {

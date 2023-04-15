@@ -25,12 +25,12 @@ func NewService(repo repository.Auth, providers oauth.Providers) *Service {
 	}
 }
 
-func (s *Service) GenerateGoogleLink() string {
-	return s.providers.Google.CreateOAuthLink()
+func (s *Service) GenerateGoogleLink(redirectUrl string) string {
+	return s.providers.Google.CreateOAuthLink(redirectUrl)
 }
 
-func (s *Service) ConnectGoogle(userId uuid.UUID, code string, state string) error {
-	googleInfo, err := s.providers.Google.GetUserInfoByCode(code, state)
+func (s *Service) ConnectGoogle(userId uuid.UUID, code string, state, redirectUrl string) error {
+	googleInfo, err := s.providers.Google.GetUserInfoByCode(code, state, redirectUrl)
 	if err != nil {
 		log.Warnf("invalid google oauth for user %s: ", code, err)
 		return authFail.GrpcInvalidCode
@@ -50,10 +50,11 @@ func (s *Service) DeleteGoogleConnection(userId uuid.UUID) error {
 	return s.repo.DeleteGoogleConnection(userId)
 }
 
-func (s *Service) GenerateVkLink(display, responseType string) (string, error) {
+func (s *Service) GenerateVkLink(display, responseType, redirectUri string) (string, error) {
 	params := vk.OAuthParams{
 		Display:      display,
 		ResponseType: responseType,
+		RedirectUri:  redirectUri,
 	}
 	link, err := s.providers.Vk.CreateOAuthLink(params)
 	if err != nil {
@@ -62,8 +63,8 @@ func (s *Service) GenerateVkLink(display, responseType string) (string, error) {
 	return link, nil
 }
 
-func (s *Service) ConnectVk(userId uuid.UUID, code string, state string) error {
-	vkResponse, err := s.providers.Vk.GetAccessToken(code, state)
+func (s *Service) ConnectVk(userId uuid.UUID, code, state string, redirectUri string) error {
+	vkResponse, err := s.providers.Vk.GetAccessToken(code, state, redirectUri)
 	if err != nil {
 		log.Warnf("invalid google oauth for user %s: ", code, err)
 		return authFail.GrpcInvalidCode

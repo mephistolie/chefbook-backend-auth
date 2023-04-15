@@ -28,7 +28,7 @@ func (s *AuthServer) SignUp(_ context.Context, req *api.SignUpRequest) (*api.Sig
 		Email:    req.Email,
 		Password: req.Password,
 	}
-	id, activated, err := s.service.Session.SignUp(credentials)
+	id, activated, err := s.service.Session.SignUp(credentials, req.ActivationLinkPattern)
 	if err != nil {
 		return nil, err
 	}

@@ -7,8 +7,8 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/vk"
 )
 
-func (s *Service) SignInGoogle(credentials entity.OAuthCredentials, client entity.ClientData) (entity.Tokens, error) {
-	googleInfo, err := s.oauthProviders.Google.GetUserInfoByCode(credentials.Code, credentials.State)
+func (s *Service) SignInGoogle(credentials entity.OAuthCredentials, client entity.ClientData, redirectUrl string) (entity.Tokens, error) {
+	googleInfo, err := s.oauthProviders.Google.GetUserInfoByCode(credentials.Code, credentials.State, redirectUrl)
 	if err != nil {
 		return entity.Tokens{}, authFail.GrpcInvalidCode
 	}
@@ -62,8 +62,8 @@ func (s *Service) signInGoogleWithProfileCreation(
 	return s.createSession(authInfo, client)
 }
 
-func (s *Service) SignInVk(credentials entity.OAuthCredentials, client entity.ClientData) (entity.Tokens, error) {
-	vkInfo, err := s.oauthProviders.Vk.GetAccessToken(credentials.Code, credentials.State)
+func (s *Service) SignInVk(credentials entity.OAuthCredentials, client entity.ClientData, redirectUri string) (entity.Tokens, error) {
+	vkInfo, err := s.oauthProviders.Vk.GetAccessToken(credentials.Code, credentials.State, redirectUri)
 	if err != nil {
 		return entity.Tokens{}, authFail.GrpcInvalidCode
 	}

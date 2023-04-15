@@ -6,6 +6,7 @@ option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 message RequestVkOAuthRequest {
   string display = 1;
   string responseType = 2;
+  string redirectUri = 3;
 }
 
 message RequestVkOAuthResponse {

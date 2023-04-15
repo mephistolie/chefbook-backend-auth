@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-func (s *Service) SignUp(credentials entity.SignUpCredentials) (uuid.UUID, bool, error) {
+func (s *Service) SignUp(credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error) {
 	if authInfo, err := s.repo.GetAuthInfoByEmail(credentials.Email); err == nil {
-		return s.resendActivationMail(authInfo, credentials.Password)
+		return s.resendActivationMail(authInfo, credentials.Password, activationLinkPattern)
 	}
 
 	if authInfo, err := s.importFirebaseProfile(credentials.Email, credentials.Password); err == nil {
@@ -31,7 +31,7 @@ func (s *Service) SignUp(credentials entity.SignUpCredentials) (uuid.UUID, bool,
 	}
 
 	if activationCode != nil {
-		go s.mail.SendProfileActivationMail(userId, credentials.Email, *activationCode)
+		go s.mail.SendProfileActivationMail(userId, credentials.Email, *activationCode, activationLinkPattern)
 	}
 
 	return userId, activationCode == nil, nil
@@ -107,7 +107,7 @@ func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entit
 	}, activationCode, nil
 }
 
-func (s *Service) resendActivationMail(authInfo entity.AuthInfo, password string) (uuid.UUID, bool, error) {
+func (s *Service) resendActivationMail(authInfo entity.AuthInfo, password, linkPattern string) (uuid.UUID, bool, error) {
 	if authInfo.IsActivated {
 		log.Warn("user with email %s already exists", authInfo.Email)
 		return uuid.UUID{}, false, authFail.GrpcUserAlreadyExists
@@ -130,7 +130,7 @@ func (s *Service) resendActivationMail(authInfo entity.AuthInfo, password string
 		return uuid.UUID{}, false, fail.GrpcUnknown
 	}
 
-	go s.mail.SendProfileActivationMail(authInfo.Id, authInfo.Email, activationCode)
+	go s.mail.SendProfileActivationMail(authInfo.Id, authInfo.Email, activationCode, linkPattern)
 
 	return authInfo.Id, false, nil
 }

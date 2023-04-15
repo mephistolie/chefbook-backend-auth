@@ -8,8 +8,9 @@ option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 message SignInVkRequest {
   string code = 1;
   string state = 2;
-  string ip = 3;
-  string userAgent = 4;
+  string redirectUri = 3;
+  string ip = 4;
+  string userAgent = 5;
 }
 
 message SignInVkResponse {

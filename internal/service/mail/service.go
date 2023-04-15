@@ -13,15 +13,6 @@ import (
 	"time"
 )
 
-const (
-	mailSendAttempts = 3
-)
-
-type routeTemplates struct {
-	profileActivation string
-	passwordReset     string
-}
-
 type profileActivationMailValues struct {
 	ActivationCode string
 	ActivationLink string
@@ -44,37 +35,34 @@ type nicknameChangedValue struct {
 
 type Service struct {
 	sender         mail.Sender
-	routeTemplates routeTemplates
 	ipInfoProvider ip.InfoProvider
 	IsStub         bool
+	sendAttempts   int
 }
 
-func NewService(ipInfoProvider ip.InfoProvider, cfg *config.Config) (*Service, error) {
+func NewService(ipInfoProvider ip.InfoProvider, cfg config.Smtp) (*Service, error) {
 	var mailSender mail.Sender = mail.NewStubSender()
 	var err error = nil
-	if len(*cfg.Smtp.Host) > 0 {
+	if len(*cfg.Host) > 0 {
 		if mailSender, err = mail.NewSmtpSender(
-			*cfg.Smtp.Sender,
-			*cfg.Smtp.Password,
-			*cfg.Smtp.Host,
-			*cfg.Smtp.Port,
+			*cfg.Sender,
+			*cfg.Password,
+			*cfg.Host,
+			*cfg.Port,
 			30*time.Second,
 		); err != nil {
 			return nil, err
 		}
 	}
 	return &Service{
-		sender: mailSender,
-		routeTemplates: routeTemplates{
-			profileActivation: fmt.Sprintf("%s/%s", *cfg.BackendUrl, *cfg.Smtp.ProfileActivationRouteTmpl),
-			passwordReset:     fmt.Sprintf("%s/%s", *cfg.FrontendUrl, *cfg.Smtp.PasswordResetRouteTmpl),
-		},
+		sender:         mailSender,
 		ipInfoProvider: ipInfoProvider,
-		IsStub:         len(*cfg.Smtp.Host) == 0,
+		IsStub:         len(*cfg.Host) == 0,
+		sendAttempts:   *cfg.SendAttempts,
 	}, nil
 }
 
-func (s *Service) SendProfileActivationMail(userId uuid.UUID, email string, code string) {
+func (s *Service) SendProfileActivationMail(userId uuid.UUID, email, code, linkPattern string) {
 	log.Info("sending profile activation mail to ", email)
 	payload := mail.Payload{
 		To:      email,
@@ -82,12 +70,12 @@ func (s *Service) SendProfileActivationMail(userId uuid.UUID, email string, code
 	}
 	mailValues := profileActivationMailValues{
 		ActivationCode: code,
-		ActivationLink: fmt.Sprintf(s.routeTemplates.profileActivation, userId, code),
+		ActivationLink: fmt.Sprintf(linkPattern, userId, code),
 	}
 	if err := payload.SetHtmlBody(assets.ProfileActivationMailTmplFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, mailSendAttempts)
+	_ = s.sender.Send(payload, s.sendAttempts)
 }
 
 func (s *Service) SendNewLoginMail(email string, client entity.ClientData, timestamp time.Time) {
@@ -113,22 +101,22 @@ func (s *Service) SendNewLoginMail(email string, client entity.ClientData, times
 	if err := payload.SetHtmlBody(assets.NewLoginFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, mailSendAttempts)
+	_ = s.sender.Send(payload, s.sendAttempts)
 }
 
-func (s *Service) SendResetPasswordMail(userId uuid.UUID, email string, code string) {
+func (s *Service) SendResetPasswordMail(userId uuid.UUID, email string, code string, linkPattern string) {
 	log.Info("sending password reset mail to ", email)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Password Reset",
 	}
 	mailValues := passwordResetValues{
-		ResetLink: fmt.Sprintf(s.routeTemplates.passwordReset, userId, code),
+		ResetLink: fmt.Sprintf(linkPattern, userId, code),
 	}
 	if err := payload.SetHtmlBody(assets.PasswordResetMailTmplFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, mailSendAttempts)
+	_ = s.sender.Send(payload, s.sendAttempts)
 }
 
 func (s *Service) SendPasswordChangedMail(email string) {
@@ -140,7 +128,7 @@ func (s *Service) SendPasswordChangedMail(email string) {
 	if err := payload.SetHtmlBody(assets.PasswordChangedMailTmplFilePath, nil); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, mailSendAttempts)
+	_ = s.sender.Send(payload, s.sendAttempts)
 }
 
 func (s *Service) SendNicknameChangedMail(email, nickname string) {
@@ -155,5 +143,5 @@ func (s *Service) SendNicknameChangedMail(email, nickname string) {
 	if err := payload.SetHtmlBody(assets.NicknameChangedMailTmplFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, mailSendAttempts)
+	_ = s.sender.Send(payload, s.sendAttempts)
 }

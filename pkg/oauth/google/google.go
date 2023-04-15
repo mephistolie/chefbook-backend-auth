@@ -28,18 +28,17 @@ type UserInfoResponse struct {
 }
 
 type OAuthProvider struct {
-	client http.Client
-	config oauth2.Config
-	state  string
+	client     http.Client
+	baseConfig oauth2.Config
+	state      string
 }
 
-func NewOAuthProvider(clientId, clientSecret, redirectUri, state string, scopes []string) *OAuthProvider {
+func NewOAuthProvider(clientId, clientSecret, state string, scopes []string) *OAuthProvider {
 	return &OAuthProvider{
 		client: http.Client{Timeout: 10 * time.Second},
-		config: oauth2.Config{
+		baseConfig: oauth2.Config{
 			ClientID:     clientId,
 			ClientSecret: clientSecret,
-			RedirectURL:  redirectUri,
 			Scopes:       scopes,
 			Endpoint:     google.Endpoint,
 		},
@@ -47,15 +46,19 @@ func NewOAuthProvider(clientId, clientSecret, redirectUri, state string, scopes 
 	}
 }
 
-func (p *OAuthProvider) CreateOAuthLink() string {
-	return p.config.AuthCodeURL(p.state)
+func (p *OAuthProvider) CreateOAuthLink(redirectUrl string) string {
+	config := p.baseConfig
+	config.RedirectURL = redirectUrl
+	return config.AuthCodeURL(p.state)
 }
 
-func (p *OAuthProvider) GetAccessToken(code, state string) (string, error) {
+func (p *OAuthProvider) GetAccessToken(code, state string, redirectUrl string) (string, error) {
+	config := p.baseConfig
+	config.RedirectURL = redirectUrl
 	if p.state != state {
 		return "", errors.New("invalid state")
 	}
-	tokens, err := p.config.Exchange(context.Background(), code)
+	tokens, err := config.Exchange(context.Background(), code)
 	if err != nil {
 		return "", err
 	}
@@ -86,8 +89,8 @@ func (p *OAuthProvider) GetUserInfoByToken(accessToken string) (*UserInfoRespons
 	return &resBody, nil
 }
 
-func (p *OAuthProvider) GetUserInfoByCode(code string, state string) (*UserInfoResponse, error) {
-	accessToken, err := p.GetAccessToken(code, state)
+func (p *OAuthProvider) GetUserInfoByCode(code, state, redirectUrl string) (*UserInfoResponse, error) {
+	accessToken, err := p.GetAccessToken(code, state, redirectUrl)
 	if err != nil {
 		return nil, err
 	}

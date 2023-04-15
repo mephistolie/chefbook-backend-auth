@@ -15,8 +15,6 @@ func main() {
 	cfg := config.Config{
 		Environment: fs.String("environment", "debug", "service environment"),
 		Port:        fs.Int("port", 8080, "service port"),
-		FrontendUrl: fs.String("frontend-url", "localhost", "base frontend url"),
-		BackendUrl:  fs.String("backend-url", "localhost", "base backend url"),
 		LogsPath:    fs.String("logs-path", "logs/all.log", "logs file path"),
 
 		Auth: config.Auth{
@@ -39,12 +37,10 @@ func main() {
 			Google: config.Google{
 				ClientId:     fs.String("google-client-id", "", "Google API client ID"),
 				ClientSecret: fs.String("google-client-secret", "", "Google API client secret"),
-				RedirectUri:  fs.String("google-redirect-uri", "auth/google", "Google API redirect URI"),
 			},
 			Vk: config.Vk{
 				ClientId:     fs.String("vk-client-id", "", "VK API client ID"),
 				ClientSecret: fs.String("vk-client-secret", "", "VK API client secret"),
-				RedirectUri:  fs.String("vk-redirect-uri", "auth/vk", "VK API redirect URI"),
 			},
 		},
 
@@ -57,12 +53,11 @@ func main() {
 		},
 
 		Smtp: config.Smtp{
-			Host:                       fs.String("smtp-host", "", "Smtp host; leave empty to disable emails"),
-			Port:                       fs.Int("smtp-port", 465, "Smtp port"),
-			Sender:                     fs.String("smtp-sender", "", "Smtp sender email"),
-			Password:                   fs.String("smtp-password", "", "Smtp sender password"),
-			ProfileActivationRouteTmpl: fs.String("activate-profile-route", "auth/activate?user_id=%s&code=%s", "activate profile route template"),
-			PasswordResetRouteTmpl:     fs.String("reset-profile-route", "auth/reset_password?user_id=%s&code=%s", "reset password route template"),
+			Host:         fs.String("smtp-host", "", "Smtp host; leave empty to disable emails"),
+			Port:         fs.Int("smtp-port", 465, "Smtp port"),
+			Sender:       fs.String("smtp-sender", "", "Smtp sender email"),
+			Password:     fs.String("smtp-password", "", "Smtp sender password"),
+			SendAttempts: fs.Int("smtp-attempts", 3, "Smtp email sending attempts"),
 		},
 	}
 	if err := ff.Parse(fs, os.Args[1:], ff.WithEnvVars()); err != nil {

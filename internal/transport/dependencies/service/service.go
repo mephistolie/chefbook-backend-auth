@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
@@ -30,11 +29,11 @@ type Service struct {
 }
 
 type Session interface {
-	SignUp(credentials entity.SignUpCredentials) (uuid.UUID, bool, error)
+	SignUp(credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error)
 	ActivateProfile(userId uuid.UUID, code string) error
 	SignIn(credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error)
-	SignInGoogle(credentials entity.OAuthCredentials, client entity.ClientData) (entity.Tokens, error)
-	SignInVk(credentials entity.OAuthCredentials, client entity.ClientData) (entity.Tokens, error)
+	SignInGoogle(credentials entity.OAuthCredentials, client entity.ClientData, redirectUrl string) (entity.Tokens, error)
+	SignInVk(credentials entity.OAuthCredentials, client entity.ClientData, redirectUri string) (entity.Tokens, error)
 	GetAccessTokenPublicKey() []byte
 	Refresh(refreshToken, ip, userAgent string) (entity.Tokens, error)
 	SignOut(refreshToken string) error
@@ -45,16 +44,16 @@ type Session interface {
 }
 
 type OAuth interface {
-	GenerateGoogleLink() string
-	ConnectGoogle(userId uuid.UUID, code, state string) error
+	GenerateGoogleLink(redirectUrl string) string
+	ConnectGoogle(userId uuid.UUID, code, state, redirectUri string) error
 	DeleteGoogleConnection(userId uuid.UUID) error
-	GenerateVkLink(display, responseType string) (string, error)
-	ConnectVk(userId uuid.UUID, code, state string) error
+	GenerateVkLink(display, responseType, redirectUrl string) (string, error)
+	ConnectVk(userId uuid.UUID, code, state, redirectUri string) error
 	DeleteVkConnection(userId uuid.UUID) error
 }
 
 type Password interface {
-	RequestReset(email, nickname *string) error
+	RequestReset(email, nickname *string, resetLinkPattern string) error
 	Reset(userId uuid.UUID, resetCode, newPassword string) error
 	Change(userId uuid.UUID, oldPassword, newPassword string) error
 }
@@ -70,7 +69,7 @@ func New(
 ) (*Service, error) {
 	ipInfoProvider := ip.NewFreeIpApiProvider()
 
-	mailService, err := mail.NewService(ipInfoProvider, cfg)
+	mailService, err := mail.NewService(ipInfoProvider, cfg.Smtp)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,6 @@ func New(
 	googleProvider := google.NewOAuthProvider(
 		*cfg.OAuth.Google.ClientId,
 		*cfg.OAuth.Google.ClientSecret,
-		fmt.Sprintf("%s/%s", *cfg.FrontendUrl, *cfg.OAuth.Google.RedirectUri),
 		*cfg.OAuth.State,
 		[]string{
 			"https://www.googleapis.com/auth/userinfo.email",
@@ -96,7 +94,6 @@ func New(
 	vkProvider := vk.NewOAuthProvider(
 		*cfg.OAuth.Vk.ClientId,
 		*cfg.OAuth.Vk.ClientSecret,
-		fmt.Sprintf("%s/%s", *cfg.FrontendUrl, *cfg.OAuth.Vk.RedirectUri),
 		strconv.Itoa(oauthService.VkScope),
 		*cfg.OAuth.State,
 	)

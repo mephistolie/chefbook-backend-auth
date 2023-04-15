@@ -35,6 +35,7 @@ var (
 type OAuthParams struct {
 	Display      string
 	ResponseType string
+	RedirectUri  string
 }
 
 type AccessTokenResponse struct {
@@ -48,17 +49,15 @@ type OAuthProvider struct {
 	client       http.Client
 	clientId     string
 	clientSecret string
-	redirectUri  string
 	scope        string
 	state        string
 }
 
-func NewOAuthProvider(clientId, clientSecret, redirectUri, scope, state string) *OAuthProvider {
+func NewOAuthProvider(clientId, clientSecret, scope, state string) *OAuthProvider {
 	return &OAuthProvider{
 		client:       http.Client{Timeout: 10 * time.Second},
 		clientId:     clientId,
 		clientSecret: clientSecret,
-		redirectUri:  redirectUri,
 		scope:        scope,
 		state:        state,
 	}
@@ -80,7 +79,7 @@ func (p *OAuthProvider) CreateOAuthLink(params OAuthParams) (string, error) {
 	}
 	urlParams := url.Values{}
 	urlParams.Add(clientIdParam, p.clientId)
-	urlParams.Add(redirectUriParam, p.redirectUri)
+	urlParams.Add(redirectUriParam, params.RedirectUri)
 	urlParams.Add(displayParam, display)
 	urlParams.Add(scopeParam, p.scope)
 	urlParams.Add(responseTypeParam, responseType)
@@ -89,12 +88,12 @@ func (p *OAuthProvider) CreateOAuthLink(params OAuthParams) (string, error) {
 	return baseUrl.String(), nil
 }
 
-func (p *OAuthProvider) GetAccessToken(code, state string) (*AccessTokenResponse, error) {
+func (p *OAuthProvider) GetAccessToken(code, state string, redirectUri string) (*AccessTokenResponse, error) {
 	if p.state != state {
 		return nil, errors.New("invalid state")
 	}
 
-	requestUrl, err := p.createGetAccessTokenUrl(code)
+	requestUrl, err := p.createGetAccessTokenUrl(code, redirectUri)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +114,7 @@ func (p *OAuthProvider) GetAccessToken(code, state string) (*AccessTokenResponse
 	return &resBody, nil
 }
 
-func (p *OAuthProvider) createGetAccessTokenUrl(code string) (string, error) {
+func (p *OAuthProvider) createGetAccessTokenUrl(code string, redirectUri string) (string, error) {
 	baseUrl, err := url.Parse(accessTokenUrl)
 	if err != nil {
 		return "", err
@@ -123,7 +122,7 @@ func (p *OAuthProvider) createGetAccessTokenUrl(code string) (string, error) {
 	urlParams := url.Values{}
 	urlParams.Add(clientIdParam, p.clientId)
 	urlParams.Add(clientSecretParam, p.clientSecret)
-	urlParams.Add(redirectUriParam, p.redirectUri)
+	urlParams.Add(redirectUriParam, redirectUri)
 	urlParams.Add(codeParam, code)
 	baseUrl.RawQuery = urlParams.Encode()
 

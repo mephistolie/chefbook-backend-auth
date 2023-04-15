@@ -34,7 +34,7 @@ func NewService(
 	}
 }
 
-func (s *Service) RequestReset(email, nickname *string) error {
+func (s *Service) RequestReset(email, nickname *string, resetLinkPattern string) error {
 	authInfo, err := s.repo.GetAuthInfoByIdentifiers(entity.UserIdentifiers{Email: email, Nickname: nickname})
 	if err != nil {
 		return nil
@@ -45,7 +45,7 @@ func (s *Service) RequestReset(email, nickname *string) error {
 		return err
 	}
 
-	go s.mail.SendResetPasswordMail(authInfo.Id, authInfo.Email, resetCode.String())
+	go s.mail.SendResetPasswordMail(authInfo.Id, authInfo.Email, resetCode.String(), resetLinkPattern)
 
 	return nil
 }

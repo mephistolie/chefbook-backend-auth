@@ -22,7 +22,7 @@ func (s *AuthServer) RequestRequestPasswordReset(_ context.Context, req *api.Req
 		nickname = &req.Nickname
 	}
 
-	if err := s.service.Password.RequestReset(email, nickname); err != nil {
+	if err := s.service.Password.RequestReset(email, nickname, req.ResetPasswordLinkPattern); err != nil {
 		return nil, err
 	}
 	return &api.RequestPasswordResetResponse{Message: "if the profile exists, reset link has been sent"}, nil

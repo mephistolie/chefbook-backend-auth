@@ -10,8 +10,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *AuthServer) RequestGoogleOAuth(_ context.Context, _ *api.RequestGoogleOAuthRequest) (*api.RequestGoogleOAuthResponse, error) {
-	return &api.RequestGoogleOAuthResponse{Link: s.service.OAuth.GenerateGoogleLink()}, nil
+func (s *AuthServer) RequestGoogleOAuth(_ context.Context, req *api.RequestGoogleOAuthRequest) (*api.RequestGoogleOAuthResponse, error) {
+	return &api.RequestGoogleOAuthResponse{Link: s.service.OAuth.GenerateGoogleLink(req.RedirectUrl)}, nil
 }
 
 func (s *AuthServer) SignInGoogle(_ context.Context, req *api.SignInGoogleRequest) (*api.SignInGoogleResponse, error) {
@@ -24,6 +24,7 @@ func (s *AuthServer) SignInGoogle(_ context.Context, req *api.SignInGoogleReques
 			Ip:        req.Ip,
 			UserAgent: req.UserAgent,
 		},
+		req.RedirectUrl,
 	)
 	if err != nil {
 		return nil, err
@@ -41,7 +42,7 @@ func (s *AuthServer) ConnectGoogle(_ context.Context, req *api.ConnectGoogleRequ
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err := s.service.OAuth.ConnectGoogle(id, req.State, query.Decode(req.Code)); err != nil {
+	if err := s.service.OAuth.ConnectGoogle(id, req.State, query.Decode(req.Code), req.RedirectUrl); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +63,7 @@ func (s *AuthServer) DeleteGoogleConnection(_ context.Context, req *api.DeleteGo
 }
 
 func (s *AuthServer) RequestVkOAuth(_ context.Context, req *api.RequestVkOAuthRequest) (*api.RequestVkOAuthResponse, error) {
-	link, err := s.service.OAuth.GenerateVkLink(req.Display, req.ResponseType)
+	link, err := s.service.OAuth.GenerateVkLink(req.Display, req.ResponseType, req.RedirectUri)
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +80,7 @@ func (s *AuthServer) SignInVk(_ context.Context, req *api.SignInVkRequest) (*api
 			Ip:        req.Ip,
 			UserAgent: req.UserAgent,
 		},
+		req.RedirectUri,
 	)
 	if err != nil {
 		return nil, err
@@ -96,7 +98,7 @@ func (s *AuthServer) ConnectVk(_ context.Context, req *api.ConnectVkRequest) (*a
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err := s.service.OAuth.ConnectVk(id, query.Decode(req.Code), req.State); err != nil {
+	if err := s.service.OAuth.ConnectVk(id, query.Decode(req.Code), req.State, req.RedirectUri); err != nil {
 		return nil, err
 	}
 

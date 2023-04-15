@@ -14,8 +14,6 @@ const (
 type Config struct {
 	Environment *string
 	Port        *int
-	FrontendUrl *string
-	BackendUrl  *string
 	LogsPath    *string
 
 	Auth     Auth
@@ -52,13 +50,11 @@ type OAuth struct {
 type Google struct {
 	ClientId     *string
 	ClientSecret *string
-	RedirectUri  *string
 }
 
 type Vk struct {
 	ClientId     *string
 	ClientSecret *string
-	RedirectUri  *string
 }
 
 type Database struct {
@@ -70,12 +66,11 @@ type Database struct {
 }
 
 type Smtp struct {
-	Host                       *string
-	Port                       *int
-	Sender                     *string
-	Password                   *string
-	ProfileActivationRouteTmpl *string
-	PasswordResetRouteTmpl     *string
+	Host         *string
+	Port         *int
+	Sender       *string
+	Password     *string
+	SendAttempts *int
 }
 
 func (c Config) Validate() error {
@@ -101,14 +96,10 @@ func (c Config) Validate() error {
 }
 
 func (c Config) Print() {
-	log.Info("SERVICE CONFIGURATION\n"+
+	log.Infof("SERVICE CONFIGURATION\n"+
 		"Environment: %v\n"+
 		"Port: %v\n"+
 		"Logs path: %v\n\n"+
-		"Frontend URL: %v\n"+
-		"Backend URL: %v\n"+
-		"Activate Profile Route: %v\n"+
-		"Password Reset Route: %v\n\n"+
 		"Salt cost: %v\n"+
 		"Access tokens TTL: %v\n"+
 		"Refresh tokens TTL: %v\n"+
@@ -120,17 +111,13 @@ func (c Config) Print() {
 		"SMTP port: %v\n\n"+
 		"OAuth state: %v\n"+
 		"Google Client ID: %v\n"+
-		"Google Redirect Route: %v\n"+
-		"VK Client ID: %v\n"+
-		"VK Redirect Route: %v\n\n",
+		"VK Client ID: %v\n",
 		*c.Environment, *c.Port, *c.LogsPath,
-		*c.FrontendUrl, *c.BackendUrl,
-		*c.Smtp.ProfileActivationRouteTmpl, *c.Smtp.PasswordResetRouteTmpl,
 		*c.Auth.SaltCost, *c.Auth.Ttl.AccessToken, *c.Auth.Ttl.RefreshToken, *c.Auth.Ttl.ResetPasswordCode,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
 		*c.Smtp.Host, *c.Smtp.Port,
 		*c.OAuth.State,
-		*c.OAuth.Google.ClientId, *c.OAuth.Google.RedirectUri,
-		*c.OAuth.Vk.ClientId, *c.OAuth.Vk.RedirectUri,
+		*c.OAuth.Google.ClientId,
+		*c.OAuth.Vk.ClientId,
 	)
 }
