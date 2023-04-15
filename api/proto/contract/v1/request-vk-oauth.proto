@@ -1,0 +1,13 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+message RequestVkOAuthRequest {
+  string display = 1;
+  string responseType = 2;
+}
+
+message RequestVkOAuthResponse {
+  string link = 1;
+}

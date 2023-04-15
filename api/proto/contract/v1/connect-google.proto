@@ -1,0 +1,14 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+message ConnectGoogleRequest {
+  string id = 1;
+  string code = 2;
+  string state = 3;
+}
+
+message ConnectGoogleResponse {
+  string message = 1;
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+message EndSessionsRequest {
+  string id = 1;
+  repeated int64 sessions = 2;
+}
+
+message EndSessionsResponse {
+  string message = 1;
+}

@@ -1,0 +1,37 @@
+package repository
+
+import (
+	"github.com/google/uuid"
+	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
+	"time"
+)
+
+type Auth interface {
+	CreateUser(credentials entity.CredentialsHash, activationCode *string, oauth entity.OAuth) (uuid.UUID, error)
+	GetAuthInfoById(userId uuid.UUID) (entity.AuthInfo, error)
+	GetAuthInfoByEmail(email string) (entity.AuthInfo, error)
+	GetAuthInfoByIdentifiers(identifiers entity.UserIdentifiers) (entity.AuthInfo, error)
+	GetAuthInfoByNickname(nickname string) (entity.AuthInfo, error)
+	GetAuthInfoByRefreshToken(refreshToken string) (entity.AuthInfo, error)
+	GetAuthInfoByFirebaseId(firebaseId string) (entity.AuthInfo, error)
+	GetAuthInfoByGoogleId(googleId string) (entity.AuthInfo, error)
+	GetAuthInfoByVkId(vkId int64) (entity.AuthInfo, error)
+	SetPassword(userId uuid.UUID, passwordHash string) error
+	GetProfileActivationCode(userId uuid.UUID) (string, error)
+	ActivateProfile(userId uuid.UUID, code string) error
+	CreateSession(session entity.SessionInput) error
+	GetSessions(userId uuid.UUID) []entity.SessionRawInfo
+	UpdateSession(session entity.SessionInput, oldRefreshToken string) error
+	DeleteSession(refreshToken string) error
+	DeleteSessions(userId uuid.UUID, sessionIds []int64)
+	DeleteOutdatedSessions(userId uuid.UUID, sessionsThreshold int)
+	ConnectGoogle(userId uuid.UUID, googleId string) error
+	DeleteGoogleConnection(userId uuid.UUID) error
+	ConnectVk(userId uuid.UUID, vkId int64) error
+	DeleteVkConnection(userId uuid.UUID) error
+	ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) error
+	DeleteUser(userId uuid.UUID) error
+	SetNickname(userId uuid.UUID, nickname string) (string, error)
+	CreatePasswordResetRequest(userId uuid.UUID, expiration time.Time) (uuid.UUID, error)
+	ResetPassword(userId uuid.UUID, resetCode, passwordHash string) error
+}

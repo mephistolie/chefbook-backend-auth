@@ -1,0 +1,23 @@
+syntax = "proto3";
+package v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+message GetSessionsRequest {
+  string id = 1;
+}
+
+message GetSessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message Session {
+  int64 id = 1;
+  string ip = 2;
+  string accessPoint = 3;
+  bool   mobile = 4;
+  google.protobuf.Timestamp accessTime = 5;
+  string location = 6;
+}

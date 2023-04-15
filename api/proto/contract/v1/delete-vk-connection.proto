@@ -1,0 +1,12 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+message DeleteVkConnectionRequest {
+  string id = 1;
+}
+
+message DeleteVkConnectionResponse {
+  string message = 1;
+}

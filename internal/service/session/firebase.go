@@ -1,0 +1,41 @@
+package session
+
+import (
+	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
+	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
+	"github.com/mephistolie/chefbook-backend-common/log"
+	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+)
+
+func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo, error) {
+	googleProfile, err := s.firebase.SignIn(email, password)
+	if err != nil {
+		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
+	}
+	log.Infof("found Firebase profile for email %s; importing...", email)
+
+	passwordHash, err := s.hashManager.Hash(password)
+	if err != nil {
+		log.Error("unable to hash password: ", err)
+		return entity.AuthInfo{}, fail.GrpcUnknown
+	}
+
+	userId, err := s.repo.CreateUser(entity.CredentialsHash{
+		Email:        email,
+		PasswordHash: &passwordHash,
+	}, nil, entity.OAuth{})
+	if err != nil {
+		return entity.AuthInfo{}, err
+	}
+
+	profile, err := s.firebase.GetProfile(googleProfile.LocalId)
+	if err != nil {
+		log.Errorf("unable to get firebase profile %s data: %s", googleProfile.LocalId, err)
+		return entity.AuthInfo{}, fail.GrpcUnknown
+	}
+	if err = s.repo.ConnectFirebase(userId, googleProfile.LocalId, profile.CreationTimestamp); err != nil {
+		return entity.AuthInfo{}, err
+	}
+
+	return s.repo.GetAuthInfoById(userId)
+}

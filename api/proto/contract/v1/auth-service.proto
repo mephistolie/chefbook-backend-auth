@@ -1,0 +1,58 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+import "v1/sign-up.proto";
+import "v1/activate-profile.proto";
+import "v1/sign-in.proto";
+import "v1/get-access-token-public-key.proto";
+import "v1/refresh-session.proto";
+import "v1/sign-out.proto";
+import "v1/get-auth-info.proto";
+import "v1/delete-profile.proto";
+import "v1/request-google-oauth.proto";
+import "v1/sign-in-google.proto";
+import "v1/connect-google.proto";
+import "v1/delete-google-connection.proto";
+import "v1/request-vk-oauth.proto";
+import "v1/sign-in-vk.proto";
+import "v1/connect-vk.proto";
+import "v1/delete-vk-connection.proto";
+import "v1/get-sessions.proto";
+import "v1/end-sessions.proto";
+import "v1/request-password-reset.proto";
+import "v1/reset-password.proto";
+import "v1/change-password.proto";
+import "v1/check-nickname-availability.proto";
+import "v1/set-nickname.proto";
+
+service AuthService {
+  rpc SignUp(SignUpRequest) returns (SignUpResponse);
+  rpc ActivateProfile(ActivateProfileRequest) returns (ActivateProfileResponse);
+  rpc SignIn(SignInRequest) returns (SignInResponse);
+  rpc GetAccessTokenPublicKey(GetAccessTokenPublicKeyRequest) returns (GetAccessTokenPublicKeyResponse);
+  rpc RefreshSession(RefreshSessionRequest) returns (RefreshSessionResponse);
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+  rpc GetAuthInfo(GetAuthInfoRequest) returns (GetAuthInfoResponse);
+  rpc DeleteProfile(DeleteProfileRequest) returns (DeleteProfileResponse);
+
+  rpc RequestGoogleOAuth(RequestGoogleOAuthRequest) returns (RequestGoogleOAuthResponse);
+  rpc SignInGoogle(SignInGoogleRequest) returns (SignInGoogleResponse);
+  rpc ConnectGoogle(ConnectGoogleRequest) returns (ConnectGoogleResponse);
+  rpc DeleteGoogleConnection(DeleteGoogleConnectionRequest) returns (DeleteGoogleConnectionResponse);
+  rpc RequestVkOAuth(RequestVkOAuthRequest) returns (RequestVkOAuthResponse);
+  rpc SignInVk(SignInVkRequest) returns (SignInVkResponse);
+  rpc ConnectVk(ConnectVkRequest) returns (ConnectVkResponse);
+  rpc DeleteVkConnection(DeleteVkConnectionRequest) returns (DeleteVkConnectionResponse);
+
+  rpc GetSessions(GetSessionsRequest) returns (GetSessionsResponse);
+  rpc EndSessions(EndSessionsRequest) returns (EndSessionsResponse);
+
+  rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
+
+  rpc CheckNicknameAvailability(CheckNicknameAvailabilityRequest) returns (CheckNicknameAvailabilityResponse);
+  rpc SetNickname(SetNicknameRequest) returns (SetNicknameResponse);
+}

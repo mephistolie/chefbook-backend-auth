@@ -1,0 +1,11 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+message GetAccessTokenPublicKeyRequest {
+}
+
+message GetAccessTokenPublicKeyResponse {
+  bytes publicKey = 1;
+}

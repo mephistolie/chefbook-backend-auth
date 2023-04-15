@@ -1,0 +1,15 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+message SignUpRequest {
+  string id = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message SignUpResponse {
+  string id = 1;
+  bool activated = 2;
+}
