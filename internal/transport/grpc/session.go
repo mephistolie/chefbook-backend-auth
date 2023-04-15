@@ -81,8 +81,9 @@ func (s *AuthServer) RefreshSession(_ context.Context, req *api.RefreshSessionRe
 		return nil, err
 	}
 	return &api.RefreshSessionResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken:         tokens.AccessToken,
+		RefreshToken:        tokens.RefreshToken,
+		ExpirationTimestamp: timestamppb.New(tokens.ExpirationTimestamp),
 	}, nil
 }
 
