@@ -72,13 +72,14 @@ func (s *Service) createSessionEntity(
 	}
 
 	res.RefreshToken = s.tokenManager.CreateRefresh()
+	res.ExpirationTimestamp = time.Now().Add(s.refreshTokenTtl)
 
 	return res, entity.SessionInput{
 		UserId:       authInfo.Id,
 		RefreshToken: res.RefreshToken,
 		Ip:           ip,
 		UserAgent:    userAgent,
-		ExpiresAt:    time.Now().Add(s.refreshTokenTtl),
+		ExpiresAt:    res.ExpirationTimestamp,
 	}, nil
 }
 

@@ -103,10 +103,10 @@ func (c Config) Validate() error {
 func (c Config) Print() {
 	log.Info("SERVICE CONFIGURATION\n"+
 		"Environment: %v\n"+
-		"Port: %v\n\n"+
+		"Port: %v\n"+
+		"Logs path: %v\n\n"+
 		"Frontend URL: %v\n"+
 		"Backend URL: %v\n"+
-		"Logs dir: %v\n\n"+
 		"Activate Profile Route: %v\n"+
 		"Password Reset Route: %v\n\n"+
 		"Salt cost: %v\n"+
@@ -123,9 +123,8 @@ func (c Config) Print() {
 		"Google Redirect Route: %v\n"+
 		"VK Client ID: %v\n"+
 		"VK Redirect Route: %v\n\n",
-		*c.Environment, *c.Port,
+		*c.Environment, *c.Port, *c.LogsPath,
 		*c.FrontendUrl, *c.BackendUrl,
-		*c.LogsPath,
 		*c.Smtp.ProfileActivationRouteTmpl, *c.Smtp.PasswordResetRouteTmpl,
 		*c.Auth.SaltCost, *c.Auth.Ttl.AccessToken, *c.Auth.Ttl.RefreshToken, *c.Auth.Ttl.ResetPasswordCode,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,

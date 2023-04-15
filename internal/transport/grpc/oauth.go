@@ -7,6 +7,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	"github.com/mephistolie/chefbook-backend-auth/internal/transport/utils/query"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *AuthServer) RequestGoogleOAuth(_ context.Context, _ *api.RequestGoogleOAuthRequest) (*api.RequestGoogleOAuthResponse, error) {
@@ -27,7 +28,11 @@ func (s *AuthServer) SignInGoogle(_ context.Context, req *api.SignInGoogleReques
 	if err != nil {
 		return nil, err
 	}
-	return &api.SignInGoogleResponse{AccessToken: tokens.AccessToken, RefreshToken: tokens.RefreshToken}, nil
+	return &api.SignInGoogleResponse{
+		AccessToken:         tokens.AccessToken,
+		RefreshToken:        tokens.RefreshToken,
+		ExpirationTimestamp: timestamppb.New(tokens.ExpirationTimestamp),
+	}, nil
 }
 
 func (s *AuthServer) ConnectGoogle(_ context.Context, req *api.ConnectGoogleRequest) (*api.ConnectGoogleResponse, error) {
@@ -78,7 +83,11 @@ func (s *AuthServer) SignInVk(_ context.Context, req *api.SignInVkRequest) (*api
 	if err != nil {
 		return nil, err
 	}
-	return &api.SignInVkResponse{AccessToken: tokens.AccessToken, RefreshToken: tokens.RefreshToken}, nil
+	return &api.SignInVkResponse{
+		AccessToken:         tokens.AccessToken,
+		RefreshToken:        tokens.RefreshToken,
+		ExpirationTimestamp: timestamppb.New(tokens.ExpirationTimestamp),
+	}, nil
 }
 
 func (s *AuthServer) ConnectVk(_ context.Context, req *api.ConnectVkRequest) (*api.ConnectVkResponse, error) {

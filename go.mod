@@ -7,14 +7,14 @@ require (
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/mephistolie/chefbook-backend-auth/api v0.0.0
-	github.com/mephistolie/chefbook-backend-common/firebase v0.0.0-20230415175808-d40f95ca635f
-	github.com/mephistolie/chefbook-backend-common/hash v0.0.0-20230415175808-d40f95ca635f
-	github.com/mephistolie/chefbook-backend-common/log v0.0.0-20230415175808-d40f95ca635f
-	github.com/mephistolie/chefbook-backend-common/mail v0.0.0-20230415175808-d40f95ca635f
-	github.com/mephistolie/chefbook-backend-common/random v0.0.0-20230415175808-d40f95ca635f
-	github.com/mephistolie/chefbook-backend-common/responses v0.0.0-20230415175808-d40f95ca635f
-	github.com/mephistolie/chefbook-backend-common/shutdown v0.0.0-20230415175808-d40f95ca635f
-	github.com/mephistolie/chefbook-backend-common/tokens v0.0.0-20230415175808-d40f95ca635f
+	github.com/mephistolie/chefbook-backend-common/firebase v0.0.0-20230415214243-2618e445e4c7
+	github.com/mephistolie/chefbook-backend-common/hash v0.0.0-20230415214243-2618e445e4c7
+	github.com/mephistolie/chefbook-backend-common/log v0.0.0-20230415214243-2618e445e4c7
+	github.com/mephistolie/chefbook-backend-common/mail v0.0.0-20230415214243-2618e445e4c7
+	github.com/mephistolie/chefbook-backend-common/random v0.0.0-20230415214243-2618e445e4c7
+	github.com/mephistolie/chefbook-backend-common/responses v0.0.0-20230415214243-2618e445e4c7
+	github.com/mephistolie/chefbook-backend-common/shutdown v0.0.0-20230415214243-2618e445e4c7
+	github.com/mephistolie/chefbook-backend-common/tokens v0.0.0-20230415214243-2618e445e4c7
 	github.com/mssola/useragent v1.0.0
 	github.com/peterbourgon/ff/v3 v3.3.0
 	golang.org/x/oauth2 v0.7.0

@@ -8,6 +8,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/transport/grpc/dto"
 	credentialUtils "github.com/mephistolie/chefbook-backend-auth/internal/transport/utils/credentials"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *AuthServer) SignUp(_ context.Context, req *api.SignUpRequest) (*api.SignUpResponse, error) {
@@ -64,8 +65,9 @@ func (s *AuthServer) SignIn(_ context.Context, req *api.SignInRequest) (*api.Sig
 		return nil, err
 	}
 	return &api.SignInResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken:         tokens.AccessToken,
+		RefreshToken:        tokens.RefreshToken,
+		ExpirationTimestamp: timestamppb.New(tokens.ExpirationTimestamp),
 	}, nil
 }
 

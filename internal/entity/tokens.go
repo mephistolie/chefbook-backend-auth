@@ -1,6 +1,9 @@
 package entity
 
+import "time"
+
 type Tokens struct {
-	AccessToken  string
-	RefreshToken string
+	AccessToken         string
+	RefreshToken        string
+	ExpirationTimestamp time.Time
 }
