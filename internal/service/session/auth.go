@@ -86,7 +86,12 @@ func (s *Service) DeleteProfile(userId uuid.UUID, password string) error {
 		return authFail.GrpcInvalidPassword
 	}
 
-	return s.repo.DeleteUser(userId)
+	err = s.repo.DeleteUser(userId)
+	if err == nil {
+		go s.mail.SendProfileDeletedMail(authInfo.Email)
+	}
+
+	return err
 }
 
 func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entity.CredentialsHash, *string, error) {

@@ -145,3 +145,15 @@ func (s *Service) SendNicknameChangedMail(email, nickname string) {
 	}
 	_ = s.sender.Send(payload, s.sendAttempts)
 }
+
+func (s *Service) SendProfileDeletedMail(email string) {
+	log.Info("sending profile deleted mail to ", email)
+	payload := mail.Payload{
+		To:      email,
+		Subject: "ChefBook Profile Deleted",
+	}
+	if err := payload.SetHtmlBody(assets.ProfileDeletedMailTmplFilePath, nil); err != nil {
+		log.Error("failed to set HTML Body for mail: ", err)
+	}
+	_ = s.sender.Send(payload, s.sendAttempts)
+}
