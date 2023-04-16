@@ -79,24 +79,27 @@ func (r *Repository) GetAuthInfoById(userId uuid.UUID) (entity.AuthInfo, error) 
 	info, err := r.getAuthInfoByCondition(fmt.Sprintf("%s.user_id=$1", usersTable), userId)
 	if err != nil {
 		log.Infof("user %s not found: %s", userId, err)
+		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
-	return info, err
+	return info, nil
 }
 
 func (r *Repository) GetAuthInfoByEmail(email string) (entity.AuthInfo, error) {
 	info, err := r.getAuthInfoByCondition(fmt.Sprintf("%s.email=$1", usersTable), email)
 	if err != nil {
 		log.Infof("user with email %s not found: %s", email, err)
+		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
-	return info, err
+	return info, nil
 }
 
 func (r *Repository) GetAuthInfoByNickname(nickname string) (entity.AuthInfo, error) {
 	info, err := r.getAuthInfoByCondition(fmt.Sprintf("%s.nickname=$1", usersTable), nickname)
 	if err != nil {
 		log.Infof("user with nickname %s not found: %s", nickname, err)
+		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
-	return info, err
+	return info, nil
 }
 
 func (r *Repository) GetAuthInfoByIdentifiers(identifiers entity.UserIdentifiers) (entity.AuthInfo, error) {
@@ -169,7 +172,7 @@ func (r *Repository) getAuthInfoByCondition(condition string, args ...interface{
 			WHERE %[3]v
 		`, usersTable, oauthTable, condition)
 	if err := r.db.Get(&info, query, args...); err != nil {
-		return entity.AuthInfo{}, authFail.GrpcUserNotFound
+		return entity.AuthInfo{}, err
 	}
 	return info.Entity(), nil
 }

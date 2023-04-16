@@ -22,6 +22,12 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
+	profile, err := s.firebase.GetProfile(context.Background(), googleProfile.LocalId)
+	if err != nil {
+		log.Errorf("unable to get firebase profile %s data: %s", googleProfile.LocalId, err)
+		return entity.AuthInfo{}, fail.GrpcUnknown
+	}
+
 	userId, err := s.repo.CreateUser(entity.CredentialsHash{
 		Email:        email,
 		PasswordHash: &passwordHash,
@@ -30,14 +36,11 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 		return entity.AuthInfo{}, err
 	}
 
-	profile, err := s.firebase.GetProfile(context.Background(), googleProfile.LocalId)
-	if err != nil {
-		log.Errorf("unable to get firebase profile %s data: %s", googleProfile.LocalId, err)
-		return entity.AuthInfo{}, fail.GrpcUnknown
-	}
-	if err = s.repo.ConnectFirebase(userId, googleProfile.LocalId, profile.CreationTimestamp); err != nil {
-		return entity.AuthInfo{}, err
-	}
+	go func() {
+		if err := s.repo.ConnectFirebase(userId, googleProfile.LocalId, profile.CreationTimestamp); err != nil {
+			log.Errorf("unable to connect firebase profile %s for user %s: %s", googleProfile.LocalId, userId, err)
+		}
+	}()
 
 	return s.repo.GetAuthInfoById(userId)
 }
