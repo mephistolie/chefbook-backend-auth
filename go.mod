@@ -6,7 +6,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/mephistolie/chefbook-backend-auth/api v0.0.0
 	github.com/mephistolie/chefbook-backend-common/firebase v0.0.0-20230416191649-175445efa564
 	github.com/mephistolie/chefbook-backend-common/hash v0.0.0-20230416191649-175445efa564
 	github.com/mephistolie/chefbook-backend-common/log v0.0.0-20230416191649-175445efa564
@@ -61,5 +60,3 @@ require (
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
-
-replace github.com/mephistolie/chefbook-backend-auth/api => ./api
