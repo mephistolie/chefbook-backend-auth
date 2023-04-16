@@ -20,7 +20,7 @@ const (
 	displayMobile     = "mobile"
 	scopeParam        = "scope"
 	responseTypeParam = "response_type"
-	responseTypeToken = "tokens"
+	responseTypeToken = "token"
 	responseTypeCode  = "code"
 	stateParam        = "state"
 	clientSecretParam = "client_secret"

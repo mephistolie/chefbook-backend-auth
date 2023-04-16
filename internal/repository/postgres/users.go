@@ -12,6 +12,7 @@ import (
 )
 
 func (r *Repository) CreateUser(credentials entity.CredentialsHash, activationCode *string, oauth entity.OAuth) (uuid.UUID, error) {
+	log.Infof("creating user for email %s...", credentials.Email)
 	var id uuid.UUID
 	if credentials.Id != nil {
 		id = *credentials.Id

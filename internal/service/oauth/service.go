@@ -32,7 +32,7 @@ func (s *Service) GenerateGoogleLink(redirectUrl string) string {
 func (s *Service) ConnectGoogle(userId uuid.UUID, code string, state, redirectUrl string) error {
 	googleInfo, err := s.providers.Google.GetUserInfoByCode(code, state, redirectUrl)
 	if err != nil {
-		log.Warnf("invalid google oauth for user %s: ", code, err)
+		log.Warnf("invalid google oauth for user %s: %s", code, err)
 		return authFail.GrpcInvalidCode
 	}
 
@@ -44,7 +44,10 @@ func (s *Service) DeleteGoogleConnection(userId uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if s.getSignInMethodsCount(authInfo) <= 1 {
+	if authInfo.OAuth.VkId == nil {
+		return nil
+	}
+	if !s.hasMultipleSignInMethods(authInfo) {
 		return authFail.GrpcFewSignInMethods
 	}
 	return s.repo.DeleteGoogleConnection(userId)
@@ -66,7 +69,7 @@ func (s *Service) GenerateVkLink(display, responseType, redirectUri string) (str
 func (s *Service) ConnectVk(userId uuid.UUID, code, state string, redirectUri string) error {
 	vkResponse, err := s.providers.Vk.GetAccessToken(code, state, redirectUri)
 	if err != nil {
-		log.Warnf("invalid google oauth for user %s: ", code, err)
+		log.Warnf("invalid vk oauth for user %s: %s", code, err)
 		return authFail.GrpcInvalidCode
 	}
 
@@ -78,18 +81,21 @@ func (s *Service) DeleteVkConnection(userId uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if s.getSignInMethodsCount(authInfo) <= 1 {
+	if authInfo.OAuth.VkId == nil {
+		return nil
+	}
+	if !s.hasMultipleSignInMethods(authInfo) {
 		return authFail.GrpcFewSignInMethods
 	}
 	return s.repo.DeleteVkConnection(userId)
 }
 
-func (s *Service) getSignInMethodsCount(authInfo entity.AuthInfo) int {
+func (s *Service) hasMultipleSignInMethods(authInfo entity.AuthInfo) bool {
 	count := 0
 	increaseForCondition(&count, len(authInfo.PasswordHash) > 0)
 	increaseForCondition(&count, authInfo.OAuth.GoogleId != nil)
 	increaseForCondition(&count, authInfo.OAuth.VkId != nil)
-	return count
+	return count > 1
 }
 
 func increaseForCondition(val *int, condition bool) {

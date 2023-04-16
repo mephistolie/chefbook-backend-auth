@@ -8,6 +8,21 @@ import (
 	"time"
 )
 
+func (r *Repository) IsFirebaseProfileConnected(firebaseId string) bool {
+	var userId uuid.UUID
+
+	query := fmt.Sprintf(`
+			SELECT user_id
+			FROM %s
+			WHERE firebase_id=$1
+		`, firebaseTable)
+
+	if err := r.db.Get(&userId, query, firebaseId); err != nil || len(userId.String()) == 0 {
+		return false
+	}
+	return true
+}
+
 func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) error {
 	tx, err := r.db.Begin()
 	if err != nil {

@@ -8,7 +8,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
-func (s *AuthServer) RequestRequestPasswordReset(_ context.Context, req *api.RequestPasswordResetRequest) (*api.RequestPasswordResetResponse, error) {
+func (s *AuthServer) RequestPasswordReset(_ context.Context, req *api.RequestPasswordResetRequest) (*api.RequestPasswordResetResponse, error) {
 	if len(req.Email) == 0 && len(req.Nickname) == 0 {
 		return nil, fail.GrpcInvalidBody
 	}

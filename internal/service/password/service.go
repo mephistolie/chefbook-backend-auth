@@ -65,9 +65,11 @@ func (s *Service) Change(userId uuid.UUID, oldPassword, newPassword string) erro
 		return authFail.GrpcUserNotFound
 	}
 
-	if err = s.hashManager.Validate(oldPassword, authInfo.PasswordHash); err != nil {
-		log.Infof("invalid password for user %s: %s", userId, err)
-		return authFail.GrpcInvalidPassword
+	if len(authInfo.PasswordHash) > 0 {
+		if err = s.hashManager.Validate(oldPassword, authInfo.PasswordHash); err != nil {
+			log.Infof("invalid password for user %s: %s", userId, err)
+			return authFail.GrpcInvalidPassword
+		}
 	}
 
 	passwordHash, err := s.hashManager.Hash(newPassword)

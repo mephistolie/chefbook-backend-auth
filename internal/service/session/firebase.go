@@ -10,11 +10,16 @@ import (
 )
 
 func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo, error) {
-	googleProfile, err := s.firebase.SignIn(email, password)
+	firebaseProfile, err := s.firebase.SignIn(email, password)
 	if err != nil {
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
 	}
-	log.Infof("found Firebase profile for email %s; importing...", email)
+	log.Infof("found Firebase profile %s for email %s; importing...", firebaseProfile.LocalId, email)
+
+	if s.repo.IsFirebaseProfileConnected(firebaseProfile.LocalId) {
+		log.Warnf("Firebase profile % already connected to other user", firebaseProfile.LocalId)
+		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
+	}
 
 	passwordHash, err := s.hashManager.Hash(password)
 	if err != nil {
@@ -22,9 +27,9 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
-	profile, err := s.firebase.GetProfile(context.Background(), googleProfile.LocalId)
+	profile, err := s.firebase.GetProfile(context.Background(), firebaseProfile.LocalId)
 	if err != nil {
-		log.Errorf("unable to get firebase profile %s data: %s", googleProfile.LocalId, err)
+		log.Errorf("unable to get firebase profile %s data: %s", firebaseProfile.LocalId, err)
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
@@ -36,11 +41,7 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 		return entity.AuthInfo{}, err
 	}
 
-	go func() {
-		if err := s.repo.ConnectFirebase(userId, googleProfile.LocalId, profile.CreationTimestamp); err != nil {
-			log.Errorf("unable to connect firebase profile %s for user %s: %s", googleProfile.LocalId, userId, err)
-		}
-	}()
+	go s.repo.ConnectFirebase(userId, firebaseProfile.LocalId, profile.CreationTimestamp)
 
 	return s.repo.GetAuthInfoById(userId)
 }

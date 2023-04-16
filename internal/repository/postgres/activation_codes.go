@@ -37,7 +37,8 @@ func (r *Repository) ActivateProfile(userId uuid.UUID, code string) error {
 			)
 		`, usersTable, activationCodesTable)
 
-	if _, err := r.db.Exec(activateProfileQuery, userId, code); err != nil {
+	res, queryErr := r.db.Exec(activateProfileQuery, userId, code)
+	if rows, err := res.RowsAffected(); queryErr != nil || err != nil || rows == 0 {
 		log.Infof("invalid activation code %s for user %s: %s", code, userId, err)
 		return fail.GrpcInvalidActivationCode
 	}

@@ -29,6 +29,7 @@ type Auth interface {
 	DeleteGoogleConnection(userId uuid.UUID) error
 	ConnectVk(userId uuid.UUID, vkId int64) error
 	DeleteVkConnection(userId uuid.UUID) error
+	IsFirebaseProfileConnected(firebaseId string) bool
 	ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) error
 	DeleteUser(userId uuid.UUID) error
 	SetNickname(userId uuid.UUID, nickname string) (string, error)

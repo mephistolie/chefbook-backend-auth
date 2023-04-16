@@ -42,7 +42,7 @@ func (s *AuthServer) ConnectGoogle(_ context.Context, req *api.ConnectGoogleRequ
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err := s.service.OAuth.ConnectGoogle(id, req.State, query.Decode(req.Code), req.RedirectUrl); err != nil {
+	if err := s.service.OAuth.ConnectGoogle(id, query.Decode(req.Code), req.State, req.RedirectUrl); err != nil {
 		return nil, err
 	}
 

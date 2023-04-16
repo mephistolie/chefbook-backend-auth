@@ -11,7 +11,6 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/shutdown"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"net"
@@ -47,7 +46,6 @@ func Run(cfg *config.Config) {
 			log.UnaryServerInterceptor(),
 		),
 	)
-	grpclog.SetLoggerV2(log.Grpc())
 
 	healthServer := health.NewServer()
 	authServer := auth.NewServer(*authService)
