@@ -5,6 +5,7 @@ import (
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/google"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/vk"
+	"github.com/mephistolie/chefbook-backend-common/log"
 )
 
 func (s *Service) SignInGoogle(credentials entity.OAuthCredentials, client entity.ClientData, redirectUrl string) (entity.Tokens, error) {
@@ -50,6 +51,7 @@ func (s *Service) signInGoogleWithProfileCreation(
 	if len(googleInfo.Email) == 0 {
 		return entity.Tokens{}, authFail.GrpcEmailRequired
 	}
+	
 	credentials := entity.CredentialsHash{Email: googleInfo.Email}
 	userId, err := s.repo.CreateUser(credentials, nil, entity.OAuth{GoogleId: &googleInfo.UserId})
 	if err != nil {
@@ -59,6 +61,13 @@ func (s *Service) signInGoogleWithProfileCreation(
 	if err != nil {
 		return entity.Tokens{}, err
 	}
+
+	go func() {
+		if err = s.connectFirebaseProfile(authInfo.Id, authInfo.Email); err != nil {
+			log.Infof("firebase profile for user %s connected", authInfo.Id)
+		}
+	}()
+
 	return s.createSession(authInfo, client)
 }
 
@@ -105,6 +114,7 @@ func (s *Service) signInVkWithProfileCreation(
 	if len(vkInfo.Email) == 0 {
 		return entity.Tokens{}, authFail.GrpcEmailRequired
 	}
+
 	credentials := entity.CredentialsHash{Email: vkInfo.Email}
 	userId, err := s.repo.CreateUser(credentials, nil, entity.OAuth{VkId: &vkInfo.UserId})
 	if err != nil {
@@ -114,5 +124,12 @@ func (s *Service) signInVkWithProfileCreation(
 	if err != nil {
 		return entity.Tokens{}, err
 	}
+
+	go func() {
+		if err = s.connectFirebaseProfile(authInfo.Id, authInfo.Email); err != nil {
+			log.Infof("firebase profile for user %s connected", authInfo.Id)
+		}
+	}()
+
 	return s.createSession(authInfo, client)
 }

@@ -1,6 +1,8 @@
 package session
 
 import (
+	"context"
+	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -28,7 +30,7 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 		return entity.AuthInfo{}, err
 	}
 
-	profile, err := s.firebase.GetProfile(googleProfile.LocalId)
+	profile, err := s.firebase.GetProfile(context.Background(), googleProfile.LocalId)
 	if err != nil {
 		log.Errorf("unable to get firebase profile %s data: %s", googleProfile.LocalId, err)
 		return entity.AuthInfo{}, fail.GrpcUnknown
@@ -38,4 +40,12 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 	}
 
 	return s.repo.GetAuthInfoById(userId)
+}
+
+func (s *Service) connectFirebaseProfile(userId uuid.UUID, email string) error {
+	profile, err := s.firebase.GetProfileByEmail(context.Background(), email)
+	if err != nil {
+		return fail.GrpcUnknown
+	}
+	return s.repo.ConnectFirebase(userId, profile.Id, profile.CreationTimestamp)
 }
