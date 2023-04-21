@@ -27,7 +27,7 @@ func main() {
 				ResetPasswordCode: fs.Duration("reset-password-code-ttl", 24*time.Hour, "reset password code time to live"),
 			},
 			Firebase: config.Firebase{
-				ConfigPath:   fs.String("firebase-config", "secrets/firebase.json", "Firebase configuration file path"),
+				Credentials:  fs.String("firebase-credentials", "", "Firebase credentials JSON"),
 				GoogleApiKey: fs.String("firebase-api-key", "", "Google API key for Firebase client"),
 			},
 		},
@@ -53,11 +53,11 @@ func main() {
 		},
 
 		Smtp: config.Smtp{
-			Host:         fs.String("smtp-host", "", "Smtp host; leave empty to disable emails"),
-			Port:         fs.Int("smtp-port", 465, "Smtp port"),
-			Sender:       fs.String("smtp-sender", "", "Smtp sender email"),
-			Password:     fs.String("smtp-password", "", "Smtp sender password"),
-			SendAttempts: fs.Int("smtp-attempts", 3, "Smtp email sending attempts"),
+			Host:         fs.String("smtp-host", "", "SMTP host; leave empty to disable emails"),
+			Port:         fs.Int("smtp-port", 465, "SMTP port"),
+			Sender:       fs.String("smtp-sender", "", "SMTP sender email"),
+			Password:     fs.String("smtp-password", "", "SMTP sender password"),
+			SendAttempts: fs.Int("smtp-attempts", 3, "SMTP email sending attempts"),
 		},
 	}
 	if err := ff.Parse(fs, os.Args[1:], ff.WithEnvVars()); err != nil {

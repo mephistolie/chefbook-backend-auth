@@ -37,7 +37,7 @@ type Ttl struct {
 }
 
 type Firebase struct {
-	ConfigPath   *string
+	Credentials  *string
 	GoogleApiKey *string
 }
 
