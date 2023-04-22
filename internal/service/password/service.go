@@ -30,7 +30,7 @@ func NewService(
 		repo:                 repo,
 		mail:                 mailService,
 		hashManager:          hashManager,
-		resetPasswordCodeTTL: *cfg.Ttl.ResetPasswordCode,
+		resetPasswordCodeTTL: *cfg.Ttl.PasswordResetCode,
 	}
 }
 

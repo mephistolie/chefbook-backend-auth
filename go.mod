@@ -15,7 +15,7 @@ require (
 	github.com/mephistolie/chefbook-backend-common/random v0.3.0
 	github.com/mephistolie/chefbook-backend-common/responses v0.3.0
 	github.com/mephistolie/chefbook-backend-common/shutdown v0.3.0
-	github.com/mephistolie/chefbook-backend-common/tokens v0.3.0
+	github.com/mephistolie/chefbook-backend-common/tokens v0.5.0
 	github.com/mssola/useragent v1.0.0
 	github.com/peterbourgon/ff/v3 v3.3.0
 	golang.org/x/oauth2 v0.7.0

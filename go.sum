@@ -868,8 +868,8 @@ github.com/mephistolie/chefbook-backend-common/responses v0.3.0 h1:EQwZZ+djapJaA
 github.com/mephistolie/chefbook-backend-common/responses v0.3.0/go.mod h1:1G7MuToVsE9jQbUJ6g49jgzbqsLHb4WGesbLHkUHSLE=
 github.com/mephistolie/chefbook-backend-common/shutdown v0.3.0 h1:L+Z3ZCw0SuYN7G/1h+D+VZWzRXTJIOsm2Z1RGViEl20=
 github.com/mephistolie/chefbook-backend-common/shutdown v0.3.0/go.mod h1:wose8RxMtomzIK9cEjBC0FyO02GSna8eswYkYW1dDFE=
-github.com/mephistolie/chefbook-backend-common/tokens v0.3.0 h1:k6bfWPV9mtgsIyL79Fbvsl37ji61I1J+8QzvD7UdL3I=
-github.com/mephistolie/chefbook-backend-common/tokens v0.3.0/go.mod h1:aOd85MbzirNeSNFf1X8vSTh7BWaORQSwIHWVXNvY8bc=
+github.com/mephistolie/chefbook-backend-common/tokens v0.5.0 h1:aYtBXlw61mxTD9HAhgD1JRpITAQvLogG5mSAbhZNFFU=
+github.com/mephistolie/chefbook-backend-common/tokens v0.5.0/go.mod h1:aOd85MbzirNeSNFf1X8vSTh7BWaORQSwIHWVXNvY8bc=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/pkcs11 v1.0.3/go.mod h1:XsNlhZGX73bx86s2hdc/FuaLm2CPZJemRLMA+WTFxgs=
 github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible/go.mod h1:8AuVvqP/mXw1px98n46wfvcGfQ4ci2FwoAjKYxuo3Z4=

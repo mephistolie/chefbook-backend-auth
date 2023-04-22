@@ -50,6 +50,6 @@ func NewService(
 		firebase:             firebase,
 		accessTokenTtl:       *cfg.Ttl.AccessToken,
 		refreshTokenTtl:      *cfg.Ttl.RefreshToken,
-		resetPasswordCodeTTL: *cfg.Ttl.ResetPasswordCode,
+		resetPasswordCodeTTL: *cfg.Ttl.PasswordResetCode,
 	}
 }

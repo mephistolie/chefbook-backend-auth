@@ -45,7 +45,7 @@ func NewService(ipInfoProvider ip.InfoProvider, cfg config.Smtp) (*Service, erro
 	var err error = nil
 	if len(*cfg.Host) > 0 {
 		if mailSender, err = mail.NewSmtpSender(
-			*cfg.Sender,
+			*cfg.Email,
 			*cfg.Password,
 			*cfg.Host,
 			*cfg.Port,

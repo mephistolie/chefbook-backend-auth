@@ -76,7 +76,7 @@ func New(
 
 	hashManager := hash.NewBcryptManager(*cfg.Auth.SaltCost)
 
-	tokenManager, err := tokens.NewManager(*cfg.Auth.AccessTokenPrivateKeyPath, *cfg.Auth.AccessTokenPublicKeyPath)
+	tokenManager, err := tokens.NewManagerByKey([]byte(*cfg.Auth.AccessTokenSigningKey))
 	if err != nil {
 		return nil, err
 	}

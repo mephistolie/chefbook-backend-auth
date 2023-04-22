@@ -23,17 +23,16 @@ type Config struct {
 }
 
 type Auth struct {
-	SaltCost                  *int
-	AccessTokenPrivateKeyPath *string
-	AccessTokenPublicKeyPath  *string
-	Ttl                       Ttl
-	Firebase                  Firebase
+	SaltCost              *int
+	AccessTokenSigningKey *string
+	Ttl                   Ttl
+	Firebase              Firebase
 }
 
 type Ttl struct {
 	AccessToken       *time.Duration
 	RefreshToken      *time.Duration
-	ResetPasswordCode *time.Duration
+	PasswordResetCode *time.Duration
 }
 
 type Firebase struct {
@@ -68,7 +67,7 @@ type Database struct {
 type Smtp struct {
 	Host         *string
 	Port         *int
-	Sender       *string
+	Email        *string
 	Password     *string
 	SendAttempts *int
 }
@@ -77,11 +76,13 @@ func (c Config) Validate() error {
 	if *c.Environment != EnvProd {
 		*c.Environment = EnvDebug
 	}
-	if *c.Auth.AccessTokenPrivateKeyPath == "" {
-		return errors.New("access tokens signing private key path is empty")
+
+	if *c.Auth.AccessTokenSigningKey == "" {
+		return errors.New("access token signing key is empty")
 	}
-	if *c.Auth.AccessTokenPublicKeyPath == "" {
-		return errors.New("access tokens signing public key path is empty")
+
+	if *c.Database.Host == "" {
+		return errors.New("database host is empty")
 	}
 	if *c.Database.DBName == "" {
 		return errors.New("database name is empty")
@@ -92,6 +93,7 @@ func (c Config) Validate() error {
 	if *c.Database.Password == "" {
 		return errors.New("database user password is empty")
 	}
+
 	return nil
 }
 
@@ -101,8 +103,8 @@ func (c Config) Print() {
 		"Port: %v\n"+
 		"Logs path: %v\n\n"+
 		"Salt cost: %v\n"+
-		"Access tokens TTL: %v\n"+
-		"Refresh tokens TTL: %v\n"+
+		"Access token TTL: %v\n"+
+		"Refresh token TTL: %v\n"+
 		"Password reset code TTL: %v\n\n"+
 		"Database host: %v\n"+
 		"Database port: %v\n"+
@@ -113,7 +115,7 @@ func (c Config) Print() {
 		"Google Client ID: %v\n"+
 		"VK Client ID: %v\n",
 		*c.Environment, *c.Port, *c.LogsPath,
-		*c.Auth.SaltCost, *c.Auth.Ttl.AccessToken, *c.Auth.Ttl.RefreshToken, *c.Auth.Ttl.ResetPasswordCode,
+		*c.Auth.SaltCost, *c.Auth.Ttl.AccessToken, *c.Auth.Ttl.RefreshToken, *c.Auth.Ttl.PasswordResetCode,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
 		*c.Smtp.Host, *c.Smtp.Port,
 		*c.OAuth.State,

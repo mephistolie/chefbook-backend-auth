@@ -18,13 +18,12 @@ func main() {
 		LogsPath:    fs.String("logs-path", "logs/all.log", "logs file path"),
 
 		Auth: config.Auth{
-			SaltCost:                  fs.Int("salt-cost", 10, "hash data salt cost"),
-			AccessTokenPrivateKeyPath: fs.String("access-token-private-key", "secrets/jwt_rsa", "access tokens signing private key path"),
-			AccessTokenPublicKeyPath:  fs.String("access-token-public-key", "secrets/jwt_rsa.pub", "access token signing public key path"),
+			SaltCost:              fs.Int("salt-cost", 10, "hash data salt cost"),
+			AccessTokenSigningKey: fs.String("access-token-signing-key", "", "access token signing key"),
 			Ttl: config.Ttl{
-				AccessToken:       fs.Duration("access-tokens-ttl", 20*time.Minute, "access tokens time to live"),
-				RefreshToken:      fs.Duration("refresh-tokens-ttl", 24*time.Hour*30, "refresh tokens time to live"),
-				ResetPasswordCode: fs.Duration("reset-password-code-ttl", 24*time.Hour, "reset password code time to live"),
+				AccessToken:       fs.Duration("access-token-ttl", 20*time.Minute, "access tokens time to live"),
+				RefreshToken:      fs.Duration("refresh-token-ttl", 24*time.Hour*30, "refresh tokens time to live"),
+				PasswordResetCode: fs.Duration("password-reset-code-ttl", 24*time.Hour, "reset password code time to live"),
 			},
 			Firebase: config.Firebase{
 				Credentials:  fs.String("firebase-credentials", "", "Firebase credentials JSON"),
@@ -55,7 +54,7 @@ func main() {
 		Smtp: config.Smtp{
 			Host:         fs.String("smtp-host", "", "SMTP host; leave empty to disable emails"),
 			Port:         fs.Int("smtp-port", 465, "SMTP port"),
-			Sender:       fs.String("smtp-sender", "", "SMTP sender email"),
+			Email:        fs.String("smtp-email", "", "SMTP sender email"),
 			Password:     fs.String("smtp-password", "", "SMTP sender password"),
 			SendAttempts: fs.Int("smtp-attempts", 3, "SMTP email sending attempts"),
 		},
