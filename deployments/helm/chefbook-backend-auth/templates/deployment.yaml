@@ -1,0 +1,146 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chefbook-backend-auth.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "chefbook-backend-auth.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "chefbook-backend-auth.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "chefbook-backend-auth.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: ENVIRONMENT
+              value: {{ if eq .Values.debug true }}debug{{ else }}production{{ end }}
+            - name: PORT
+              value: {{ quote .Values.service.port }}
+            - name: LOGS_PATH
+              value: {{ .Values.logsPath }}
+
+            # Auth
+
+            - name: SALT_COST
+              value: {{ quote .Values.auth.saltCost }}
+
+            - name: ACCESS_TOKEN_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.accessTokenSecrets.name }}
+                  key:  {{ .Values.auth.accessTokenSecrets.signingKeyKey }}
+
+            - name: ACCESS_TOKEN_TTL
+              value: {{ .Values.auth.accessTokenTtl }}
+            - name: REFRESH_TOKEN_TTL
+              value: {{ .Values.auth.refreshTokenTtl }}
+            - name: PASSWORD_RESET_CODE_TTL
+              value: {{ .Values.auth.resetPasswordCodeTtl }}
+
+            - name: FIREBASE_CREDENTIALS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.firebaseSecrets.name }}
+                  key: {{ .Values.auth.firebaseSecrets.credentialsKey }}
+            - name: FIREBASE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.firebaseSecrets.name }}
+                  key: {{ .Values.auth.firebaseSecrets.googleApiKey }}
+
+            # OAuth
+
+            - name: GOOGLE_CLIENT_ID
+              value: {{ .Values.oauth.googleClientId }}
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oauth.secrets.name }}
+                  key: {{ .Values.oauth.secrets.googleClientSecretKey }}
+
+            - name: VK_CLIENT_ID
+              value: {{ quote .Values.oauth.vkClientId }}
+            - name: VK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oauth.secrets.name }}
+                  key: {{ .Values.oauth.secrets.vkClientSecretKey }}
+
+            # PostgreSQL
+
+            - name: DB_HOST
+              value: {{ .Values.postgres.host }}
+            - name: DB_PORT
+              value: {{ quote .Values.postgres.port }}
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secrets.name }}
+                  key: {{ .Values.postgres.secrets.userKey }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secrets.name }}
+                  key: {{ .Values.postgres.secrets.passwordKey }}
+            - name: DB_NAME
+              value: {{ .Values.postgres.dbName | quote }}
+
+            # SMTP
+
+            - name: SMTP_HOST
+              value: {{ .Values.smtp.host }}
+            - name: SMTP_PORT
+              value: {{ quote .Values.smtp.port }}
+            - name: SMTP_EMAIL
+              value: {{ .Values.smtp.email }}
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.smtp.secrets.name }}
+                  key: {{ .Values.smtp.secrets.passwordKey }}
+            - name: SMTP_ATTEMPTS
+              value: {{ quote .Values.smtp.sendAttempts }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            grpc:
+              port: {{ .Values.service.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
