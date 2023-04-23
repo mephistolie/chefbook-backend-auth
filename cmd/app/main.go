@@ -15,7 +15,7 @@ func main() {
 	cfg := config.Config{
 		Environment: fs.String("environment", "debug", "service environment"),
 		Port:        fs.Int("port", 8080, "service port"),
-		LogsPath:    fs.String("logs-path", "logs/all.log", "logs file path"),
+		LogsPath:    fs.String("logs-path", "", "logs file path"),
 
 		Auth: config.Auth{
 			SaltCost:              fs.Int("salt-cost", 10, "hash data salt cost"),

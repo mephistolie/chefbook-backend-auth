@@ -1,9 +1,13 @@
+nameOverride: ""
+fullnameOverride: ""
 replicaCount: 3
 
 image:
   repository: ""
   pullPolicy: IfNotPresent
   tag: ""
+
+imagePullSecrets: []
 
 debug: false
 # Leave empty for stdout only
@@ -51,9 +55,8 @@ smtp:
     passwordKey: password
   sendAttempts: 3
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+secrets:
+  dependencyEnabled: true
 
 podAnnotations: {}
 

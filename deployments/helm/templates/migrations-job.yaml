@@ -1,10 +1,10 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "chefbook-backend-auth.fullname" . }}-migrations-job
+  name: {{ include "chefbook-backend-auth-service.fullname" . }}-migrations-job
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "chefbook-backend-auth.labels" . | nindent 4 }}
+    {{- include "chefbook-backend-auth-service.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-weight": "-5"
@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "chefbook-backend-auth.name" . }}-migration
+        app.kubernetes.io/name: {{ include "chefbook-backend-auth-service.name" . }}-migration
         app.kubernetes.io/instance: {{ .Release.Name }}
       annotations:
         readiness.status.sidecar.istio.io/applicationPorts: ""

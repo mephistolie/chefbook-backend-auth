@@ -35,7 +35,7 @@ func Run(cfg *config.Config) {
 		return
 	}
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *cfg.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *cfg.Port))
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -58,6 +58,8 @@ func Run(cfg *config.Config) {
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Errorf("error occurred while running http server: %s\n", err.Error())
+		} else {
+			log.Info("gRPC server started")
 		}
 	}()
 

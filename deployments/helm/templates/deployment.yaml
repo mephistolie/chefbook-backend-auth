@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "chefbook-backend-auth.fullname" . }}
+  name: {{ include "chefbook-backend-auth-service.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "chefbook-backend-auth.labels" . | nindent 4 }}
+    {{- include "chefbook-backend-auth-service.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "chefbook-backend-auth.selectorLabels" . | nindent 6 }}
+      {{- include "chefbook-backend-auth-service.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -19,7 +19,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "chefbook-backend-auth.selectorLabels" . | nindent 8 }}
+        {{- include "chefbook-backend-auth-service.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -39,7 +39,7 @@ spec:
             - name: PORT
               value: {{ quote .Values.service.port }}
             - name: LOGS_PATH
-              value: {{ .Values.logsPath }}
+              value: {{ quote .Values.logsPath }}
 
             # Auth
 

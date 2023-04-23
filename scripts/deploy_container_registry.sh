@@ -5,8 +5,8 @@ fi
 
 # Configuration
 
-app_name=chefbook-backend-auth
-app_image="$CONTAINER_REGISTRY/chefbook-backend-auth"
+app_name=chefbook-backend-auth-service
+app_image="$CONTAINER_REGISTRY/$app_name"
 migrations_image="$app_image-migrations"
 
 read -rp 'Enter version: ' version
@@ -46,6 +46,7 @@ read -rp "Confirm (only yes will be accepted): " confirm
 if [[ $confirm != "yes" ]]; then
   exit
 fi
+echo
 
 # Containers
 
@@ -58,7 +59,7 @@ repositoryAlias=@chefbook-helm-repository
 repositoryUrl=oci://$HELM_REGISTRY
 chartArchive="$app_name-$version.tgz"
 
-cd deployments/helm/chefbook-backend-auth || exit
+cd deployments/helm || exit
 
 sed -i '' "s,$repositoryAlias,$repositoryUrl,g" Chart.yaml
 
