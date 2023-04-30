@@ -31,97 +31,97 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.image.container }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: ENVIRONMENT
-              value: {{ if eq .Values.debug true }}debug{{ else }}production{{ end }}
+              value: {{ include "chefbook-backend-auth-service.environment" . }}
             - name: PORT
-              value: {{ quote .Values.service.port }}
+              value: {{ .Values.service.port | quote }}
             - name: LOGS_PATH
-              value: {{ quote .Values.logsPath }}
+              value: {{ .Values.config.logsPath }}
 
             # Auth
 
             - name: SALT_COST
-              value: {{ quote .Values.auth.saltCost }}
+              value: {{ .Values.config.auth.saltCost | quote }}
 
             - name: ACCESS_TOKEN_SIGNING_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.auth.accessTokenSecrets.name }}
-                  key:  {{ .Values.auth.accessTokenSecrets.signingKeyKey }}
+                  name: {{ .Values.secrets.accessToken.name }}
+                  key:  {{ .Values.secrets.accessToken.signingKeyRef }}
 
             - name: ACCESS_TOKEN_TTL
-              value: {{ .Values.auth.accessTokenTtl }}
+              value: {{ .Values.config.auth.accessTokenTtl }}
             - name: REFRESH_TOKEN_TTL
-              value: {{ .Values.auth.refreshTokenTtl }}
+              value: {{ .Values.config.auth.refreshTokenTtl }}
             - name: PASSWORD_RESET_CODE_TTL
-              value: {{ .Values.auth.resetPasswordCodeTtl }}
+              value: {{ .Values.config.auth.resetPasswordCodeTtl }}
 
             - name: FIREBASE_CREDENTIALS
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.auth.firebaseSecrets.name }}
-                  key: {{ .Values.auth.firebaseSecrets.credentialsKey }}
+                  name: {{ .Values.secrets.firebase.name }}
+                  key: {{ .Values.secrets.firebase.credentialsRef }}
             - name: FIREBASE_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.auth.firebaseSecrets.name }}
-                  key: {{ .Values.auth.firebaseSecrets.googleApiKey }}
+                  name: {{ .Values.secrets.firebase.name }}
+                  key: {{ .Values.secrets.firebase.googleApiKeyRef }}
 
             # OAuth
 
             - name: GOOGLE_CLIENT_ID
-              value: {{ .Values.oauth.googleClientId }}
+              value: {{ .Values.config.oauth.googleClientId }}
             - name: GOOGLE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.oauth.secrets.name }}
-                  key: {{ .Values.oauth.secrets.googleClientSecretKey }}
+                  name: {{ .Values.secrets.oauth.name }}
+                  key: {{ .Values.secrets.oauth.googleClientSecretRef }}
 
             - name: VK_CLIENT_ID
-              value: {{ quote .Values.oauth.vkClientId }}
+              value: {{ .Values.config.oauth.vkClientId | quote }}
             - name: VK_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.oauth.secrets.name }}
-                  key: {{ .Values.oauth.secrets.vkClientSecretKey }}
+                  name: {{ .Values.secrets.oauth.name }}
+                  key: {{ .Values.secrets.oauth.vkClientSecretRef }}
 
             # PostgreSQL
 
             - name: DB_HOST
-              value: {{ .Values.postgres.host }}
+              value: {{ .Values.config.postgres.host }}
             - name: DB_PORT
-              value: {{ quote .Values.postgres.port }}
+              value: {{ .Values.config.postgres.port | quote }}
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.postgres.secrets.name }}
-                  key: {{ .Values.postgres.secrets.userKey }}
+                  name: {{ .Values.secrets.postgres.name }}
+                  key: {{ .Values.secrets.postgres.userRef }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.postgres.secrets.name }}
-                  key: {{ .Values.postgres.secrets.passwordKey }}
+                  name: {{ .Values.secrets.postgres.name }}
+                  key: {{ .Values.secrets.postgres.passwordRef }}
             - name: DB_NAME
-              value: {{ .Values.postgres.dbName | quote }}
+              value: {{ .Values.config.postgres.dbName }}
 
             # SMTP
 
             - name: SMTP_HOST
-              value: {{ .Values.smtp.host }}
+              value: {{ .Values.config.smtp.host }}
             - name: SMTP_PORT
-              value: {{ quote .Values.smtp.port }}
+              value: {{ .Values.config.smtp.port | quote }}
             - name: SMTP_EMAIL
-              value: {{ .Values.smtp.email }}
+              value: {{ .Values.config.smtp.email }}
             - name: SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.smtp.secrets.name }}
-                  key: {{ .Values.smtp.secrets.passwordKey }}
+                  name: {{ .Values.secrets.smtp.name }}
+                  key: {{ .Values.secrets.smtp.passwordRef }}
             - name: SMTP_ATTEMPTS
-              value: {{ quote .Values.smtp.sendAttempts }}
+              value: {{ .Values.config.smtp.sendAttempts | quote }}
 
           ports:
             - name: http

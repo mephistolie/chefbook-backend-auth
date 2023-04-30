@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="chefbook-auth@rc1a-hdm77b52kwxtr10q.mdb.yandexcloud.net" uuid="f44cd383-3569-4714-8cfe-90cf79f497a0">
+    <data-source source="LOCAL" name="chefbook-auth-dev@rc1a-hdm77b52kwxtr10q.mdb.yandexcloud.net" uuid="f44cd383-3569-4714-8cfe-90cf79f497a0">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://rc1a-hdm77b52kwxtr10q.mdb.yandexcloud.net:6432/chefbook-auth</jdbc-url>
+      <jdbc-url>jdbc:postgresql://rc1a-hdm77b52kwxtr10q.mdb.yandexcloud.net:6432/chefbook-auth-dev</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

@@ -15,28 +15,26 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "chefbook-backend-auth-service.name" . }}-migration
         app.kubernetes.io/instance: {{ .Release.Name }}
-      annotations:
-        readiness.status.sidecar.istio.io/applicationPorts: ""
     spec:
       restartPolicy: Never
       containers:
         - name: {{ .Chart.Name }}-migrations
-          image: "{{ .Values.image.repository }}-migrations:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.image.container }}-migrations:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: DB_HOST
-              value: {{ .Values.postgres.host }}
+              value: {{ .Values.config.postgres.host }}
             - name: DB_PORT
-              value: {{ quote .Values.postgres.port }}
+              value: {{ .Values.config.postgres.port | quote }}
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.postgres.secrets.name }}
-                  key: {{ .Values.postgres.secrets.userKey }}
+                  name: {{ .Values.secrets.postgres.name }}
+                  key: {{ .Values.secrets.postgres.userRef }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.postgres.secrets.name }}
-                  key: {{ .Values.postgres.secrets.passwordKey }}
+                  name: {{ .Values.secrets.postgres.name }}
+                  key: {{ .Values.secrets.postgres.passwordRef }}
             - name: DB_NAME
-              value: {{ .Values.postgres.dbName | quote }}
+              value: {{ .Values.config.postgres.dbName }}

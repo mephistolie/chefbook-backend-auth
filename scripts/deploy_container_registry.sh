@@ -31,7 +31,7 @@ if [[ $latest == "y" ]]; then
     app_tags="$app_tags -t $app_image:stable"
     migrations_tags="$migrations_tags -t $migrations_image:stable"
   else
-    app_tags="$app_tags -t $app_image:debug"
+    app_tags="$app_tags -t $app_image:develop"
     migrations_tags="$migrations_tags -t $migrations_image:debug"
   fi
 fi
@@ -63,7 +63,6 @@ cd deployments/helm || exit
 
 sed -i '' "s,$repositoryAlias,$repositoryUrl,g" Chart.yaml
 
-helm dependency update
 helm package . --version "$version"
 helm push "$chartArchive" "$repositoryUrl"
 

@@ -39,6 +39,8 @@ helm.sh/chart: {{ include "chefbook-backend-auth-service.chart" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
+app.kubernetes.io/component: service
+app.kubernetes.io/part-of: chefbook-backend
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
@@ -48,4 +50,16 @@ Selector labels
 {{- define "chefbook-backend-auth-service.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "chefbook-backend-auth-service.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+environment: {{ include "chefbook-backend-auth-service.environment" . }}
+{{- end }}
+
+{{/*
+Choose Environment
+*/}}
+{{- define "chefbook-backend-auth-service.environment" -}}
+{{- if eq (tpl "{{ .Values.config.develop }}" .) "true" }}
+{{- print "develop" }}
+{{- else }}
+{{- print "production" }}
+{{- end }}
 {{- end }}
