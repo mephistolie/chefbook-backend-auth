@@ -51,12 +51,14 @@ func (s *Service) signInGoogleWithProfileCreation(
 	if len(googleInfo.Email) == 0 {
 		return entity.Tokens{}, authFail.GrpcEmailRequired
 	}
-	
+
 	credentials := entity.CredentialsHash{Email: googleInfo.Email}
-	userId, err := s.repo.CreateUser(credentials, nil, entity.OAuth{GoogleId: &googleInfo.UserId})
+	userId, msg, err := s.repo.CreateUser(credentials, nil, entity.OAuth{GoogleId: &googleInfo.UserId})
 	if err != nil {
 		return entity.Tokens{}, err
 	}
+	go s.mq.PublishProfileMessage(*msg)
+
 	authInfo, err = s.repo.GetAuthInfoById(userId)
 	if err != nil {
 		return entity.Tokens{}, err
@@ -116,10 +118,12 @@ func (s *Service) signInVkWithProfileCreation(
 	}
 
 	credentials := entity.CredentialsHash{Email: vkInfo.Email}
-	userId, err := s.repo.CreateUser(credentials, nil, entity.OAuth{VkId: &vkInfo.UserId})
+	userId, msg, err := s.repo.CreateUser(credentials, nil, entity.OAuth{VkId: &vkInfo.UserId})
 	if err != nil {
 		return entity.Tokens{}, err
 	}
+	go s.mq.PublishProfileMessage(*msg)
+
 	authInfo, err = s.repo.GetAuthInfoById(userId)
 	if err != nil {
 		return entity.Tokens{}, err

@@ -65,11 +65,12 @@ type Nickname interface {
 
 func New(
 	cfg *config.Config,
-	repo repository.Auth,
+	repo repository.Data,
+	mq repository.MessageQueue,
 ) (*Service, error) {
 	ipInfoProvider := ip.NewFreeIpApiProvider()
 
-	mailService, err := mail.NewService(ipInfoProvider, cfg.Smtp)
+	mailService, err := mail.NewService(ipInfoProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +113,7 @@ func New(
 	}
 
 	return &Service{
-		Session:  session.NewService(repo, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth),
+		Session:  session.NewService(repo, mq, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth),
 		OAuth:    oauthService.NewService(repo, oauthProviders),
 		Password: password.NewService(repo, *mailService, hashManager, cfg.Auth),
 		Nickname: nickname.NewService(repo, *mailService),

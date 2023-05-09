@@ -14,11 +14,11 @@ import (
 const VkScope = 1 << 22
 
 type Service struct {
-	repo      repository.Auth
+	repo      repository.Data
 	providers oauth.Providers
 }
 
-func NewService(repo repository.Auth, providers oauth.Providers) *Service {
+func NewService(repo repository.Data, providers oauth.Providers) *Service {
 	return &Service{
 		repo:      repo,
 		providers: providers,

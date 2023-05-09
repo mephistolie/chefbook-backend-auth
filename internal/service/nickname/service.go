@@ -7,11 +7,11 @@ import (
 )
 
 type Service struct {
-	repo repository.Auth
+	repo repository.Data
 	mail mail.Service
 }
 
-func NewService(repo repository.Auth, mailService mail.Service) *Service {
+func NewService(repo repository.Data, mailService mail.Service) *Service {
 	return &Service{
 		repo: repo,
 		mail: mailService,

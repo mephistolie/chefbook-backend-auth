@@ -37,18 +37,19 @@ type Service struct {
 	sender         mail.Sender
 	ipInfoProvider ip.InfoProvider
 	IsStub         bool
+	IsDevEnv       bool
 	sendAttempts   int
 }
 
-func NewService(ipInfoProvider ip.InfoProvider, cfg config.Smtp) (*Service, error) {
+func NewService(ipInfoProvider ip.InfoProvider, cfg *config.Config) (*Service, error) {
 	var mailSender mail.Sender = mail.NewStubSender()
 	var err error = nil
-	if len(*cfg.Host) > 0 {
+	if len(*cfg.Smtp.Host) > 0 {
 		if mailSender, err = mail.NewSmtpSender(
-			*cfg.Email,
-			*cfg.Password,
-			*cfg.Host,
-			*cfg.Port,
+			*cfg.Smtp.Email,
+			*cfg.Smtp.Password,
+			*cfg.Smtp.Host,
+			*cfg.Smtp.Port,
 			30*time.Second,
 		); err != nil {
 			return nil, err
@@ -57,8 +58,9 @@ func NewService(ipInfoProvider ip.InfoProvider, cfg config.Smtp) (*Service, erro
 	return &Service{
 		sender:         mailSender,
 		ipInfoProvider: ipInfoProvider,
-		IsStub:         len(*cfg.Host) == 0,
-		sendAttempts:   *cfg.SendAttempts,
+		IsStub:         len(*cfg.Smtp.Host) == 0,
+		IsDevEnv:       *cfg.Environment == config.EnvDev,
+		sendAttempts:   *cfg.Smtp.SendAttempts,
 	}, nil
 }
 
@@ -75,7 +77,7 @@ func (s *Service) SendProfileActivationMail(userId uuid.UUID, email, code, linkP
 	if err := payload.SetHtmlBody(assets.ProfileActivationMailTmplFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, s.sendAttempts)
+	s.sendMessage(payload)
 }
 
 func (s *Service) SendNewLoginMail(email string, client entity.ClientData, timestamp time.Time) {
@@ -101,7 +103,7 @@ func (s *Service) SendNewLoginMail(email string, client entity.ClientData, times
 	if err := payload.SetHtmlBody(assets.NewLoginFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, s.sendAttempts)
+	s.sendMessage(payload)
 }
 
 func (s *Service) SendResetPasswordMail(userId uuid.UUID, email string, code string, linkPattern string) {
@@ -116,7 +118,7 @@ func (s *Service) SendResetPasswordMail(userId uuid.UUID, email string, code str
 	if err := payload.SetHtmlBody(assets.PasswordResetMailTmplFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, s.sendAttempts)
+	s.sendMessage(payload)
 }
 
 func (s *Service) SendPasswordChangedMail(email string) {
@@ -128,7 +130,7 @@ func (s *Service) SendPasswordChangedMail(email string) {
 	if err := payload.SetHtmlBody(assets.PasswordChangedMailTmplFilePath, nil); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, s.sendAttempts)
+	s.sendMessage(payload)
 }
 
 func (s *Service) SendNicknameChangedMail(email, nickname string) {
@@ -143,7 +145,7 @@ func (s *Service) SendNicknameChangedMail(email, nickname string) {
 	if err := payload.SetHtmlBody(assets.NicknameChangedMailTmplFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
-	_ = s.sender.Send(payload, s.sendAttempts)
+	s.sendMessage(payload)
 }
 
 func (s *Service) SendProfileDeletedMail(email string) {
@@ -154,6 +156,13 @@ func (s *Service) SendProfileDeletedMail(email string) {
 	}
 	if err := payload.SetHtmlBody(assets.ProfileDeletedMailTmplFilePath, nil); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
+	}
+	s.sendMessage(payload)
+}
+
+func (s *Service) sendMessage(payload mail.Payload) {
+	if s.IsDevEnv {
+		payload.Body = "DEV\n" + payload.Body
 	}
 	_ = s.sender.Send(payload, s.sendAttempts)
 }

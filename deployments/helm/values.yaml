@@ -28,6 +28,12 @@ config:
     port: 5432
     dbName: chefbook-auth
 
+  rabbitmq:
+    name: ""
+    namespace: ""
+    port: 5672
+    vhost: ""
+
   smtp:
     host: smtp.gmail.com
     port: 465
@@ -48,6 +54,10 @@ secrets:
     vkClientSecretRef: vkClientSecret
   postgres:
     name: postgres-secrets
+    userRef: user
+    passwordRef: password
+  rabbitmq:
+    name: rabbitmq-secrets
     userRef: user
     passwordRef: password
   smtp:

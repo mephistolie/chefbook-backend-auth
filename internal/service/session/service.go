@@ -18,7 +18,8 @@ const (
 )
 
 type Service struct {
-	repo                 repository.Auth
+	repo                 repository.Data
+	mq                   repository.MessageQueue
 	mail                 mail.Service
 	oauthProviders       oauth.Providers
 	hashManager          hash.Manager
@@ -31,7 +32,8 @@ type Service struct {
 }
 
 func NewService(
-	repo repository.Auth,
+	repo repository.Data,
+	mq repository.MessageQueue,
 	mailService mail.Service,
 	oauthProviders oauth.Providers,
 	hashManager hash.Manager,
@@ -42,6 +44,7 @@ func NewService(
 ) *Service {
 	return &Service{
 		repo:                 repo,
+		mq:                   mq,
 		mail:                 mailService,
 		oauthProviders:       oauthProviders,
 		hashManager:          hashManager,

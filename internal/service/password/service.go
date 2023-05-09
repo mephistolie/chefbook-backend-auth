@@ -14,14 +14,14 @@ import (
 )
 
 type Service struct {
-	repo                 repository.Auth
+	repo                 repository.Data
 	mail                 mail.Service
 	hashManager          hash.Manager
 	resetPasswordCodeTTL time.Duration
 }
 
 func NewService(
-	repo repository.Auth,
+	repo repository.Data,
 	mailService mail.Service,
 	hashManager hash.Manager,
 	cfg config.Auth,

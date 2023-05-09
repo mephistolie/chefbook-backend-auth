@@ -50,7 +50,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.secrets.accessToken.name }}
-                  key:  {{ .Values.secrets.accessToken.signingKeyRef }}
+                  key: {{ .Values.secrets.accessToken.signingKeyRef }}
 
             - name: ACCESS_TOKEN_TTL
               value: {{ .Values.config.auth.accessTokenTtl }}
@@ -107,6 +107,25 @@ spec:
             - name: DB_NAME
               value: {{ .Values.config.postgres.dbName }}
 
+            # RabbitMQ
+
+            - name: AMQP_HOST
+              value: "{{ .Values.config.rabbitmq.name }}.{{ .Values.config.rabbitmq.namespace | default .Release.Namespace }}.svc.cluster.local"
+            - name: AMQP_PORT
+              value: {{ .Values.config.rabbitmq.port | quote }}
+            - name: AMQP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.rabbitmq.name }}
+                  key: {{ .Values.secrets.rabbitmq.userRef }}
+            - name: AMQP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.rabbitmq.name }}
+                  key: {{ .Values.secrets.rabbitmq.passwordRef }}
+            - name: AMQP_VHOST
+              value: {{ .Values.config.rabbitmq.vhost }}
+
             # SMTP
 
             - name: SMTP_HOST
@@ -130,6 +149,7 @@ spec:
           livenessProbe:
             grpc:
               port: {{ .Values.service.port }}
+            periodSeconds: 60
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

@@ -1,8 +1,11 @@
 package postgres
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	api "github.com/mephistolie/chefbook-backend-auth/api/mq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres/dto"
@@ -11,7 +14,11 @@ import (
 	"time"
 )
 
-func (r *Repository) CreateUser(credentials entity.CredentialsHash, activationCode *string, oauth entity.OAuth) (uuid.UUID, error) {
+func (r *Repository) CreateUser(
+	credentials entity.CredentialsHash,
+	activationCode *string,
+	oauth entity.OAuth,
+) (uuid.UUID, *entity.MessageData, error) {
 	log.Infof("creating user for email %s...", credentials.Email)
 	var id uuid.UUID
 	if credentials.Id != nil {
@@ -23,57 +30,102 @@ func (r *Repository) CreateUser(credentials entity.CredentialsHash, activationCo
 	tx, err := r.db.Begin()
 	if err != nil {
 		log.Error("unable to begin transaction: ", err)
-		return uuid.UUID{}, fail.GrpcUnknown
+		return uuid.UUID{}, nil, fail.GrpcUnknown
 	}
 
-	createUserQuery := fmt.Sprintf(`
-			INSERT INTO %s (user_id, email, password, activated)
-			VALUES ($1, $2, $3, $4)
-		`, usersTable)
-
-	if _, err := tx.Exec(createUserQuery, id, credentials.Email, credentials.PasswordHash, activationCode == nil); err != nil {
-		log.Errorf("unable to create user %s: %s", id, err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("unable to rollback transaction: ", err)
-		}
-		return uuid.UUID{}, authFail.GrpcUnableCreateProfile
+	if err = r.addUsersRow(id, credentials, activationCode == nil, tx); err != nil {
+		return uuid.UUID{}, nil, err
+	}
+	if err = r.addOauthRow(id, oauth, activationCode == nil, tx); err != nil {
+		return uuid.UUID{}, nil, err
+	}
+	if err = r.addActivationCodeRow(id, activationCode, tx); err != nil {
+		return uuid.UUID{}, nil, err
 	}
 
-	createOAuthQuery := fmt.Sprintf(`
-			INSERT INTO %s (user_id, google_id, vk_id)
-			VALUES ($1, $2, $3)
-		`, oauthTable)
-
-	if _, err := tx.Exec(createOAuthQuery, id, oauth.GoogleId, oauth.VkId); err != nil {
-		log.Errorf("unable to create user %s oauth data: %s", id, err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("unable to rollback transaction: ", err)
-		}
-		return uuid.UUID{}, authFail.GrpcUnableCreateProfile
-	}
-
-	if activationCode != nil {
-		createActivationLinkQuery := fmt.Sprintf(`
-			INSERT INTO %s (activation_code, user_id)
-			VALUES ($1, $2)
-			RETURNING user_id
-		`, activationCodesTable)
-
-		if _, err := tx.Exec(createActivationLinkQuery, *activationCode, id); err != nil {
-			log.Errorf("unable to create user %s activation code: %s", id, err)
-			if err := tx.Rollback(); err != nil {
-				log.Error("unable to rollback transaction: ", err)
-			}
-			return uuid.UUID{}, authFail.GrpcUnableCreateProfile
-		}
+	msg, err := r.addOutboxProfileCreatedMsg(id, tx)
+	if err != nil {
+		return uuid.UUID{}, nil, err
 	}
 
 	if err = tx.Commit(); err != nil {
 		log.Error("unable to commit transaction: ", err)
-		return uuid.UUID{}, fail.GrpcUnknown
+		return uuid.UUID{}, nil, fail.GrpcUnknown
 	}
 
-	return id, nil
+	return id, &msg, nil
+}
+
+func (r *Repository) addUsersRow(id uuid.UUID, credentials entity.CredentialsHash, activated bool, tx *sql.Tx) error {
+	query := fmt.Sprintf(`
+			INSERT INTO %s (user_id, email, password, activated)
+			VALUES ($1, $2, $3, $4)
+		`, usersTable)
+
+	if _, err := tx.Exec(query, id, credentials.Email, credentials.PasswordHash, activated); err != nil {
+		log.Errorf("unable to create user %s: %s", id, err)
+		if err := tx.Rollback(); err != nil {
+			log.Error("unable to rollback transaction: ", err)
+		}
+		return authFail.GrpcUnableCreateProfile
+	}
+
+	return nil
+}
+
+func (r *Repository) addOauthRow(id uuid.UUID, oauth entity.OAuth, activated bool, tx *sql.Tx) error {
+	query := fmt.Sprintf(`
+			INSERT INTO %s (user_id, google_id, vk_id)
+			VALUES ($1, $2, $3)
+		`, oauthTable)
+
+	if _, err := tx.Exec(query, id, oauth.GoogleId, oauth.VkId); err != nil {
+		log.Errorf("unable to create user %s oauth data: %s", id, err)
+		if err := tx.Rollback(); err != nil {
+			log.Error("unable to rollback transaction: ", err)
+		}
+		return authFail.GrpcUnableCreateProfile
+	}
+
+	return nil
+}
+
+func (r *Repository) addActivationCodeRow(id uuid.UUID, activationCode *string, tx *sql.Tx) error {
+	if activationCode != nil {
+		query := fmt.Sprintf(`
+			INSERT INTO %s (activation_code, user_id)
+			VALUES ($1, $2)
+		`, activationCodesTable)
+
+		if _, err := tx.Exec(query, *activationCode, id); err != nil {
+			log.Errorf("unable to create user %s activation code: %s", id, err)
+			if err := tx.Rollback(); err != nil {
+				log.Error("unable to rollback transaction: ", err)
+			}
+			return authFail.GrpcUnableCreateProfile
+		}
+	}
+
+	return nil
+}
+
+func (r *Repository) addOutboxProfileCreatedMsg(id uuid.UUID, tx *sql.Tx) (entity.MessageData, error) {
+	msgBody := api.MsgBodyProfileCreated{
+		UserId: id.String(),
+	}
+	var msgBodyBson, err = json.Marshal(msgBody)
+	if err != nil {
+		log.Error("unable to marshal profile created message body: ", err)
+		return entity.MessageData{}, fail.GrpcUnknown
+	}
+	msg := entity.MessageData{
+		EventId:  uuid.New(),
+		Exchange: api.ExchangeProfiles,
+		Type:     api.MsgTypeProfileCreated,
+		Body:     msgBodyBson,
+	}
+
+	return msg, r.createOutboxMsg(msg, tx)
 }
 
 func (r *Repository) GetAuthInfoById(userId uuid.UUID) (entity.AuthInfo, error) {
@@ -178,18 +230,56 @@ func (r *Repository) getAuthInfoByCondition(condition string, args ...interface{
 	return info.Entity(), nil
 }
 
-func (r *Repository) DeleteUser(userId uuid.UUID) error {
+func (r *Repository) DeleteUser(userId uuid.UUID) (entity.MessageData, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		log.Error("unable to begin transaction: ", err)
+		return entity.MessageData{}, fail.GrpcUnknown
+	}
+
 	query := fmt.Sprintf(`
 			DELETE FROM %s
 			WHERE user_id=$1
 		`, usersTable)
 
-	if _, err := r.db.Exec(query, userId); err != nil {
+	if _, err := tx.Exec(query, userId); err != nil {
 		log.Infof("unable to delete user %s: %s", userId, err)
-		return fail.GrpcUnknown
+		if err := tx.Rollback(); err != nil {
+			log.Error("unable to rollback transaction: ", err)
+		}
+		return entity.MessageData{}, fail.GrpcUnknown
 	}
 
-	return nil
+	msg, err := r.addOutboxProfileDeletedMsg(userId, tx)
+	if err != nil {
+		return entity.MessageData{}, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		log.Error("unable to commit transaction: ", err)
+		return entity.MessageData{}, fail.GrpcUnknown
+	}
+
+	return msg, nil
+}
+
+func (r *Repository) addOutboxProfileDeletedMsg(id uuid.UUID, tx *sql.Tx) (entity.MessageData, error) {
+	msgBody := api.MsgBodyProfileDeleted{
+		UserId: id.String(),
+	}
+	var msgBodyBson, err = json.Marshal(msgBody)
+	if err != nil {
+		log.Error("unable to marshal profile deleted message body: ", err)
+		return entity.MessageData{}, fail.GrpcUnknown
+	}
+	msg := entity.MessageData{
+		EventId:  uuid.New(),
+		Exchange: api.ExchangeProfiles,
+		Type:     api.MsgTypeProfileDeleted,
+		Body:     msgBodyBson,
+	}
+
+	return msg, r.createOutboxMsg(msg, tx)
 }
 
 func (r *Repository) SetNickname(userId uuid.UUID, nickname string) (string, error) {

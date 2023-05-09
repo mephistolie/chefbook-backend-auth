@@ -14,6 +14,7 @@ const (
 	oauthTable           = "oauth"
 	firebaseTable        = "firebase"
 	passwordResetsTable  = "password_resets"
+	outboxTable          = "outbox"
 )
 
 type Repository struct {

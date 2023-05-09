@@ -1,8 +1,12 @@
 package postgres
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	api "github.com/mephistolie/chefbook-backend-auth/api/mq"
+	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"time"
@@ -23,11 +27,11 @@ func (r *Repository) IsFirebaseProfileConnected(firebaseId string) bool {
 	return true
 }
 
-func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) error {
+func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (entity.MessageData, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		log.Error("unable to begin transaction: ", err)
-		return fail.GrpcUnknown
+		return entity.MessageData{}, fail.GrpcUnknown
 	}
 
 	clarifyRegistrationTimestampQuery := fmt.Sprintf(`
@@ -42,7 +46,7 @@ func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creati
 		if err := tx.Rollback(); err != nil {
 			log.Error("unable to rollback transaction: ", err)
 		}
-		return fail.GrpcUnknown
+		return entity.MessageData{}, fail.GrpcUnknown
 	}
 
 	addFirebaseConnectionQuery := fmt.Sprintf(`
@@ -55,13 +59,38 @@ func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creati
 		if err := tx.Rollback(); err != nil {
 			log.Error("unable to rollback transaction: ", err)
 		}
-		return fail.GrpcUnknown
+		return entity.MessageData{}, fail.GrpcUnknown
+	}
+
+	msg, err := r.addOutboxProfileFirebaseImportMsg(userId, firebaseId, tx)
+	if err != nil {
+		return entity.MessageData{}, err
 	}
 
 	if err = tx.Commit(); err != nil {
 		log.Error("unable to commit transaction: ", err)
-		return fail.GrpcUnknown
+		return entity.MessageData{}, fail.GrpcUnknown
 	}
 
-	return nil
+	return msg, nil
+}
+
+func (r *Repository) addOutboxProfileFirebaseImportMsg(id uuid.UUID, firebaseId string, tx *sql.Tx) (entity.MessageData, error) {
+	msgBody := api.MsgBodyProfileFirebaseImport{
+		UserId:     id.String(),
+		FirebaseId: firebaseId,
+	}
+	var msgBodyBson, err = json.Marshal(msgBody)
+	if err != nil {
+		log.Error("unable to marshal firebase import message body: ", err)
+		return entity.MessageData{}, fail.GrpcUnknown
+	}
+	msgInfo := entity.MessageData{
+		EventId:  uuid.New(),
+		Exchange: api.ExchangeProfiles,
+		Type:     api.MsgTypeProfileFirebaseImport,
+		Body:     msgBodyBson,
+	}
+
+	return msgInfo, r.createOutboxMsg(msgInfo, tx)
 }

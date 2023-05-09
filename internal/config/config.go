@@ -19,6 +19,7 @@ type Config struct {
 	Auth     Auth
 	OAuth    OAuth
 	Database Database
+	Amqp     Amqp
 	Smtp     Smtp
 }
 
@@ -62,6 +63,14 @@ type Database struct {
 	User     *string
 	Password *string
 	DBName   *string
+}
+
+type Amqp struct {
+	Host     *string
+	Port     *int
+	User     *string
+	Password *string
+	VHost    *string
 }
 
 type Smtp struct {
@@ -109,6 +118,9 @@ func (c Config) Print() {
 		"Database host: %v\n"+
 		"Database port: %v\n"+
 		"Database name: %v\n\n"+
+		"MQ host: %v\n"+
+		"MQ port: %v\n"+
+		"MQ vhost: %v\n\n"+
 		"SMTP host: %v\n"+
 		"SMTP port: %v\n\n"+
 		"OAuth state: %v\n"+
@@ -117,6 +129,7 @@ func (c Config) Print() {
 		*c.Environment, *c.Port, *c.LogsPath,
 		*c.Auth.SaltCost, *c.Auth.Ttl.AccessToken, *c.Auth.Ttl.RefreshToken, *c.Auth.Ttl.PasswordResetCode,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
+		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,
 		*c.Smtp.Host, *c.Smtp.Port,
 		*c.OAuth.State,
 		*c.OAuth.Google.ClientId,

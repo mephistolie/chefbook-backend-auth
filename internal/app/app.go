@@ -6,6 +6,7 @@ import (
 	authpb "github.com/mephistolie/chefbook-backend-auth/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres"
+	"github.com/mephistolie/chefbook-backend-auth/internal/repository/rabbitmq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/transport/dependencies/service"
 	auth "github.com/mephistolie/chefbook-backend-auth/internal/transport/grpc"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -29,7 +30,13 @@ func Run(cfg *config.Config) {
 
 	repository := postgres.NewRepository(db)
 
-	authService, err := service.New(cfg, repository)
+	mq, err := rabbitmq.NewRepository(cfg.Amqp, repository)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	authService, err := service.New(cfg, repository, mq)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -70,6 +77,9 @@ func Run(cfg *config.Config) {
 		},
 		"database": func(ctx context.Context) error {
 			return db.Close()
+		},
+		"mq": func(ctx context.Context) error {
+			return mq.Stop()
 		},
 	})
 	<-wait

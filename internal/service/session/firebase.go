@@ -33,10 +33,11 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
-	userId, err := s.repo.CreateUser(entity.CredentialsHash{
+	userId, msg, err := s.repo.CreateUser(entity.CredentialsHash{
 		Email:        email,
 		PasswordHash: &passwordHash,
 	}, nil, entity.OAuth{})
+	go s.mq.PublishProfileMessage(*msg)
 	if err != nil {
 		return entity.AuthInfo{}, err
 	}
@@ -51,5 +52,10 @@ func (s *Service) connectFirebaseProfile(userId uuid.UUID, email string) error {
 	if err != nil {
 		return fail.GrpcUnknown
 	}
-	return s.repo.ConnectFirebase(userId, profile.Id, profile.CreationTimestamp)
+	msg, err := s.repo.ConnectFirebase(userId, profile.Id, profile.CreationTimestamp)
+	if err != nil {
+		return nil
+	}
+	s.mq.PublishProfileMessage(msg)
+	return nil
 }

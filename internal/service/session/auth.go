@@ -25,7 +25,8 @@ func (s *Service) SignUp(credentials entity.SignUpCredentials, activationLinkPat
 		return uuid.UUID{}, false, err
 	}
 
-	userId, err := s.repo.CreateUser(credentialsHash, activationCode, entity.OAuth{})
+	userId, msg, err := s.repo.CreateUser(credentialsHash, activationCode, entity.OAuth{})
+	go s.mq.PublishProfileMessage(*msg)
 	if err != nil {
 		return uuid.UUID{}, activationCode == nil, err
 	}
@@ -86,7 +87,8 @@ func (s *Service) DeleteProfile(userId uuid.UUID, password string) error {
 		return authFail.GrpcInvalidPassword
 	}
 
-	err = s.repo.DeleteUser(userId)
+	msg, err := s.repo.DeleteUser(userId)
+	go s.mq.PublishProfileMessage(msg)
 	if err == nil {
 		go s.mail.SendProfileDeletedMail(authInfo.Email)
 	}

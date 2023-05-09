@@ -10,6 +10,7 @@ app_image="$CONTAINER_REGISTRY/$app_name"
 migrations_image="$app_image-migrations"
 
 read -rp 'Enter version: ' version
+tagsArr=("$version")
 app_tags="-t $app_image:$version"
 migrations_tags="-t $migrations_image:$version"
 
@@ -19,8 +20,13 @@ while [[ $latest != "y" ]] && [[ $latest != "n" ]]; do
 done
 
 if [[ $latest == "y" ]]; then
+  tagsArr+=('latest')
   app_tags="$app_tags -t $app_image:latest"
   migrations_tags="$migrations_tags -t $migrations_image:latest"
+
+  tagsArr+=('develop')
+  app_tags="$app_tags -t $app_image:develop"
+  migrations_tags="$migrations_tags -t $migrations_image:debug"
 
   release=""
   while [[ $release != "d" ]] && [[ $release != "s" ]]; do
@@ -28,11 +34,9 @@ if [[ $latest == "y" ]]; then
   done
 
   if [[ $release == "s" ]]; then
+    tagsArr+=('stable')
     app_tags="$app_tags -t $app_image:stable"
     migrations_tags="$migrations_tags -t $migrations_image:stable"
-  else
-    app_tags="$app_tags -t $app_image:develop"
-    migrations_tags="$migrations_tags -t $migrations_image:debug"
   fi
 fi
 
@@ -50,8 +54,13 @@ echo
 
 # Containers
 
-docker build --platform linux/amd64 -f Dockerfile $app_tags . && docker push --all-tags "$app_image"
-docker build --platform linux/amd64 -f migrations/Dockerfile $migrations_tags . && docker push --all-tags "$migrations_image"
+docker build --platform linux/amd64 -f Dockerfile $app_tags .
+docker build --platform linux/amd64 -f migrations/Dockerfile $migrations_tags .
+for tag in "${tagsArr[@]}"
+do
+  docker push "$app_image:$tag"
+  docker push "$migrations_image:$tag"
+done
 
 # Helm Chart
 

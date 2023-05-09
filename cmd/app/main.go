@@ -51,6 +51,14 @@ func main() {
 			DBName:   fs.String("db-name", "", "service database name"),
 		},
 
+		Amqp: config.Amqp{
+			Host:     fs.String("amqp-host", "localhost", "message broker host"),
+			Port:     fs.Int("amqp-port", 5672, "message broker port"),
+			User:     fs.String("amqp-user", "guest", "message broker user name"),
+			Password: fs.String("amqp-password", "guest", "message broker user password"),
+			VHost:    fs.String("amqp-vhost", "", "message broker virtual host"),
+		},
+
 		Smtp: config.Smtp{
 			Host:         fs.String("smtp-host", "", "SMTP host; leave empty to disable emails"),
 			Port:         fs.Int("smtp-port", 465, "SMTP port"),
