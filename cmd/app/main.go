@@ -19,15 +19,15 @@ func main() {
 
 		Auth: config.Auth{
 			SaltCost:              fs.Int("salt-cost", 10, "hash data salt cost"),
-			AccessTokenSigningKey: fs.String("access-token-signing-key", "", "access token signing key"),
+			AccessTokenSigningKey: fs.String("access-token-signing-key", "", "access token signing key; leave empty for random"),
 			Ttl: config.Ttl{
 				AccessToken:       fs.Duration("access-token-ttl", 20*time.Minute, "access tokens time to live"),
 				RefreshToken:      fs.Duration("refresh-token-ttl", 24*time.Hour*30, "refresh tokens time to live"),
 				PasswordResetCode: fs.Duration("password-reset-code-ttl", 24*time.Hour, "reset password code time to live"),
 			},
 			Firebase: config.Firebase{
-				Credentials:  fs.String("firebase-credentials", "", "Firebase credentials JSON"),
-				GoogleApiKey: fs.String("firebase-api-key", "", "Google API key for Firebase client"),
+				Credentials:  fs.String("firebase-credentials", "", "Firebase credentials JSON; leave empty to disable"),
+				GoogleApiKey: fs.String("firebase-api-key", "", "Google API key for Firebase client; leave empty to disable"),
 			},
 		},
 
@@ -52,7 +52,7 @@ func main() {
 		},
 
 		Amqp: config.Amqp{
-			Host:     fs.String("amqp-host", "localhost", "message broker host"),
+			Host:     fs.String("amqp-host", "", "message broker host; leave empty to disable"),
 			Port:     fs.Int("amqp-port", 5672, "message broker port"),
 			User:     fs.String("amqp-user", "guest", "message broker user name"),
 			Password: fs.String("amqp-password", "guest", "message broker user password"),
@@ -60,7 +60,7 @@ func main() {
 		},
 
 		Smtp: config.Smtp{
-			Host:         fs.String("smtp-host", "", "SMTP host; leave empty to disable emails"),
+			Host:         fs.String("smtp-host", "", "SMTP host; leave empty to disable"),
 			Port:         fs.Int("smtp-port", 465, "SMTP port"),
 			Email:        fs.String("smtp-email", "", "SMTP sender email"),
 			Password:     fs.String("smtp-password", "", "SMTP sender password"),

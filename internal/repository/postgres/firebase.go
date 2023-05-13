@@ -27,26 +27,22 @@ func (r *Repository) IsFirebaseProfileConnected(firebaseId string) bool {
 	return true
 }
 
-func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (entity.MessageData, error) {
+func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (*entity.MessageData, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		log.Error("unable to begin transaction: ", err)
-		return entity.MessageData{}, fail.GrpcUnknown
+		return nil, fail.GrpcUnknown
 	}
 
 	clarifyRegistrationTimestampQuery := fmt.Sprintf(`
 			UPDATE %s
 			SET registered=$1
 			WHERE user_id=$2
-			RETURNING email
 		`, usersTable)
 
 	if _, err := tx.Exec(clarifyRegistrationTimestampQuery, creationTimestamp, userId); err != nil {
 		log.Errorf("failed to set profile creation timestamp for user %s: %s", userId, err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("unable to rollback transaction: ", err)
-		}
-		return entity.MessageData{}, fail.GrpcUnknown
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	addFirebaseConnectionQuery := fmt.Sprintf(`
@@ -56,26 +52,18 @@ func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creati
 
 	if _, err := tx.Exec(addFirebaseConnectionQuery, userId, firebaseId); err != nil {
 		log.Errorf("failed to add Firebase connection fo user %s with firebase id %s: %s", userId, firebaseId, err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("unable to rollback transaction: ", err)
-		}
-		return entity.MessageData{}, fail.GrpcUnknown
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
 	msg, err := r.addOutboxProfileFirebaseImportMsg(userId, firebaseId, tx)
 	if err != nil {
-		return entity.MessageData{}, err
+		return nil, err
 	}
 
-	if err = tx.Commit(); err != nil {
-		log.Error("unable to commit transaction: ", err)
-		return entity.MessageData{}, fail.GrpcUnknown
-	}
-
-	return msg, nil
+	return msg, commitTransaction(tx)
 }
 
-func (r *Repository) addOutboxProfileFirebaseImportMsg(id uuid.UUID, firebaseId string, tx *sql.Tx) (entity.MessageData, error) {
+func (r *Repository) addOutboxProfileFirebaseImportMsg(id uuid.UUID, firebaseId string, tx *sql.Tx) (*entity.MessageData, error) {
 	msgBody := api.MsgBodyProfileFirebaseImport{
 		UserId:     id.String(),
 		FirebaseId: firebaseId,
@@ -83,14 +71,14 @@ func (r *Repository) addOutboxProfileFirebaseImportMsg(id uuid.UUID, firebaseId 
 	var msgBodyBson, err = json.Marshal(msgBody)
 	if err != nil {
 		log.Error("unable to marshal firebase import message body: ", err)
-		return entity.MessageData{}, fail.GrpcUnknown
+		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msgInfo := entity.MessageData{
-		EventId:  uuid.New(),
+		Id:       uuid.New(),
 		Exchange: api.ExchangeProfiles,
 		Type:     api.MsgTypeProfileFirebaseImport,
 		Body:     msgBodyBson,
 	}
 
-	return msgInfo, r.createOutboxMsg(msgInfo, tx)
+	return &msgInfo, r.createOutboxMsg(&msgInfo, tx)
 }

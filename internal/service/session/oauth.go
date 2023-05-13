@@ -57,7 +57,7 @@ func (s *Service) signInGoogleWithProfileCreation(
 	if err != nil {
 		return entity.Tokens{}, err
 	}
-	go s.mq.PublishProfileMessage(*msg)
+	go s.mq.PublishProfilesMessage(msg)
 
 	authInfo, err = s.repo.GetAuthInfoById(userId)
 	if err != nil {
@@ -122,7 +122,7 @@ func (s *Service) signInVkWithProfileCreation(
 	if err != nil {
 		return entity.Tokens{}, err
 	}
-	go s.mq.PublishProfileMessage(*msg)
+	go s.mq.PublishProfilesMessage(msg)
 
 	authInfo, err = s.repo.GetAuthInfoById(userId)
 	if err != nil {

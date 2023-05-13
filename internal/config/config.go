@@ -85,11 +85,7 @@ func (c Config) Validate() error {
 	if *c.Environment != EnvProd {
 		*c.Environment = EnvDev
 	}
-
-	if *c.Auth.AccessTokenSigningKey == "" {
-		return errors.New("access token signing key is empty")
-	}
-
+	
 	if *c.Database.Host == "" {
 		return errors.New("database host is empty")
 	}

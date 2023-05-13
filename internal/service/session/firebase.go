@@ -37,12 +37,17 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 		Email:        email,
 		PasswordHash: &passwordHash,
 	}, nil, entity.OAuth{})
-	go s.mq.PublishProfileMessage(*msg)
 	if err != nil {
 		return entity.AuthInfo{}, err
 	}
+	go s.mq.PublishProfilesMessage(msg)
 
-	go s.repo.ConnectFirebase(userId, firebaseProfile.LocalId, profile.CreationTimestamp)
+	go func() {
+		msg, err := s.repo.ConnectFirebase(userId, firebaseProfile.LocalId, profile.CreationTimestamp)
+		if err == nil {
+			_ = s.mq.PublishProfilesMessage(msg)
+		}
+	}()
 
 	return s.repo.GetAuthInfoById(userId)
 }
@@ -56,6 +61,6 @@ func (s *Service) connectFirebaseProfile(userId uuid.UUID, email string) error {
 	if err != nil {
 		return nil
 	}
-	s.mq.PublishProfileMessage(msg)
+	_ = s.mq.PublishProfilesMessage(msg)
 	return nil
 }

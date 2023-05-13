@@ -30,13 +30,13 @@ type Data interface {
 	ConnectVk(userId uuid.UUID, vkId int64) error
 	DeleteVkConnection(userId uuid.UUID) error
 	IsFirebaseProfileConnected(firebaseId string) bool
-	ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (entity.MessageData, error)
-	DeleteUser(userId uuid.UUID) (entity.MessageData, error)
+	ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (*entity.MessageData, error)
+	DeleteUser(userId uuid.UUID) (*entity.MessageData, error)
 	SetNickname(userId uuid.UUID, nickname string) (string, error)
 	CreatePasswordResetRequest(userId uuid.UUID, expiration time.Time) (uuid.UUID, error)
 	ResetPassword(userId uuid.UUID, resetCode, passwordHash string) error
 }
 
 type MessageQueue interface {
-	PublishProfileMessage(msg entity.MessageData)
+	PublishProfilesMessage(msg *entity.MessageData) error
 }

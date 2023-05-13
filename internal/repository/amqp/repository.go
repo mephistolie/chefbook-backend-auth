@@ -1,4 +1,4 @@
-package rabbitmq
+package amqp
 
 import (
 	"fmt"
@@ -6,12 +6,13 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	outboxApi "github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres/api"
 	amqp "github.com/wagslane/go-rabbitmq"
+	"time"
 )
 
 type Repository struct {
-	conn        *amqp.Conn
-	pubProfiles *amqp.Publisher
-	outbox      outboxApi.Outbox
+	conn              *amqp.Conn
+	publisherProfiles *amqp.Publisher
+	outbox            outboxApi.Outbox
 }
 
 func NewRepository(cfg config.Amqp, outbox outboxApi.Outbox) (*Repository, error) {
@@ -21,28 +22,48 @@ func NewRepository(cfg config.Amqp, outbox outboxApi.Outbox) (*Repository, error
 		return nil, err
 	}
 
-	pubProfiles, err := amqp.NewPublisher(
-		conn,
+	return &Repository{
+		conn:   conn,
+		outbox: outbox,
+	}, nil
+}
+
+func (r *Repository) Start() error {
+	var err error = nil
+	r.publisherProfiles, err = amqp.NewPublisher(
+		r.conn,
 		amqp.WithPublisherOptionsExchangeName(api.ExchangeProfiles),
 		amqp.WithPublisherOptionsExchangeKind("fanout"),
 		amqp.WithPublisherOptionsExchangeDurable,
 		amqp.WithPublisherOptionsExchangeDeclare,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	mq := Repository{
-		conn:        conn,
-		pubProfiles: pubProfiles,
-		outbox:      outbox,
-	}
-	go mq.sendMessages()
+	go r.observeOutbox()
 
-	return &mq, nil
+	return nil
+}
+
+func (r *Repository) observeOutbox() {
+	for {
+		fails := 0
+		if msgs, err := r.outbox.GetPendingMessages(); err == nil {
+			for _, msg := range msgs {
+				if err = r.PublishProfilesMessage(msg); err != nil {
+					fails += 1
+					if fails >= 5 {
+						break
+					}
+				}
+			}
+		}
+		time.Sleep(10 * time.Second)
+	}
 }
 
 func (r *Repository) Stop() error {
-	r.pubProfiles.Close()
+	r.publisherProfiles.Close()
 	return r.conn.Close()
 }

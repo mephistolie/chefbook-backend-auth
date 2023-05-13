@@ -64,10 +64,7 @@ func (r *Repository) ResetPassword(userId uuid.UUID, resetCode string, passwordH
 
 	if _, err := tx.Exec(userResetCodeQuery, userId, resetCode); err != nil {
 		log.Errorf("invalid reset code %s for user %s: %s", resetCode, userId, err)
-		if err := tx.Rollback(); err != nil {
-			return fail.GrpcUnknown
-		}
-		return authFail.GrpcInvalidResetPasswordCode
+		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
 	}
 
 	changePasswordQuery := fmt.Sprintf(`
@@ -79,18 +76,10 @@ func (r *Repository) ResetPassword(userId uuid.UUID, resetCode string, passwordH
 
 	if _, err := r.db.Exec(changePasswordQuery, passwordHash, userId); err != nil {
 		log.Errorf("error while updating password for user %s: %s", userId, err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("unable to rollback transaction: ", err)
-		}
-		return fail.GrpcUnknown
+		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	if err := tx.Commit(); err != nil {
-		log.Error("unable to commit transaction: ", err)
-		return fail.GrpcUnknown
-	}
-
-	return nil
+	return commitTransaction(tx)
 }
 
 func (r *Repository) SetPassword(userId uuid.UUID, passwordHash string) error {

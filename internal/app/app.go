@@ -5,8 +5,8 @@ import (
 	"fmt"
 	authpb "github.com/mephistolie/chefbook-backend-auth/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
+	"github.com/mephistolie/chefbook-backend-auth/internal/repository/amqp"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres"
-	"github.com/mephistolie/chefbook-backend-auth/internal/repository/rabbitmq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/transport/dependencies/service"
 	auth "github.com/mephistolie/chefbook-backend-auth/internal/transport/grpc"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -30,10 +30,18 @@ func Run(cfg *config.Config) {
 
 	repository := postgres.NewRepository(db)
 
-	mq, err := rabbitmq.NewRepository(cfg.Amqp, repository)
-	if err != nil {
-		log.Fatal(err)
-		return
+	var mq *amqp.Repository = nil
+	if len(*cfg.Amqp.Host) > 0 {
+		mq, err = amqp.NewRepository(cfg.Amqp, repository)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		if err = mq.Start(); err != nil {
+			log.Fatal(err)
+			return
+		}
+		log.Info("MQ server initialized")
 	}
 
 	authService, err := service.New(cfg, repository, mq)
@@ -79,6 +87,9 @@ func Run(cfg *config.Config) {
 			return db.Close()
 		},
 		"mq": func(ctx context.Context) error {
+			if mq == nil {
+				return nil
+			}
 			return mq.Stop()
 		},
 	})

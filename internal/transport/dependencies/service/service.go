@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
@@ -77,9 +79,18 @@ func New(
 
 	hashManager := hash.NewBcryptManager(*cfg.Auth.SaltCost)
 
-	tokenManager, err := tokens.NewManagerByKey([]byte(*cfg.Auth.AccessTokenSigningKey))
-	if err != nil {
-		return nil, err
+	var tokenManager *tokens.Manager = nil
+	if len(*cfg.Auth.AccessTokenSigningKey) > 0 {
+		tokenManager, err = tokens.NewManagerByRawKey([]byte(*cfg.Auth.AccessTokenSigningKey))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		key, err := rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			return nil, err
+		}
+		tokenManager = tokens.NewManagerByKey(key)
 	}
 
 	googleProvider := google.NewOAuthProvider(
@@ -104,7 +115,7 @@ func New(
 	}
 
 	var firebaseClient *firebase.Client = nil
-	if len(*cfg.Auth.Firebase.GoogleApiKey) > 0 {
+	if len(*cfg.Auth.Firebase.Credentials) > 0 && len(*cfg.Auth.Firebase.GoogleApiKey) > 0 {
 		credentials := []byte(*cfg.Auth.Firebase.Credentials)
 		if client, err := firebase.NewClient(credentials, *cfg.Auth.Firebase.GoogleApiKey); err == nil {
 			firebaseClient = client

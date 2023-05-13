@@ -3,7 +3,7 @@ package entity
 import "github.com/google/uuid"
 
 type MessageData struct {
-	EventId  uuid.UUID
+	Id       uuid.UUID
 	Exchange string
 	Type     string
 	Body     []byte

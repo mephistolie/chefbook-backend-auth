@@ -1,10 +1,13 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
+	"github.com/mephistolie/chefbook-backend-common/log"
+	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
 const (
@@ -34,4 +37,22 @@ func Connect(cfg config.Database) (*sqlx.DB, error) {
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
+}
+
+func errorWithTransactionRollback(tx *sql.Tx, err error) error {
+	if err = tx.Rollback(); err != nil {
+		log.Error("unable to rollback transaction: ", err)
+	}
+	return nil
+}
+
+func commitTransaction(tx *sql.Tx) error {
+	if err := tx.Commit(); err != nil {
+		log.Error("unable to commit transaction: ", err)
+		if err := tx.Rollback(); err != nil {
+			log.Error("unable to rollback transaction: ", err)
+		}
+		return fail.GrpcUnknown
+	}
+	return nil
 }
