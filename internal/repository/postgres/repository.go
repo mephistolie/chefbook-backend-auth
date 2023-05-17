@@ -40,18 +40,14 @@ func NewRepository(db *sqlx.DB) *Repository {
 }
 
 func errorWithTransactionRollback(tx *sql.Tx, err error) error {
-	if err = tx.Rollback(); err != nil {
-		log.Error("unable to rollback transaction: ", err)
-	}
-	return nil
+	_ = tx.Rollback()
+	return err
 }
 
 func commitTransaction(tx *sql.Tx) error {
 	if err := tx.Commit(); err != nil {
 		log.Error("unable to commit transaction: ", err)
-		if err := tx.Rollback(); err != nil {
-			log.Error("unable to rollback transaction: ", err)
-		}
+		_ = tx.Rollback()
 		return fail.GrpcUnknown
 	}
 	return nil

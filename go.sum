@@ -864,8 +864,8 @@ github.com/mephistolie/chefbook-backend-common/migrate/sql v0.6.0 h1:aERwvXh7pV7
 github.com/mephistolie/chefbook-backend-common/migrate/sql v0.6.0/go.mod h1:g9ywS0RLVwDLqOMAB3odt6J/ZVCeqDnd9+5L8tA/kAU=
 github.com/mephistolie/chefbook-backend-common/random v0.7.0 h1:OGVeCejcmIh+wS5tIEmWP3sGWjhiUfiQns/2YxoZIoA=
 github.com/mephistolie/chefbook-backend-common/random v0.7.0/go.mod h1:s7ZWApn73fmLQDTkZfm37qs5nHiuQQ0bWID8NuMrlTg=
-github.com/mephistolie/chefbook-backend-common/responses v0.6.0 h1:faJBEIZFquvDtenbXHAm/yTsb/DKpBqwJ+9h8S9QRXo=
-github.com/mephistolie/chefbook-backend-common/responses v0.6.0/go.mod h1:1G7MuToVsE9jQbUJ6g49jgzbqsLHb4WGesbLHkUHSLE=
+github.com/mephistolie/chefbook-backend-common/responses v0.9.0 h1:wtWbYQif0Hom+B88QnAKHUrqalMlMHuqtgb6Px05C/s=
+github.com/mephistolie/chefbook-backend-common/responses v0.9.0/go.mod h1:1G7MuToVsE9jQbUJ6g49jgzbqsLHb4WGesbLHkUHSLE=
 github.com/mephistolie/chefbook-backend-common/shutdown v0.6.0 h1:pNXz1Z9XPn7iA8QF16MDuFVTEu2uFCksWK68FYWitVo=
 github.com/mephistolie/chefbook-backend-common/shutdown v0.6.0/go.mod h1:wose8RxMtomzIK9cEjBC0FyO02GSna8eswYkYW1dDFE=
 github.com/mephistolie/chefbook-backend-common/tokens v0.7.0 h1:ZVr5XlryI2Xg0+yQljY6j+k8X/QBTfcM88SI5IkqFr4=
