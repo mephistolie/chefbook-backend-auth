@@ -85,7 +85,7 @@ func (c Config) Validate() error {
 	if *c.Environment != EnvProd {
 		*c.Environment = EnvDev
 	}
-	
+
 	if *c.Database.Host == "" {
 		return errors.New("database host is empty")
 	}
@@ -103,7 +103,7 @@ func (c Config) Validate() error {
 }
 
 func (c Config) Print() {
-	log.Infof("SERVICE CONFIGURATION\n"+
+	log.Infof("AUTH SERVICE CONFIGURATION\n"+
 		"Environment: %v\n"+
 		"Port: %v\n"+
 		"Logs path: %v\n\n"+
