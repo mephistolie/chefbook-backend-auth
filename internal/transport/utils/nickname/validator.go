@@ -1,6 +1,7 @@
 package nickname
 
 import (
+	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/assets"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -37,6 +38,9 @@ func (v *Validator) Validate(nickname string) error {
 	}
 	if nicknameLen > 64 {
 		return authFail.GrpcNicknameTooLong
+	}
+	if _, err := uuid.Parse(nickname); err == nil {
+		return authFail.GrpcNicknameId
 	}
 	if match, err := regexp.MatchString(nicknameStartLetterRegex, nickname[0:1]); err != nil || !match {
 		return authFail.GrpcNicknameStartLetter

@@ -46,6 +46,7 @@ var (
 
 	GrpcNicknameTooShort         = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must contain at least 5 symbols")
 	GrpcNicknameTooLong          = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must contain maximum 64 symbols")
+	GrpcNicknameId               = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must not be UUID")
 	GrpcNicknameStartLetter      = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must starts with latin letter")
 	GrpcNicknameEndLetter        = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must ends with latin letter or number")
 	GrpcNicknameForbiddenSymbols = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must contain only latin letters, numbers and '_'")
