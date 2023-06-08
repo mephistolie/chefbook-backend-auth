@@ -12,15 +12,10 @@ message GetAuthInfoRequest {
 }
 
 message GetAuthInfoResponse {
-  enum Role {
-    MEMBER = 0;
-    ADMIN = 1;
-  }
-
   string id = 1;
   string email = 2;
   string nickname = 3;
-  Role role = 4;
+  string role = 4;
   google.protobuf.Timestamp registrationTimestamp = 5;
   bool isActivated = 6;
   bool isBlocked = 7;

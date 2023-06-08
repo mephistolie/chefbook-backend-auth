@@ -6,11 +6,6 @@ import (
 )
 import api "github.com/mephistolie/chefbook-backend-auth/api/proto/implementation/v1"
 
-const (
-	roleMember = "member"
-	roleAdmin  = "admin"
-)
-
 func NewGetAuthInfoResponse(info entity.AuthInfo) *api.GetAuthInfoResponse {
 	nickname := ""
 	googleId := ""
@@ -25,16 +20,11 @@ func NewGetAuthInfoResponse(info entity.AuthInfo) *api.GetAuthInfoResponse {
 		vkId = *info.OAuth.VkId
 	}
 
-	role := api.GetAuthInfoResponse_MEMBER
-	if info.Role == roleAdmin {
-		role = api.GetAuthInfoResponse_ADMIN
-	}
-
 	return &api.GetAuthInfoResponse{
 		Id:                    info.Id.String(),
 		Email:                 info.Email,
 		Nickname:              nickname,
-		Role:                  role,
+		Role:                  info.Role,
 		RegistrationTimestamp: timestamppb.New(info.RegistrationTimestamp),
 		IsActivated:           info.IsActivated,
 		IsBlocked:             info.IsBlocked,
