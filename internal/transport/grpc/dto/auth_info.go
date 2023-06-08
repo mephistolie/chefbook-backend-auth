@@ -8,16 +8,21 @@ import api "github.com/mephistolie/chefbook-backend-auth/api/proto/implementatio
 
 func NewGetAuthInfoResponse(info entity.AuthInfo) *api.GetAuthInfoResponse {
 	nickname := ""
-	googleId := ""
-	var vkId int64 = -1
 	if info.Nickname != nil {
 		nickname = *info.Nickname
 	}
-	if info.OAuth.GoogleId != nil {
-		googleId = *info.OAuth.GoogleId
-	}
-	if info.OAuth.VkId != nil {
-		vkId = *info.OAuth.VkId
+
+	var oAuthPtr *api.OAuth = nil
+	if info.OAuth.GoogleId != nil ||
+		info.OAuth.VkId != nil {
+		oAuth := api.OAuth{}
+		if info.OAuth.GoogleId != nil {
+			oAuth.GoogleId = *info.OAuth.GoogleId
+		}
+		if info.OAuth.VkId != nil {
+			oAuth.VkId = *info.OAuth.VkId
+		}
+		oAuthPtr = &oAuth
 	}
 
 	return &api.GetAuthInfoResponse{
@@ -28,9 +33,6 @@ func NewGetAuthInfoResponse(info entity.AuthInfo) *api.GetAuthInfoResponse {
 		RegistrationTimestamp: timestamppb.New(info.RegistrationTimestamp),
 		IsActivated:           info.IsActivated,
 		IsBlocked:             info.IsBlocked,
-		OAuth: &api.OAuth{
-			GoogleId: googleId,
-			VkId:     vkId,
-		},
+		OAuth:                 oAuthPtr,
 	}
 }
