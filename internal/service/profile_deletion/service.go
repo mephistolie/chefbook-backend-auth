@@ -47,7 +47,6 @@ func (s *Service) Request(userId uuid.UUID, password string, deleteSharedData bo
 	if err != nil {
 		return time.Time{}, err
 	} else {
-		go s.repo.DeleteAllSessions(authInfo.Id)
 		go s.mail.SendProfileDeletionRequestMail(authInfo.Email, timestamp, deleteSharedData)
 	}
 

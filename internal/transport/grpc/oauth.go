@@ -29,10 +29,17 @@ func (s *AuthServer) SignInGoogle(_ context.Context, req *api.SignInGoogleReques
 	if err != nil {
 		return nil, err
 	}
+
+	var deletionTimestamp *timestamppb.Timestamp
+	if tokens.DeletionTimestamp != nil {
+		deletionTimestamp = timestamppb.New(*tokens.DeletionTimestamp)
+	}
+
 	return &api.SignInGoogleResponse{
-		AccessToken:         tokens.AccessToken,
-		RefreshToken:        tokens.RefreshToken,
-		ExpirationTimestamp: timestamppb.New(tokens.ExpirationTimestamp),
+		AccessToken:              tokens.AccessToken,
+		RefreshToken:             tokens.RefreshToken,
+		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),
+		ProfileDeletionTimestamp: deletionTimestamp,
 	}, nil
 }
 
@@ -85,10 +92,17 @@ func (s *AuthServer) SignInVk(_ context.Context, req *api.SignInVkRequest) (*api
 	if err != nil {
 		return nil, err
 	}
+
+	var deletionTimestamp *timestamppb.Timestamp
+	if tokens.DeletionTimestamp != nil {
+		deletionTimestamp = timestamppb.New(*tokens.DeletionTimestamp)
+	}
+
 	return &api.SignInVkResponse{
-		AccessToken:         tokens.AccessToken,
-		RefreshToken:        tokens.RefreshToken,
-		ExpirationTimestamp: timestamppb.New(tokens.ExpirationTimestamp),
+		AccessToken:              tokens.AccessToken,
+		RefreshToken:             tokens.RefreshToken,
+		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),
+		ProfileDeletionTimestamp: deletionTimestamp,
 	}, nil
 }
 

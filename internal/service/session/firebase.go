@@ -17,7 +17,7 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 	log.Infof("found Firebase profile %s for email %s; importing...", firebaseProfile.LocalId, email)
 
 	if s.repo.IsFirebaseProfileConnected(firebaseProfile.LocalId) {
-		log.Warnf("Firebase profile % already connected to other user", firebaseProfile.LocalId)
+		log.Warnf("Firebase profile %s already connected to other user", firebaseProfile.LocalId)
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
 	}
 

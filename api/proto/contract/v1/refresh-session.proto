@@ -15,4 +15,5 @@ message RefreshSessionResponse {
   string accessToken = 1;
   string refreshToken = 2;
   google.protobuf.Timestamp expirationTimestamp = 3;
+  google.protobuf.Timestamp profileDeletionTimestamp = 4;
 }

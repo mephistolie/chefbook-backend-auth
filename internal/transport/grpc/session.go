@@ -64,10 +64,17 @@ func (s *AuthServer) SignIn(_ context.Context, req *api.SignInRequest) (*api.Sig
 	if err != nil {
 		return nil, err
 	}
+
+	var deletionTimestamp *timestamppb.Timestamp
+	if tokens.DeletionTimestamp != nil {
+		deletionTimestamp = timestamppb.New(*tokens.DeletionTimestamp)
+	}
+
 	return &api.SignInResponse{
-		AccessToken:         tokens.AccessToken,
-		RefreshToken:        tokens.RefreshToken,
-		ExpirationTimestamp: timestamppb.New(tokens.ExpirationTimestamp),
+		AccessToken:              tokens.AccessToken,
+		RefreshToken:             tokens.RefreshToken,
+		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),
+		ProfileDeletionTimestamp: deletionTimestamp,
 	}, nil
 }
 
@@ -80,10 +87,17 @@ func (s *AuthServer) RefreshSession(_ context.Context, req *api.RefreshSessionRe
 	if err != nil {
 		return nil, err
 	}
+
+	var deletionTimestamp *timestamppb.Timestamp
+	if tokens.DeletionTimestamp != nil {
+		deletionTimestamp = timestamppb.New(*tokens.DeletionTimestamp)
+	}
+
 	return &api.RefreshSessionResponse{
-		AccessToken:         tokens.AccessToken,
-		RefreshToken:        tokens.RefreshToken,
-		ExpirationTimestamp: timestamppb.New(tokens.ExpirationTimestamp),
+		AccessToken:              tokens.AccessToken,
+		RefreshToken:             tokens.RefreshToken,
+		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),
+		ProfileDeletionTimestamp: deletionTimestamp,
 	}, nil
 }
 
@@ -117,33 +131,6 @@ func (s *AuthServer) GetAuthInfo(_ context.Context, req *api.GetAuthInfoRequest)
 	}
 
 	return dto.NewGetAuthInfoResponse(authInfo), nil
-}
-
-func (s *AuthServer) DeleteProfile(_ context.Context, req *api.DeleteProfileRequest) (*api.DeleteProfileResponse, error) {
-	userId, err := uuid.Parse(req.ProfileId)
-	if err != nil {
-		return nil, fail.GrpcInvalidBody
-	}
-
-	timestamp, err := s.service.ProfileDeletion.Request(userId, req.Password, req.DeleteSharedData)
-	if err != nil {
-		return nil, err
-	}
-
-	return &api.DeleteProfileResponse{DeletionTimestamp: timestamppb.New(timestamp)}, nil
-}
-
-func (s *AuthServer) CancelProfileDeletion(_ context.Context, req *api.CancelProfileDeletionRequest) (*api.CancelProfileDeletionResponse, error) {
-	userId, err := uuid.Parse(req.ProfileId)
-	if err != nil {
-		return nil, fail.GrpcInvalidBody
-	}
-
-	if err = s.service.ProfileDeletion.Cancel(userId); err != nil {
-		return nil, err
-	}
-
-	return &api.CancelProfileDeletionResponse{Message: "delete profile request canceled"}, nil
 }
 
 func (s *AuthServer) GetSessions(_ context.Context, req *api.GetSessionsRequest) (*api.GetSessionsResponse, error) {
