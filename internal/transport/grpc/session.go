@@ -71,7 +71,7 @@ func (s *AuthServer) SignIn(_ context.Context, req *api.SignInRequest) (*api.Sig
 	}, nil
 }
 
-func (s *AuthServer) GetAccessTokenPublicKey(_ context.Context, req *api.GetAccessTokenPublicKeyRequest) (*api.GetAccessTokenPublicKeyResponse, error) {
+func (s *AuthServer) GetAccessTokenPublicKey(_ context.Context, _ *api.GetAccessTokenPublicKeyRequest) (*api.GetAccessTokenPublicKeyResponse, error) {
 	return &api.GetAccessTokenPublicKeyResponse{PublicKey: s.service.Session.GetAccessTokenPublicKey()}, nil
 }
 
@@ -120,16 +120,30 @@ func (s *AuthServer) GetAuthInfo(_ context.Context, req *api.GetAuthInfoRequest)
 }
 
 func (s *AuthServer) DeleteProfile(_ context.Context, req *api.DeleteProfileRequest) (*api.DeleteProfileResponse, error) {
-	userId, err := uuid.Parse(req.Id)
+	userId, err := uuid.Parse(req.ProfileId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.Session.DeleteProfile(userId, req.Password); err != nil {
+	timestamp, err := s.service.ProfileDeletion.Request(userId, req.Password, req.DeleteSharedData)
+	if err != nil {
 		return nil, err
 	}
 
-	return &api.DeleteProfileResponse{Message: "profile deleted"}, nil
+	return &api.DeleteProfileResponse{DeletionTimestamp: timestamppb.New(timestamp)}, nil
+}
+
+func (s *AuthServer) CancelProfileDeletion(_ context.Context, req *api.CancelProfileDeletionRequest) (*api.CancelProfileDeletionResponse, error) {
+	userId, err := uuid.Parse(req.ProfileId)
+	if err != nil {
+		return nil, fail.GrpcInvalidBody
+	}
+
+	if err = s.service.ProfileDeletion.Cancel(userId); err != nil {
+		return nil, err
+	}
+
+	return &api.CancelProfileDeletionResponse{Message: "delete profile request canceled"}, nil
 }
 
 func (s *AuthServer) GetSessions(_ context.Context, req *api.GetSessionsRequest) (*api.GetSessionsResponse, error) {

@@ -31,6 +31,11 @@ func main() {
 			},
 		},
 
+		ProfileDeletion: config.ProfileDeletion{
+			Offset:        fs.Duration("delete-profile-offset", 14*24*time.Hour, "profile delete offset from request to execution"),
+			CheckInterval: fs.Duration("delete-profile-check-interval", 30*time.Minute, "profile delete requests check interval"),
+		},
+
 		OAuth: config.OAuth{
 			State: fs.String("oauth-state", random.DigitString(10), "state param for OAuth queries"),
 			Google: config.Google{

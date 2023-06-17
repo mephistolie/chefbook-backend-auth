@@ -27,6 +27,7 @@ const (
 	AuthService_SignOut_FullMethodName                   = "/v1.AuthService/SignOut"
 	AuthService_GetAuthInfo_FullMethodName               = "/v1.AuthService/GetAuthInfo"
 	AuthService_DeleteProfile_FullMethodName             = "/v1.AuthService/DeleteProfile"
+	AuthService_CancelProfileDeletion_FullMethodName     = "/v1.AuthService/CancelProfileDeletion"
 	AuthService_RequestGoogleOAuth_FullMethodName        = "/v1.AuthService/RequestGoogleOAuth"
 	AuthService_SignInGoogle_FullMethodName              = "/v1.AuthService/SignInGoogle"
 	AuthService_ConnectGoogle_FullMethodName             = "/v1.AuthService/ConnectGoogle"
@@ -56,6 +57,7 @@ type AuthServiceClient interface {
 	SignOut(ctx context.Context, in *SignOutRequest, opts ...grpc.CallOption) (*SignOutResponse, error)
 	GetAuthInfo(ctx context.Context, in *GetAuthInfoRequest, opts ...grpc.CallOption) (*GetAuthInfoResponse, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error)
+	CancelProfileDeletion(ctx context.Context, in *CancelProfileDeletionRequest, opts ...grpc.CallOption) (*CancelProfileDeletionResponse, error)
 	RequestGoogleOAuth(ctx context.Context, in *RequestGoogleOAuthRequest, opts ...grpc.CallOption) (*RequestGoogleOAuthResponse, error)
 	SignInGoogle(ctx context.Context, in *SignInGoogleRequest, opts ...grpc.CallOption) (*SignInGoogleResponse, error)
 	ConnectGoogle(ctx context.Context, in *ConnectGoogleRequest, opts ...grpc.CallOption) (*ConnectGoogleResponse, error)
@@ -147,6 +149,15 @@ func (c *authServiceClient) GetAuthInfo(ctx context.Context, in *GetAuthInfoRequ
 func (c *authServiceClient) DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error) {
 	out := new(DeleteProfileResponse)
 	err := c.cc.Invoke(ctx, AuthService_DeleteProfile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) CancelProfileDeletion(ctx context.Context, in *CancelProfileDeletionRequest, opts ...grpc.CallOption) (*CancelProfileDeletionResponse, error) {
+	out := new(CancelProfileDeletionResponse)
+	err := c.cc.Invoke(ctx, AuthService_CancelProfileDeletion_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -300,6 +311,7 @@ type AuthServiceServer interface {
 	SignOut(context.Context, *SignOutRequest) (*SignOutResponse, error)
 	GetAuthInfo(context.Context, *GetAuthInfoRequest) (*GetAuthInfoResponse, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error)
+	CancelProfileDeletion(context.Context, *CancelProfileDeletionRequest) (*CancelProfileDeletionResponse, error)
 	RequestGoogleOAuth(context.Context, *RequestGoogleOAuthRequest) (*RequestGoogleOAuthResponse, error)
 	SignInGoogle(context.Context, *SignInGoogleRequest) (*SignInGoogleResponse, error)
 	ConnectGoogle(context.Context, *ConnectGoogleRequest) (*ConnectGoogleResponse, error)
@@ -345,6 +357,9 @@ func (UnimplementedAuthServiceServer) GetAuthInfo(context.Context, *GetAuthInfoR
 }
 func (UnimplementedAuthServiceServer) DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfile not implemented")
+}
+func (UnimplementedAuthServiceServer) CancelProfileDeletion(context.Context, *CancelProfileDeletionRequest) (*CancelProfileDeletionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelProfileDeletion not implemented")
 }
 func (UnimplementedAuthServiceServer) RequestGoogleOAuth(context.Context, *RequestGoogleOAuthRequest) (*RequestGoogleOAuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestGoogleOAuth not implemented")
@@ -544,6 +559,24 @@ func _AuthService_DeleteProfile_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).DeleteProfile(ctx, req.(*DeleteProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_CancelProfileDeletion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelProfileDeletionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).CancelProfileDeletion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_CancelProfileDeletion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).CancelProfileDeletion(ctx, req.(*CancelProfileDeletionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -856,6 +889,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteProfile",
 			Handler:    _AuthService_DeleteProfile_Handler,
+		},
+		{
+			MethodName: "CancelProfileDeletion",
+			Handler:    _AuthService_CancelProfileDeletion_Handler,
 		},
 		{
 			MethodName: "RequestGoogleOAuth",

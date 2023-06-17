@@ -14,6 +14,7 @@ type AuthInfo struct {
 	RegistrationTimestamp time.Time
 	IsActivated           bool
 	IsBlocked             bool
+	DeletionTimestamp     *time.Time
 	OAuth                 OAuth
 }
 

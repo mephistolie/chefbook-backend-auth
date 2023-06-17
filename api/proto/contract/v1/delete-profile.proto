@@ -3,11 +3,14 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
+import "google/protobuf/timestamp.proto";
+
 message DeleteProfileRequest {
-  string id = 1;
+  string profileId = 1;
   string password = 2;
+  bool deleteSharedData = 3;
 }
 
 message DeleteProfileResponse {
-  string message = 1;
+  google.protobuf.Timestamp deletionTimestamp = 1;
 }

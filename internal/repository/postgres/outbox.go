@@ -11,9 +11,9 @@ import (
 
 func (r *Repository) createOutboxMsg(msg *entity.MessageData, tx *sql.Tx) error {
 	query := fmt.Sprintf(`
-			INSERT INTO %s (message_id, exchange, type, body)
-			VALUES ($1, $2, $3, $4)
-		`, outboxTable)
+		INSERT INTO %s (message_id, exchange, type, body)
+		VALUES ($1, $2, $3, $4)
+	`, outboxTable)
 
 	if _, err := tx.Exec(query, msg.Id, msg.Exchange, msg.Type, msg.Body); err != nil {
 		log.Error("unable to add message to outbox: ", err)
@@ -27,9 +27,9 @@ func (r *Repository) GetPendingMessages() ([]*entity.MessageData, error) {
 	var msgs []*entity.MessageData
 
 	query := fmt.Sprintf(`
-			SELECT message_id, exchange, type, body
-			FROM %s
-		`, outboxTable)
+		SELECT message_id, exchange, type, body
+		FROM %s
+	`, outboxTable)
 
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -51,9 +51,9 @@ func (r *Repository) GetPendingMessages() ([]*entity.MessageData, error) {
 
 func (r *Repository) MarkMessageSent(messageId uuid.UUID) error {
 	query := fmt.Sprintf(`
-			DELETE FROM %s
-			WHERE message_id=$1
-		`, outboxTable)
+		DELETE FROM %s
+		WHERE message_id=$1
+	`, outboxTable)
 
 	_, err := r.db.Exec(query, messageId)
 	if err != nil {

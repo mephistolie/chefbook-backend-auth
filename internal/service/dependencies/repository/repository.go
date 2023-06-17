@@ -24,6 +24,7 @@ type Data interface {
 	UpdateSession(session entity.SessionInput, oldRefreshToken string) error
 	DeleteSession(refreshToken string) error
 	DeleteSessions(userId uuid.UUID, sessionIds []int64)
+	DeleteAllSessions(userId uuid.UUID)
 	DeleteOutdatedSessions(userId uuid.UUID, sessionsThreshold int)
 	ConnectGoogle(userId uuid.UUID, googleId string) error
 	DeleteGoogleConnection(userId uuid.UUID) error
@@ -31,7 +32,11 @@ type Data interface {
 	DeleteVkConnection(userId uuid.UUID) error
 	IsFirebaseProfileConnected(firebaseId string) bool
 	ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (*entity.MessageData, error)
-	DeleteUser(userId uuid.UUID) (*entity.MessageData, error)
+	GetProfilesToDelete() []entity.DeleteProfileRequest
+	GetDeleteProfileRequest(userId uuid.UUID) (entity.DeleteProfileRequest, error)
+	RequestDeleteProfile(userId uuid.UUID, deleteSharedData bool) (time.Time, error)
+	CancelProfileDeletion(userId uuid.UUID) error
+	DeleteUser(userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error)
 	SetNickname(userId uuid.UUID, nickname string) (string, error)
 	CreatePasswordResetRequest(userId uuid.UUID, expiration time.Time) (uuid.UUID, error)
 	ResetPassword(userId uuid.UUID, resetCode, passwordHash string) error

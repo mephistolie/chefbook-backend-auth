@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	authpb "github.com/mephistolie/chefbook-backend-auth/api/proto/implementation/v1"
+	"github.com/mephistolie/chefbook-backend-auth/internal/app/daemon"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/amqp"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres"
@@ -28,7 +29,7 @@ func Run(cfg *config.Config) {
 		return
 	}
 
-	repository := postgres.NewRepository(db)
+	repository := postgres.NewRepository(db, *cfg.ProfileDeletion.Offset)
 
 	var mq *amqp.Repository = nil
 	if len(*cfg.Amqp.Host) > 0 {
@@ -78,6 +79,9 @@ func Run(cfg *config.Config) {
 		}
 	}()
 
+	daemonService := daemon.New(authService.ProfileDeletion, cfg.ProfileDeletion)
+	go daemonService.Start()
+
 	wait := shutdown.Graceful(context.Background(), 5*time.Second, map[string]shutdown.Operation{
 		"grpc-server": func(ctx context.Context) error {
 			grpcServer.GracefulStop()
@@ -91,6 +95,10 @@ func Run(cfg *config.Config) {
 				return nil
 			}
 			return mq.Stop()
+		},
+		"daemon": func(ctx context.Context) error {
+			daemonService.Stop()
+			return nil
 		},
 	})
 	<-wait

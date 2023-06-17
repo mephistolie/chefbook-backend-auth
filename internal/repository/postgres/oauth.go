@@ -19,10 +19,10 @@ func (r *Repository) GetAuthInfoByVkId(vkId int64) (entity.AuthInfo, error) {
 
 func (r *Repository) ConnectGoogle(userId uuid.UUID, googleId string) error {
 	query := fmt.Sprintf(`
-			UPDATE %s
-			SET google_id=$1
-			WHERE user_id=$2
-		`, oauthTable)
+		UPDATE %s
+		SET google_id=$1
+		WHERE user_id=$2
+	`, oauthTable)
 	if _, err := r.db.Exec(query, googleId, userId); err != nil {
 		log.Warnf("Google profile %s is occupied: %s", googleId, err)
 		return authFail.GrpcAccountOccupied
@@ -33,10 +33,10 @@ func (r *Repository) ConnectGoogle(userId uuid.UUID, googleId string) error {
 
 func (r *Repository) DeleteGoogleConnection(userId uuid.UUID) error {
 	query := fmt.Sprintf(`
-			UPDATE %s
-			SET google_id=NULL
-			WHERE user_id=$1
-		`, oauthTable)
+		UPDATE %s
+		SET google_id=NULL
+		WHERE user_id=$1
+	`, oauthTable)
 	if _, err := r.db.Exec(query, userId); err != nil {
 		log.Errorf("unable to delete Google profile connection for user %s: %s", userId, err)
 		return fail.GrpcUnknown
@@ -47,10 +47,10 @@ func (r *Repository) DeleteGoogleConnection(userId uuid.UUID) error {
 
 func (r *Repository) ConnectVk(userId uuid.UUID, vkId int64) error {
 	query := fmt.Sprintf(`
-			UPDATE %s
-			SET vk_id=$1
-			WHERE user_id=$2
-		`, oauthTable)
+		UPDATE %s
+		SET vk_id=$1
+		WHERE user_id=$2
+	`, oauthTable)
 	if _, err := r.db.Exec(query, vkId, userId); err != nil {
 		log.Warnf("VK profile %s is occupied: %s", vkId, err)
 		return authFail.GrpcAccountOccupied
@@ -61,10 +61,10 @@ func (r *Repository) ConnectVk(userId uuid.UUID, vkId int64) error {
 
 func (r *Repository) DeleteVkConnection(userId uuid.UUID) error {
 	query := fmt.Sprintf(`
-			UPDATE %s
-			SET vk_id=NULL
-			WHERE user_id=$1
-		`, oauthTable)
+		UPDATE %s
+		SET vk_id=NULL
+		WHERE user_id=$1
+	`, oauthTable)
 	if _, err := r.db.Exec(query, userId); err != nil {
 		log.Errorf("unable to delete VK profile connection for user %s: %s", userId, err)
 		return fail.GrpcUnknown

@@ -88,6 +88,13 @@ spec:
                   name: {{ .Values.secrets.oauth.name }}
                   key: {{ .Values.secrets.oauth.vkClientSecretRef }}
 
+            # Profile deletion
+
+            - name: DELETE_PROFILE_OFFSET
+              value: {{ .Values.config.profileDelete.offset }}
+            - name: DELETE_PROFILE_CHECK_INTERVAL
+              value: {{ .Values.config.profileDelete.checkInterval }}
+
             # PostgreSQL
 
             - name: DB_HOST

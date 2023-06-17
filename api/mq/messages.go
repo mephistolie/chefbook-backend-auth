@@ -17,5 +17,6 @@ type MsgBodyProfileFirebaseImport struct {
 }
 
 type MsgBodyProfileDeleted struct {
-	UserId string `json:"userId"`
+	UserId           string `json:"userId"`
+	DeleteSharedData bool   `json:"deleteSharedData"`
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/nickname"
 	oauthService "github.com/mephistolie/chefbook-backend-auth/internal/service/oauth"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/password"
+	"github.com/mephistolie/chefbook-backend-auth/internal/service/profile_deletion"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/session"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/ip"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth"
@@ -21,13 +22,15 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/tokens"
 	"strconv"
+	"time"
 )
 
 type Service struct {
-	Session  Session
-	OAuth    OAuth
-	Password Password
-	Nickname Nickname
+	Session         Session
+	OAuth           OAuth
+	Password        Password
+	Nickname        Nickname
+	ProfileDeletion ProfileDeletion
 }
 
 type Session interface {
@@ -40,7 +43,6 @@ type Session interface {
 	Refresh(refreshToken, ip, userAgent string) (entity.Tokens, error)
 	SignOut(refreshToken string) error
 	GetAuthInfo(identifiers entity.UserIdentifiers) (entity.AuthInfo, error)
-	DeleteProfile(userId uuid.UUID, password string) error
 	GetAll(userId uuid.UUID) []entity.SessionInfo
 	DeleteMultiple(userId uuid.UUID, sessionIds []int64)
 }
@@ -63,6 +65,13 @@ type Password interface {
 type Nickname interface {
 	CheckAvailability(nickname string) (bool, error)
 	Set(userId uuid.UUID, nickname string) error
+}
+
+type ProfileDeletion interface {
+	Request(userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error)
+	ExecuteAll()
+	Execute(request entity.DeleteProfileRequest) error
+	Cancel(userId uuid.UUID) error
 }
 
 func New(
@@ -124,9 +133,10 @@ func New(
 	}
 
 	return &Service{
-		Session:  session.NewService(repo, mq, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth),
-		OAuth:    oauthService.NewService(repo, oauthProviders),
-		Password: password.NewService(repo, *mailService, hashManager, cfg.Auth),
-		Nickname: nickname.NewService(repo, *mailService),
+		Session:         session.NewService(repo, mq, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth),
+		OAuth:           oauthService.NewService(repo, oauthProviders),
+		Password:        password.NewService(repo, *mailService, hashManager, cfg.Auth),
+		Nickname:        nickname.NewService(repo, *mailService),
+		ProfileDeletion: profile_deletion.NewService(repo, mq, mailService, hashManager),
 	}, nil
 }

@@ -25,6 +25,11 @@ func NewGetAuthInfoResponse(info entity.AuthInfo) *api.GetAuthInfoResponse {
 		oAuthPtr = &oAuth
 	}
 
+	var deletionTimestamp *timestamppb.Timestamp
+	if info.DeletionTimestamp != nil {
+		deletionTimestamp = timestamppb.New(*info.DeletionTimestamp)
+	}
+
 	return &api.GetAuthInfoResponse{
 		Id:                    info.Id.String(),
 		Email:                 info.Email,
@@ -33,6 +38,7 @@ func NewGetAuthInfoResponse(info entity.AuthInfo) *api.GetAuthInfoResponse {
 		RegistrationTimestamp: timestamppb.New(info.RegistrationTimestamp),
 		IsActivated:           info.IsActivated,
 		IsBlocked:             info.IsBlocked,
+		DeletionTimestamp:     deletionTimestamp,
 		OAuth:                 oAuthPtr,
 	}
 }

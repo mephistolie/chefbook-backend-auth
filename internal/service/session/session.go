@@ -65,6 +65,7 @@ func (s *Service) createSessionEntity(
 		Email:    authInfo.Email,
 		Nickname: authInfo.Nickname,
 		Role:     authInfo.Role,
+		Deleted:  authInfo.DeletionTimestamp != nil,
 	}, s.accessTokenTtl)
 	if err != nil {
 		log.Error("unable to create access token: ", err)

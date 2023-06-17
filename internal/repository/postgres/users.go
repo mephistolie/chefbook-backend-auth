@@ -53,9 +53,9 @@ func (r *Repository) CreateUser(
 
 func (r *Repository) addUsersRow(id uuid.UUID, credentials entity.CredentialsHash, activated bool, tx *sql.Tx) error {
 	query := fmt.Sprintf(`
-			INSERT INTO %s (user_id, email, password, activated)
-			VALUES ($1, $2, $3, $4)
-		`, usersTable)
+		INSERT INTO %s (user_id, email, password, activated)
+		VALUES ($1, $2, $3, $4)
+	`, usersTable)
 
 	if _, err := tx.Exec(query, id, credentials.Email, credentials.PasswordHash, activated); err != nil {
 		log.Errorf("unable to create user %s: %s", id, err)
@@ -67,9 +67,9 @@ func (r *Repository) addUsersRow(id uuid.UUID, credentials entity.CredentialsHas
 
 func (r *Repository) addOauthRow(id uuid.UUID, oauth entity.OAuth, tx *sql.Tx) error {
 	query := fmt.Sprintf(`
-			INSERT INTO %s (user_id, google_id, vk_id)
-			VALUES ($1, $2, $3)
-		`, oauthTable)
+		INSERT INTO %s (user_id, google_id, vk_id)
+		VALUES ($1, $2, $3)
+	`, oauthTable)
 
 	if _, err := tx.Exec(query, id, oauth.GoogleId, oauth.VkId); err != nil {
 		log.Errorf("unable to create user %s oauth data: %s", id, err)
@@ -163,10 +163,10 @@ func (r *Repository) GetAuthInfoByRefreshToken(refreshToken string) (entity.Auth
 	var session entity.SessionInput
 
 	getUserIdQuery := fmt.Sprintf(`
-			SELECT user_id, expires_at
-			FROM %s
-			WHERE refresh_token=$1
-		`, sessionsTable)
+		SELECT user_id, expires_at
+		FROM %s
+		WHERE refresh_token=$1
+	`, sessionsTable)
 
 	row := r.db.QueryRow(getUserIdQuery, refreshToken)
 	if err := row.Scan(&userId, &session.ExpiresAt); err != nil {
@@ -201,74 +201,32 @@ func (r *Repository) GetAuthInfoByFirebaseId(firebaseId string) (entity.AuthInfo
 func (r *Repository) getAuthInfoByCondition(condition string, args ...interface{}) (entity.AuthInfo, error) {
 	var info dto.AuthInfo
 	query := fmt.Sprintf(`
-			SELECT
-				%[1]v.user_id, %[1]v.email, %[1]v.nickname, %[1]v.password, %[1]v.role, %[1]v.registered,
-				%[1]v.activated, %[1]v.blocked, %[2]v.google_id, %[2]v.vk_id
-			FROM
-				%[1]v
-			LEFT JOIN
-				%[2]v ON %[1]v.user_id=%[2]v.user_id
-			WHERE %[3]v
-		`, usersTable, oauthTable, condition)
+		SELECT
+			%[1]v.user_id, %[1]v.email, %[1]v.nickname, %[1]v.password, %[1]v.role, %[1]v.registered,
+			%[1]v.activated, %[1]v.blocked, %[2]v.google_id, %[2]v.vk_id, %[3]v.deletion_timestamp
+		FROM
+			%[1]v
+		LEFT JOIN
+			%[2]v ON %[1]v.user_id=%[2]v.user_id
+		LEFT JOIN
+			%[3]v ON %[1]v.user_id=%[3]v.user_id
+		WHERE %[4]v
+	`, usersTable, oauthTable, deleteProfileRequestsTable, condition)
 	if err := r.db.Get(&info, query, args...); err != nil {
 		return entity.AuthInfo{}, err
 	}
 	return info.Entity(), nil
 }
 
-func (r *Repository) DeleteUser(userId uuid.UUID) (*entity.MessageData, error) {
-	tx, err := r.db.Begin()
-	if err != nil {
-		log.Error("unable to begin transaction: ", err)
-		return nil, fail.GrpcUnknown
-	}
-
-	query := fmt.Sprintf(`
-			DELETE FROM %s
-			WHERE user_id=$1
-		`, usersTable)
-
-	if _, err := tx.Exec(query, userId); err != nil {
-		log.Infof("unable to delete user %s: %s", userId, err)
-		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
-	}
-
-	msg, err := r.addOutboxProfileDeletedMsg(userId, tx)
-	if err != nil {
-		return nil, err
-	}
-
-	return msg, commitTransaction(tx)
-}
-
-func (r *Repository) addOutboxProfileDeletedMsg(id uuid.UUID, tx *sql.Tx) (*entity.MessageData, error) {
-	msgBody := api.MsgBodyProfileDeleted{
-		UserId: id.String(),
-	}
-	var msgBodyBson, err = json.Marshal(msgBody)
-	if err != nil {
-		log.Error("unable to marshal profile deleted message body: ", err)
-		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
-	}
-	msg := entity.MessageData{
-		Id:       uuid.New(),
-		Exchange: api.ExchangeProfiles,
-		Type:     api.MsgTypeProfileDeleted,
-		Body:     msgBodyBson,
-	}
-
-	return &msg, r.createOutboxMsg(&msg, tx)
-}
-
 func (r *Repository) SetNickname(userId uuid.UUID, nickname string) (string, error) {
 	var email string
 
 	query := fmt.Sprintf(`
-			UPDATE %s
-			SET nickname=$1
-			WHERE user_id=$2
-			RETURNING email
-		`, usersTable)
+		UPDATE %s
+		SET nickname=$1
+		WHERE user_id=$2
+		RETURNING email
+	`, usersTable)
 
 	if err := r.db.Get(&email, query, nickname, userId); err != nil {
 		log.Infof("nickname %s is occupied: %s", nickname, err)

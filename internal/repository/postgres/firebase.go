@@ -16,10 +16,10 @@ func (r *Repository) IsFirebaseProfileConnected(firebaseId string) bool {
 	var userId uuid.UUID
 
 	query := fmt.Sprintf(`
-			SELECT user_id
-			FROM %s
-			WHERE firebase_id=$1
-		`, firebaseTable)
+		SELECT user_id
+		FROM %s
+		WHERE firebase_id=$1
+	`, firebaseTable)
 
 	if err := r.db.Get(&userId, query, firebaseId); err != nil || len(userId.String()) == 0 {
 		return false
@@ -35,10 +35,10 @@ func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creati
 	}
 
 	clarifyRegistrationTimestampQuery := fmt.Sprintf(`
-			UPDATE %s
-			SET registered=$1
-			WHERE user_id=$2
-		`, usersTable)
+		UPDATE %s
+		SET registered=$1
+		WHERE user_id=$2
+	`, usersTable)
 
 	if _, err := tx.Exec(clarifyRegistrationTimestampQuery, creationTimestamp, userId); err != nil {
 		log.Errorf("failed to set profile creation timestamp for user %s: %s", userId, err)
@@ -46,9 +46,9 @@ func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creati
 	}
 
 	addFirebaseConnectionQuery := fmt.Sprintf(`
-			INSERT INTO %s (user_id, firebase_id)
-			VALUES ($1, $2)
-		`, firebaseTable)
+		INSERT INTO %s (user_id, firebase_id)
+		VALUES ($1, $2)
+	`, firebaseTable)
 
 	if _, err := tx.Exec(addFirebaseConnectionQuery, userId, firebaseId); err != nil {
 		log.Errorf("failed to add Firebase connection fo user %s with firebase id %s: %s", userId, firebaseId, err)

@@ -16,11 +16,12 @@ type Config struct {
 	Port        *int
 	LogsPath    *string
 
-	Auth     Auth
-	OAuth    OAuth
-	Database Database
-	Amqp     Amqp
-	Smtp     Smtp
+	Auth            Auth
+	OAuth           OAuth
+	ProfileDeletion ProfileDeletion
+	Database        Database
+	Amqp            Amqp
+	Smtp            Smtp
 }
 
 type Auth struct {
@@ -55,6 +56,11 @@ type Google struct {
 type Vk struct {
 	ClientId     *string
 	ClientSecret *string
+}
+
+type ProfileDeletion struct {
+	Offset        *time.Duration
+	CheckInterval *time.Duration
 }
 
 type Database struct {
@@ -111,6 +117,8 @@ func (c Config) Print() {
 		"Access token TTL: %v\n"+
 		"Refresh token TTL: %v\n"+
 		"Password reset code TTL: %v\n\n"+
+		"Profile deletion offset: %v\n"+
+		"Profile deletion check interval: %v\n\n"+
 		"Database host: %v\n"+
 		"Database port: %v\n"+
 		"Database name: %v\n\n"+
@@ -124,6 +132,7 @@ func (c Config) Print() {
 		"VK Client ID: %v\n",
 		*c.Environment, *c.Port, *c.LogsPath,
 		*c.Auth.SaltCost, *c.Auth.Ttl.AccessToken, *c.Auth.Ttl.RefreshToken, *c.Auth.Ttl.PasswordResetCode,
+		*c.ProfileDeletion.Offset, *c.ProfileDeletion.CheckInterval,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
 		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,
 		*c.Smtp.Host, *c.Smtp.Port,

@@ -20,6 +20,7 @@ message GetAuthInfoResponse {
   bool isActivated = 6;
   bool isBlocked = 7;
   OAuth oAuth = 8;
+  google.protobuf.Timestamp deletionTimestamp = 9;
 }
 
 message OAuth {

@@ -551,6 +551,7 @@ github.com/mephistolie/chefbook-backend-common/random v0.2.1/go.mod h1:s7ZWApn73
 github.com/mephistolie/chefbook-backend-common/responses v0.2.1/go.mod h1:1G7MuToVsE9jQbUJ6g49jgzbqsLHb4WGesbLHkUHSLE=
 github.com/mephistolie/chefbook-backend-common/shutdown v0.2.1/go.mod h1:wose8RxMtomzIK9cEjBC0FyO02GSna8eswYkYW1dDFE=
 github.com/mephistolie/chefbook-backend-common/tokens v0.2.1/go.mod h1:aOd85MbzirNeSNFf1X8vSTh7BWaORQSwIHWVXNvY8bc=
+github.com/mephistolie/chefbook-backend-common/tokens v0.9.0/go.mod h1:aOd85MbzirNeSNFf1X8vSTh7BWaORQSwIHWVXNvY8bc=
 github.com/miekg/dns v1.0.14 h1:9jZdLNd/P4+SfEJ0TNyxYpsK8N4GtfylBLqtbYN1sbA=
 github.com/miekg/pkcs11 v1.0.3 h1:iMwmD7I5225wv84WxIG/bmxz9AXjWvTWIbM/TYHvWtw=
 github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8 h1:AMFGa4R4MiIpspGNG7Z948v4n35fFGB3RR3G/ry4FWs=

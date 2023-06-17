@@ -76,26 +76,6 @@ func (s *Service) GetAuthInfo(identifiers entity.UserIdentifiers) (entity.AuthIn
 	return s.repo.GetAuthInfoByIdentifiers(identifiers)
 }
 
-func (s *Service) DeleteProfile(userId uuid.UUID, password string) error {
-	authInfo, err := s.repo.GetAuthInfoById(userId)
-	if err != nil {
-		return authFail.GrpcUserNotFound
-	}
-
-	if err = s.hashManager.Validate(password, authInfo.PasswordHash); err != nil {
-		log.Infof("invalid password for user %s: %s", userId, err)
-		return authFail.GrpcInvalidPassword
-	}
-
-	msg, err := s.repo.DeleteUser(userId)
-	if err == nil {
-		go s.mail.SendProfileDeletedMail(authInfo.Email)
-	}
-	go s.mq.PublishProfilesMessage(msg)
-
-	return err
-}
-
 func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entity.CredentialsHash, *string, error) {
 	passwordHash, err := s.hashManager.Hash(credentials.Password)
 	if err != nil {

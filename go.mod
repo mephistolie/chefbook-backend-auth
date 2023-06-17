@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/google/uuid v1.3.0
+	github.com/jackc/pgconn v1.8.0
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/mephistolie/chefbook-backend-auth/api v1.3.1
@@ -15,7 +16,7 @@ require (
 	github.com/mephistolie/chefbook-backend-common/random v0.7.0
 	github.com/mephistolie/chefbook-backend-common/responses v0.9.0
 	github.com/mephistolie/chefbook-backend-common/shutdown v0.6.0
-	github.com/mephistolie/chefbook-backend-common/tokens v0.7.0
+	github.com/mephistolie/chefbook-backend-common/tokens v0.9.0
 	github.com/mssola/useragent v1.0.0
 	github.com/peterbourgon/ff/v3 v3.3.0
 	github.com/wagslane/go-rabbitmq v0.12.3
@@ -48,7 +49,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.8.0 // indirect
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

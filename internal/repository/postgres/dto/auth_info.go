@@ -7,16 +7,17 @@ import (
 )
 
 type AuthInfo struct {
-	Id                    uuid.UUID `db:"user_id"`
-	Email                 string    `db:"email"`
-	Nickname              *string   `db:"nickname"`
-	PasswordHash          *string   `db:"password"`
-	Role                  string    `db:"role"`
-	RegistrationTimestamp time.Time `db:"registered"`
-	IsActivated           bool      `db:"activated"`
-	IsBlocked             bool      `db:"blocked"`
-	GoogleId              *string   `db:"google_id"`
-	VkId                  *int64    `db:"vk_id"`
+	Id                    uuid.UUID  `db:"user_id"`
+	Email                 string     `db:"email"`
+	Nickname              *string    `db:"nickname"`
+	PasswordHash          *string    `db:"password"`
+	Role                  string     `db:"role"`
+	RegistrationTimestamp time.Time  `db:"registered"`
+	IsActivated           bool       `db:"activated"`
+	IsBlocked             bool       `db:"blocked"`
+	DeletionTimestamp     *time.Time `db:"deletion_timestamp"`
+	GoogleId              *string    `db:"google_id"`
+	VkId                  *int64     `db:"vk_id"`
 }
 
 func (p *AuthInfo) Entity() entity.AuthInfo {
@@ -33,6 +34,7 @@ func (p *AuthInfo) Entity() entity.AuthInfo {
 		RegistrationTimestamp: p.RegistrationTimestamp,
 		IsActivated:           p.IsActivated,
 		IsBlocked:             p.IsBlocked,
+		DeletionTimestamp:     p.DeletionTimestamp,
 		OAuth: entity.OAuth{
 			GoogleId: p.GoogleId,
 			VkId:     p.VkId,

@@ -11,6 +11,7 @@ import "v1/refresh-session.proto";
 import "v1/sign-out.proto";
 import "v1/get-auth-info.proto";
 import "v1/delete-profile.proto";
+import "v1/cancel-delete-profile.proto";
 import "v1/request-google-oauth.proto";
 import "v1/sign-in-google.proto";
 import "v1/connect-google.proto";
@@ -36,6 +37,7 @@ service AuthService {
   rpc SignOut(SignOutRequest) returns (SignOutResponse);
   rpc GetAuthInfo(GetAuthInfoRequest) returns (GetAuthInfoResponse);
   rpc DeleteProfile(DeleteProfileRequest) returns (DeleteProfileResponse);
+  rpc CancelProfileDeletion(CancelProfileDeletionRequest) returns (CancelProfileDeletionResponse);
 
   rpc RequestGoogleOAuth(RequestGoogleOAuthRequest) returns (RequestGoogleOAuthResponse);
   rpc SignInGoogle(SignInGoogleRequest) returns (SignInGoogleResponse);

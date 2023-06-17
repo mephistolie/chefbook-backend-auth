@@ -33,6 +33,11 @@ type nicknameChangedValue struct {
 	Nickname string
 }
 
+type profileDeletionRequestValues struct {
+	IncludeSharedData string
+	Timestamp         string
+}
+
 type Service struct {
 	sender         mail.Sender
 	ipInfoProvider ip.InfoProvider
@@ -143,6 +148,26 @@ func (s *Service) SendNicknameChangedMail(email, nickname string) {
 		Nickname: nickname,
 	}
 	if err := payload.SetHtmlBody(assets.NicknameChangedMailTmplFilePath, mailValues); err != nil {
+		log.Error("failed to set HTML Body for mail: ", err)
+	}
+	s.sendMessage(payload)
+}
+
+func (s *Service) SendProfileDeletionRequestMail(email string, timestamp time.Time, withSharedData bool) {
+	log.Info("sending profile deletion request mail to ", email)
+	payload := mail.Payload{
+		To:      email,
+		Subject: "ChefBook Profile Deletion Request",
+	}
+	mailValues := profileDeletionRequestValues{
+		IncludeSharedData: "excluding",
+		Timestamp:         timestamp.Format(time.RFC1123),
+	}
+	if withSharedData {
+		mailValues.IncludeSharedData = "including"
+	}
+
+	if err := payload.SetHtmlBody(assets.ProfileDeletionRequestMailTmplFilePath, mailValues); err != nil {
 		log.Error("failed to set HTML Body for mail: ", err)
 	}
 	s.sendMessage(payload)
