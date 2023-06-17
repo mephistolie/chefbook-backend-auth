@@ -32,6 +32,15 @@ func NewService(
 	}
 }
 
+func (s *Service) GetInfo(userId uuid.UUID) (*time.Time, bool) {
+	authInfo, err := s.repo.GetAuthInfoById(userId)
+	if err != nil {
+		return nil, true
+	}
+
+	return authInfo.DeletionTimestamp, false
+}
+
 func (s *Service) Request(userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error) {
 	authInfo, err := s.repo.GetAuthInfoById(userId)
 	if err != nil {

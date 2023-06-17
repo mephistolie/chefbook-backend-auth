@@ -8,6 +8,25 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func (s *AuthServer) GetProfileDeletionStatus(_ context.Context, req *api.GetProfileDeletionStatusRequest) (*api.GetProfileDeletionStatusResponse, error) {
+	userId, err := uuid.Parse(req.ProfileId)
+	if err != nil {
+		return nil, fail.GrpcInvalidBody
+	}
+
+	timestamp, deleted := s.service.ProfileDeletion.GetInfo(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var deletionTimestamp *timestamppb.Timestamp
+	if timestamp != nil {
+		deletionTimestamp = timestamppb.New(*timestamp)
+	}
+
+	return &api.GetProfileDeletionStatusResponse{DeletionTimestamp: deletionTimestamp, Deleted: deleted}, nil
+}
+
 func (s *AuthServer) DeleteProfile(_ context.Context, req *api.DeleteProfileRequest) (*api.DeleteProfileResponse, error) {
 	userId, err := uuid.Parse(req.ProfileId)
 	if err != nil {

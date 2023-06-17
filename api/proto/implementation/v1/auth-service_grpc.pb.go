@@ -26,6 +26,7 @@ const (
 	AuthService_RefreshSession_FullMethodName            = "/v1.AuthService/RefreshSession"
 	AuthService_SignOut_FullMethodName                   = "/v1.AuthService/SignOut"
 	AuthService_GetAuthInfo_FullMethodName               = "/v1.AuthService/GetAuthInfo"
+	AuthService_GetProfileDeletionStatus_FullMethodName  = "/v1.AuthService/GetProfileDeletionStatus"
 	AuthService_DeleteProfile_FullMethodName             = "/v1.AuthService/DeleteProfile"
 	AuthService_CancelProfileDeletion_FullMethodName     = "/v1.AuthService/CancelProfileDeletion"
 	AuthService_RequestGoogleOAuth_FullMethodName        = "/v1.AuthService/RequestGoogleOAuth"
@@ -56,6 +57,7 @@ type AuthServiceClient interface {
 	RefreshSession(ctx context.Context, in *RefreshSessionRequest, opts ...grpc.CallOption) (*RefreshSessionResponse, error)
 	SignOut(ctx context.Context, in *SignOutRequest, opts ...grpc.CallOption) (*SignOutResponse, error)
 	GetAuthInfo(ctx context.Context, in *GetAuthInfoRequest, opts ...grpc.CallOption) (*GetAuthInfoResponse, error)
+	GetProfileDeletionStatus(ctx context.Context, in *GetProfileDeletionStatusRequest, opts ...grpc.CallOption) (*GetProfileDeletionStatusResponse, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error)
 	CancelProfileDeletion(ctx context.Context, in *CancelProfileDeletionRequest, opts ...grpc.CallOption) (*CancelProfileDeletionResponse, error)
 	RequestGoogleOAuth(ctx context.Context, in *RequestGoogleOAuthRequest, opts ...grpc.CallOption) (*RequestGoogleOAuthResponse, error)
@@ -140,6 +142,15 @@ func (c *authServiceClient) SignOut(ctx context.Context, in *SignOutRequest, opt
 func (c *authServiceClient) GetAuthInfo(ctx context.Context, in *GetAuthInfoRequest, opts ...grpc.CallOption) (*GetAuthInfoResponse, error) {
 	out := new(GetAuthInfoResponse)
 	err := c.cc.Invoke(ctx, AuthService_GetAuthInfo_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetProfileDeletionStatus(ctx context.Context, in *GetProfileDeletionStatusRequest, opts ...grpc.CallOption) (*GetProfileDeletionStatusResponse, error) {
+	out := new(GetProfileDeletionStatusResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetProfileDeletionStatus_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -310,6 +321,7 @@ type AuthServiceServer interface {
 	RefreshSession(context.Context, *RefreshSessionRequest) (*RefreshSessionResponse, error)
 	SignOut(context.Context, *SignOutRequest) (*SignOutResponse, error)
 	GetAuthInfo(context.Context, *GetAuthInfoRequest) (*GetAuthInfoResponse, error)
+	GetProfileDeletionStatus(context.Context, *GetProfileDeletionStatusRequest) (*GetProfileDeletionStatusResponse, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error)
 	CancelProfileDeletion(context.Context, *CancelProfileDeletionRequest) (*CancelProfileDeletionResponse, error)
 	RequestGoogleOAuth(context.Context, *RequestGoogleOAuthRequest) (*RequestGoogleOAuthResponse, error)
@@ -354,6 +366,9 @@ func (UnimplementedAuthServiceServer) SignOut(context.Context, *SignOutRequest) 
 }
 func (UnimplementedAuthServiceServer) GetAuthInfo(context.Context, *GetAuthInfoRequest) (*GetAuthInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAuthInfo not implemented")
+}
+func (UnimplementedAuthServiceServer) GetProfileDeletionStatus(context.Context, *GetProfileDeletionStatusRequest) (*GetProfileDeletionStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfileDeletionStatus not implemented")
 }
 func (UnimplementedAuthServiceServer) DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfile not implemented")
@@ -541,6 +556,24 @@ func _AuthService_GetAuthInfo_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).GetAuthInfo(ctx, req.(*GetAuthInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetProfileDeletionStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfileDeletionStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetProfileDeletionStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetProfileDeletionStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetProfileDeletionStatus(ctx, req.(*GetProfileDeletionStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -885,6 +918,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAuthInfo",
 			Handler:    _AuthService_GetAuthInfo_Handler,
+		},
+		{
+			MethodName: "GetProfileDeletionStatus",
+			Handler:    _AuthService_GetProfileDeletionStatus_Handler,
 		},
 		{
 			MethodName: "DeleteProfile",

@@ -1,0 +1,15 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+import "google/protobuf/timestamp.proto";
+
+message GetProfileDeletionStatusRequest {
+  string profileId = 1;
+}
+
+message GetProfileDeletionStatusResponse {
+  google.protobuf.Timestamp deletionTimestamp = 1;
+  bool deleted = 2;
+}

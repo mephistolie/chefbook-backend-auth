@@ -68,6 +68,7 @@ type Nickname interface {
 }
 
 type ProfileDeletion interface {
+	GetInfo(userId uuid.UUID) (*time.Time, bool)
 	Request(userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error)
 	ExecuteAll()
 	Execute(request entity.DeleteProfileRequest) error

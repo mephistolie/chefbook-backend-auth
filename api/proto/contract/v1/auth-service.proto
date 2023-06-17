@@ -10,6 +10,7 @@ import "v1/get-access-token-public-key.proto";
 import "v1/refresh-session.proto";
 import "v1/sign-out.proto";
 import "v1/get-auth-info.proto";
+import "v1/get-profile-deletion-status.proto";
 import "v1/delete-profile.proto";
 import "v1/cancel-delete-profile.proto";
 import "v1/request-google-oauth.proto";
@@ -36,6 +37,8 @@ service AuthService {
   rpc RefreshSession(RefreshSessionRequest) returns (RefreshSessionResponse);
   rpc SignOut(SignOutRequest) returns (SignOutResponse);
   rpc GetAuthInfo(GetAuthInfoRequest) returns (GetAuthInfoResponse);
+
+  rpc GetProfileDeletionStatus(GetProfileDeletionStatusRequest) returns (GetProfileDeletionStatusResponse);
   rpc DeleteProfile(DeleteProfileRequest) returns (DeleteProfileResponse);
   rpc CancelProfileDeletion(CancelProfileDeletionRequest) returns (CancelProfileDeletionResponse);
 
