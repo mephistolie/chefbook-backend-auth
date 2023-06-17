@@ -16,9 +16,9 @@ func (r *Repository) GetProfilesToDelete() []entity.DeleteProfileRequest {
 	var requests []entity.DeleteProfileRequest
 
 	query := fmt.Sprintf(`
-		SELECT user_id, with_shared_data, timestamp
+		SELECT user_id, with_shared_data, deletion_timestamp
 		FROM %s
-		WHERE timestamp<=$1
+		WHERE deletion_timestamp<=$1
 	`, deleteProfileRequestsTable)
 
 	rows, err := r.db.Query(query, time.Now())
