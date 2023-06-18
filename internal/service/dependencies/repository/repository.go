@@ -26,18 +26,24 @@ type Data interface {
 	DeleteSessions(userId uuid.UUID, sessionIds []int64)
 	DeleteAllSessions(userId uuid.UUID)
 	DeleteOutdatedSessions(userId uuid.UUID, sessionsThreshold int)
+
 	ConnectGoogle(userId uuid.UUID, googleId string) error
 	DeleteGoogleConnection(userId uuid.UUID) error
 	ConnectVk(userId uuid.UUID, vkId int64) error
 	DeleteVkConnection(userId uuid.UUID) error
+
 	IsFirebaseProfileConnected(firebaseId string) bool
 	ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (*entity.MessageData, error)
+
 	GetProfilesToDelete() []entity.DeleteProfileRequest
 	GetDeleteProfileRequest(userId uuid.UUID) (entity.DeleteProfileRequest, error)
 	RequestDeleteProfile(userId uuid.UUID, deleteSharedData bool) (time.Time, error)
 	CancelProfileDeletion(userId uuid.UUID) error
 	DeleteUser(userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error)
+
+	GetNicknamesWithFallback(userIds []uuid.UUID) (map[uuid.UUID]string, error)
 	SetNickname(userId uuid.UUID, nickname string) (string, error)
+
 	CreatePasswordResetRequest(userId uuid.UUID, expiration time.Time) (uuid.UUID, error)
 	ResetPassword(userId uuid.UUID, resetCode, passwordHash string) error
 }

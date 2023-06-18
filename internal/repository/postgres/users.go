@@ -11,6 +11,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres/dto"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"strings"
 	"time"
 )
 
@@ -216,6 +217,42 @@ func (r *Repository) getAuthInfoByCondition(condition string, args ...interface{
 		return entity.AuthInfo{}, err
 	}
 	return info.Entity(), nil
+}
+
+func (r *Repository) GetNicknamesWithFallback(userIds []uuid.UUID) (map[uuid.UUID]string, error) {
+	var nicknames map[uuid.UUID]string
+
+	query := fmt.Sprintf(`
+		SELECT user_id, nickname
+		FROM %s
+		WHERE user_id=ANY($1)
+	`, usersTable)
+
+	rows, err := r.db.Query(query, userIds)
+	if err != nil {
+		log.Error("unable to get nicknames for users: ", err)
+		return nil, fail.GrpcNotFound
+	}
+
+	for rows.Next() {
+		var userId uuid.UUID
+		var nickname *string
+
+		if err = rows.Scan(&userId, &nickname); err != nil {
+			log.Error("unable to parse nickname and email for user: ", err)
+			continue
+		}
+
+		if nickname != nil {
+			nicknames[userId] = *nickname
+		} else {
+			fallbackNickname := userId.String()
+			separatorIndex := strings.Index(fallbackNickname, "-")
+			nicknames[userId] = fallbackNickname[0:separatorIndex]
+		}
+	}
+
+	return nicknames, nil
 }
 
 func (r *Repository) SetNickname(userId uuid.UUID, nickname string) (string, error) {

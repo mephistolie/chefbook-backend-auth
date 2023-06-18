@@ -1,0 +1,12 @@
+syntax = "proto3";
+package v1;
+
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+
+message GetVisibleNamesRequest {
+  repeated string userIds = 1;
+}
+
+message GetVisibleNamesResponse {
+  map<string, string> userVisibleNames = 1;
+}

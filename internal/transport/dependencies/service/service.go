@@ -63,6 +63,7 @@ type Password interface {
 }
 
 type Nickname interface {
+	GetMultipleWithFallback(userIds []uuid.UUID) (map[uuid.UUID]string, error)
 	CheckAvailability(nickname string) (bool, error)
 	Set(userId uuid.UUID, nickname string) error
 }

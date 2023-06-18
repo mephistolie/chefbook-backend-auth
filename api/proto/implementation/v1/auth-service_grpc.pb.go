@@ -42,6 +42,7 @@ const (
 	AuthService_RequestPasswordReset_FullMethodName      = "/v1.AuthService/RequestPasswordReset"
 	AuthService_ResetPassword_FullMethodName             = "/v1.AuthService/ResetPassword"
 	AuthService_ChangePassword_FullMethodName            = "/v1.AuthService/ChangePassword"
+	AuthService_GetVisibleNames_FullMethodName           = "/v1.AuthService/GetVisibleNames"
 	AuthService_CheckNicknameAvailability_FullMethodName = "/v1.AuthService/CheckNicknameAvailability"
 	AuthService_SetNickname_FullMethodName               = "/v1.AuthService/SetNickname"
 )
@@ -73,6 +74,7 @@ type AuthServiceClient interface {
 	RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error)
 	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error)
 	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error)
+	GetVisibleNames(ctx context.Context, in *GetVisibleNamesRequest, opts ...grpc.CallOption) (*GetVisibleNamesResponse, error)
 	CheckNicknameAvailability(ctx context.Context, in *CheckNicknameAvailabilityRequest, opts ...grpc.CallOption) (*CheckNicknameAvailabilityResponse, error)
 	SetNickname(ctx context.Context, in *SetNicknameRequest, opts ...grpc.CallOption) (*SetNicknameResponse, error)
 }
@@ -292,6 +294,15 @@ func (c *authServiceClient) ChangePassword(ctx context.Context, in *ChangePasswo
 	return out, nil
 }
 
+func (c *authServiceClient) GetVisibleNames(ctx context.Context, in *GetVisibleNamesRequest, opts ...grpc.CallOption) (*GetVisibleNamesResponse, error) {
+	out := new(GetVisibleNamesResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetVisibleNames_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) CheckNicknameAvailability(ctx context.Context, in *CheckNicknameAvailabilityRequest, opts ...grpc.CallOption) (*CheckNicknameAvailabilityResponse, error) {
 	out := new(CheckNicknameAvailabilityResponse)
 	err := c.cc.Invoke(ctx, AuthService_CheckNicknameAvailability_FullMethodName, in, out, opts...)
@@ -337,6 +348,7 @@ type AuthServiceServer interface {
 	RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error)
 	ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error)
 	ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error)
+	GetVisibleNames(context.Context, *GetVisibleNamesRequest) (*GetVisibleNamesResponse, error)
 	CheckNicknameAvailability(context.Context, *CheckNicknameAvailabilityRequest) (*CheckNicknameAvailabilityResponse, error)
 	SetNickname(context.Context, *SetNicknameRequest) (*SetNicknameResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
@@ -414,6 +426,9 @@ func (UnimplementedAuthServiceServer) ResetPassword(context.Context, *ResetPassw
 }
 func (UnimplementedAuthServiceServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
+}
+func (UnimplementedAuthServiceServer) GetVisibleNames(context.Context, *GetVisibleNamesRequest) (*GetVisibleNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVisibleNames not implemented")
 }
 func (UnimplementedAuthServiceServer) CheckNicknameAvailability(context.Context, *CheckNicknameAvailabilityRequest) (*CheckNicknameAvailabilityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckNicknameAvailability not implemented")
@@ -848,6 +863,24 @@ func _AuthService_ChangePassword_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GetVisibleNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetVisibleNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetVisibleNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetVisibleNames_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetVisibleNames(ctx, req.(*GetVisibleNamesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_CheckNicknameAvailability_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CheckNicknameAvailabilityRequest)
 	if err := dec(in); err != nil {
@@ -982,6 +1015,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChangePassword",
 			Handler:    _AuthService_ChangePassword_Handler,
+		},
+		{
+			MethodName: "GetVisibleNames",
+			Handler:    _AuthService_GetVisibleNames_Handler,
 		},
 		{
 			MethodName: "CheckNicknameAvailability",

@@ -26,6 +26,7 @@ import "v1/end-sessions.proto";
 import "v1/request-password-reset.proto";
 import "v1/reset-password.proto";
 import "v1/change-password.proto";
+import "v1/get-visible-names.proto";
 import "v1/check-nickname-availability.proto";
 import "v1/set-nickname.proto";
 
@@ -58,6 +59,7 @@ service AuthService {
   rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
 
+  rpc GetVisibleNames(GetVisibleNamesRequest) returns (GetVisibleNamesResponse);
   rpc CheckNicknameAvailability(CheckNicknameAvailabilityRequest) returns (CheckNicknameAvailabilityResponse);
   rpc SetNickname(SetNicknameRequest) returns (SetNicknameResponse);
 }

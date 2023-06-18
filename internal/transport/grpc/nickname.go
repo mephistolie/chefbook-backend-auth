@@ -7,6 +7,24 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
+func (s *AuthServer) GetVisibleNames(_ context.Context, req *api.GetVisibleNamesRequest) (*api.GetVisibleNamesResponse, error) {
+	var userIds []uuid.UUID
+	for _, rawId := range req.UserIds {
+		if userId, err := uuid.Parse(rawId); err == nil {
+			userIds = append(userIds, userId)
+		}
+	}
+
+	response, err := s.service.Nickname.GetMultipleWithFallback(userIds)
+
+	visibleNames := make(map[string]string)
+	for id, name := range response {
+		visibleNames[id.String()] = name
+	}
+
+	return &api.GetVisibleNamesResponse{UserVisibleNames: visibleNames}, err
+}
+
 func (s *AuthServer) CheckNicknameAvailability(_ context.Context, req *api.CheckNicknameAvailabilityRequest) (*api.CheckNicknameAvailabilityResponse, error) {
 	if err := s.nicknameValidator.Validate(req.Nickname); err != nil {
 		return nil, err
