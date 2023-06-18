@@ -31,15 +31,18 @@ CREATE TABLE sessions
     created_at    TIMESTAMP WITH TIME ZONE                          NOT NULL DEFAULT now()::timestamp
 );
 
+CREATE INDEX sessions_user_id_fkey ON sessions (user_id);
+
 CREATE TABLE password_resets
 (
-    reset_id   SERIAL PRIMARY KEY                                NOT NULL UNIQUE,
     user_id    uuid REFERENCES users (user_id) ON DELETE CASCADE NOT NULL,
     reset_code VARCHAR(40)                                       NOT NULL UNIQUE,
     used       BOOLEAN                                           NOT NULL DEFAULT FALSE,
     expires_at TIMESTAMP WITH TIME ZONE                          NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE                          NOT NULL DEFAULT now()::timestamp
 );
+
+CREATE INDEX password_resets_user_id_fkey ON password_resets (user_id);
 
 CREATE TABLE oauth
 (
