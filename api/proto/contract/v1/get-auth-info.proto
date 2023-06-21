@@ -14,7 +14,7 @@ message GetAuthInfoRequest {
 message GetAuthInfoResponse {
   string id = 1;
   string email = 2;
-  string nickname = 3;
+  optional string nickname = 3;
   string role = 4;
   google.protobuf.Timestamp registrationTimestamp = 5;
   bool isActivated = 6;
@@ -24,6 +24,6 @@ message GetAuthInfoResponse {
 }
 
 message OAuth {
-  string googleId = 1;
-  int64 vkId = 2;
+  optional string googleId = 1;
+  optional int64 vkId = 2;
 }

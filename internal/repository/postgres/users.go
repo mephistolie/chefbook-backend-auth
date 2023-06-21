@@ -220,7 +220,7 @@ func (r *Repository) getAuthInfoByCondition(condition string, args ...interface{
 }
 
 func (r *Repository) GetNicknamesWithFallback(userIds []uuid.UUID) (map[uuid.UUID]string, error) {
-	var nicknames map[uuid.UUID]string
+	nicknames := make(map[uuid.UUID]string)
 
 	query := fmt.Sprintf(`
 		SELECT user_id, nickname
