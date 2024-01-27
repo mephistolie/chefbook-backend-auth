@@ -55,14 +55,14 @@ func (r *Repository) GetSessions(userId uuid.UUID) []entity.SessionRawInfo {
 func (r *Repository) UpdateSession(session entity.SessionInput, oldRefreshToken string) error {
 	query := fmt.Sprintf(`
 		UPDATE %s
-		SET refresh_token=$1, ip=$2, user_agent=$3, access_time=$4 expires_at=$5
+		SET refresh_token=$1, ip=$2, user_agent=$3, last_access=$4, expires_at=$5
 		WHERE refresh_token=$6
 	`, sessionsTable)
 
-	if _, err := r.db.Exec(query, session.RefreshToken, session.Ip, time.Now(), session.UserAgent, session.ExpiresAt,
+	if _, err := r.db.Exec(query, session.RefreshToken, session.Ip, session.UserAgent, time.Now(), session.ExpiresAt,
 		oldRefreshToken); err != nil {
-		log.Warnf("unable to update session for user %s: %s", session.UserId, err)
-		return authFail.GrpcSessionNotFound
+		log.Debugf("unable to update session for user %s: %s", session.UserId, err)
+		return fail.GrpcUnknown
 	}
 
 	return nil

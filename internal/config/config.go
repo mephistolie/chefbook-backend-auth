@@ -19,9 +19,12 @@ type Config struct {
 	Auth            Auth
 	OAuth           OAuth
 	ProfileDeletion ProfileDeletion
-	Database        Database
-	Amqp            Amqp
-	Smtp            Smtp
+
+	SubscriptionService Service
+
+	Database Database
+	Amqp     Amqp
+	Smtp     Smtp
 }
 
 type Auth struct {
@@ -61,6 +64,10 @@ type Vk struct {
 type ProfileDeletion struct {
 	Offset        *time.Duration
 	CheckInterval *time.Duration
+}
+
+type Service struct {
+	Addr *string
 }
 
 type Database struct {
@@ -119,6 +126,7 @@ func (c Config) Print() {
 		"Password reset code TTL: %v\n\n"+
 		"Profile deletion offset: %v\n"+
 		"Profile deletion check interval: %v\n\n"+
+		"Subscription service address: %v\n\n"+
 		"Database host: %v\n"+
 		"Database port: %v\n"+
 		"Database name: %v\n\n"+
@@ -133,6 +141,7 @@ func (c Config) Print() {
 		*c.Environment, *c.Port, *c.LogsPath,
 		*c.Auth.SaltCost, *c.Auth.Ttl.AccessToken, *c.Auth.Ttl.RefreshToken, *c.Auth.Ttl.PasswordResetCode,
 		*c.ProfileDeletion.Offset, *c.ProfileDeletion.CheckInterval,
+		*c.SubscriptionService.Addr,
 		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
 		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,
 		*c.Smtp.Host, *c.Smtp.Port,

@@ -48,6 +48,10 @@ func main() {
 			},
 		},
 
+		SubscriptionService: config.Service{
+			Addr: fs.String("subscription-addr", "", "subscription service address"),
+		},
+
 		Database: config.Database{
 			Host:     fs.String("db-host", "localhost", "database host"),
 			Port:     fs.Int("db-port", 5432, "database port"),

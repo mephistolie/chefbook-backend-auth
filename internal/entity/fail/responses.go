@@ -35,9 +35,9 @@ var (
 	GrpcAccountOccupied  = fail.CreateGrpcClient(typeAccountOccupied, "this OAuth profile already connected to different ChefBook Profile")
 	GrpcEmailRequired    = fail.CreateGrpcClient(fail.TypeInvalidBody, "email access is required to complete registration")
 
-	GrpcProfileIsBlocked = fail.CreateGrpcUnauthorized(typeProfileBlocked, "profile is blocked")
-	GrpcSessionExpired   = fail.CreateGrpcUnauthorized(fail.TypeUnauthorized, "session expired")
-	GrpcSessionNotFound  = fail.CreateGrpcUnauthorized(fail.TypeUnauthorized, "session not found")
+	GrpcProfileIsBlocked = fail.CreateGrpcAccessDenied(typeProfileBlocked, "profile is blocked")
+	GrpcSessionExpired   = fail.CreateGrpcClient(fail.TypeInvalidBody, "session expired")
+	GrpcSessionNotFound  = fail.CreateGrpcNotFound(fail.TypeNotFound, "session not found")
 
 	GrpcUserNotFound           = fail.CreateGrpcNotFound(fail.TypeNotFound, "user not found")
 	GrpcActivationLinkNotFound = fail.CreateGrpcNotFound(fail.TypeNotFound, "activation link not found")

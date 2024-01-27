@@ -7,6 +7,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/app/daemon"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/amqp"
+	grpcRepo "github.com/mephistolie/chefbook-backend-auth/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres"
 	"github.com/mephistolie/chefbook-backend-auth/internal/transport/dependencies/service"
 	auth "github.com/mephistolie/chefbook-backend-auth/internal/transport/grpc"
@@ -31,6 +32,12 @@ func Run(cfg *config.Config) {
 
 	repository := postgres.NewRepository(db, *cfg.ProfileDeletion.Offset)
 
+	grpcRepository, err := grpcRepo.NewRepository(cfg)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	var mq *amqp.Repository = nil
 	if len(*cfg.Amqp.Host) > 0 {
 		mq, err = amqp.NewRepository(cfg.Amqp, repository)
@@ -45,7 +52,7 @@ func Run(cfg *config.Config) {
 		log.Info("MQ server initialized")
 	}
 
-	authService, err := service.New(cfg, repository, mq)
+	authService, err := service.New(cfg, repository, grpcRepository, mq)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -89,6 +96,9 @@ func Run(cfg *config.Config) {
 		},
 		"database": func(ctx context.Context) error {
 			return db.Close()
+		},
+		"services": func(ctx context.Context) error {
+			return grpcRepository.Stop()
 		},
 		"mq": func(ctx context.Context) error {
 			if mq == nil {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mephistolie/chefbook-backend-common/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"io"
@@ -56,7 +55,6 @@ func (p *OAuthProvider) CreateOAuthLink(redirectUrl string) string {
 func (p *OAuthProvider) GetAccessToken(code, state string, redirectUrl string) (string, error) {
 	config := p.baseConfig
 	config.RedirectURL = redirectUrl
-	log.Warn(p.state, state)
 	if p.state != state {
 		return "", errors.New("invalid state")
 	}

@@ -44,6 +44,12 @@ config:
     email: ""
     sendAttempts: 3
 
+services:
+  subscription:
+    name: chefbook-backend-subscription-service
+    namespace: ""
+    port: 8080
+
 secrets:
   accessToken:
     name: access-token-secrets

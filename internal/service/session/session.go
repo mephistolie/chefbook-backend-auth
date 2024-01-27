@@ -1,13 +1,16 @@
 package session
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"github.com/mephistolie/chefbook-backend-common/subscription"
 	"github.com/mephistolie/chefbook-backend-common/tokens/access"
+	subscriptionApi "github.com/mephistolie/chefbook-backend-subscription/api/proto/implementation/v1"
 	"github.com/mssola/useragent"
 	"sync"
 	"time"
@@ -57,15 +60,25 @@ func (s *Service) createSessionEntity(
 	userAgent string,
 ) (entity.Tokens, entity.SessionInput, error) {
 	var (
-		res entity.Tokens
-		err error
+		res  entity.Tokens
+		err  error
+		plan = subscription.PlanFree
 	)
+
+	if sub, err := s.grpc.Subscription.GetProfileCurrentSubscription(
+		context.Background(),
+		&subscriptionApi.GetProfileCurrentSubscriptionRequest{UserId: authInfo.Id.String()},
+	); err == nil {
+		plan = sub.Plan
+	}
+
 	res.AccessToken, err = s.tokenManager.CreateAccess(access.Payload{
-		UserId:   authInfo.Id,
-		Email:    authInfo.Email,
-		Nickname: authInfo.Nickname,
-		Role:     authInfo.Role,
-		Deleted:  authInfo.DeletionTimestamp != nil,
+		UserId:           authInfo.Id,
+		Email:            authInfo.Email,
+		Nickname:         authInfo.Nickname,
+		Role:             authInfo.Role,
+		SubscriptionPlan: plan,
+		Deleted:          authInfo.DeletionTimestamp != nil,
 	}, s.accessTokenTtl)
 	if err != nil {
 		log.Error("unable to create access token: ", err)
@@ -73,7 +86,7 @@ func (s *Service) createSessionEntity(
 	}
 
 	res.RefreshToken = s.tokenManager.CreateRefresh()
-	res.ExpirationTimestamp = time.Now().Add(s.accessTokenTtl)
+	res.ExpirationTimestamp = time.Now().Add(s.refreshTokenTtl)
 	res.DeletionTimestamp = authInfo.DeletionTimestamp
 
 	return res, entity.SessionInput{

@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
+	"github.com/mephistolie/chefbook-backend-auth/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/mail"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/nickname"
@@ -79,6 +80,7 @@ type ProfileDeletion interface {
 func New(
 	cfg *config.Config,
 	repo repository.Data,
+	grpc *grpc.Repository,
 	mq repository.MessageQueue,
 ) (*Service, error) {
 	ipInfoProvider := ip.NewFreeIpApiProvider()
@@ -135,7 +137,7 @@ func New(
 	}
 
 	return &Service{
-		Session:         session.NewService(repo, mq, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth),
+		Session:         session.NewService(repo, grpc, mq, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth),
 		OAuth:           oauthService.NewService(repo, oauthProviders),
 		Password:        password.NewService(repo, *mailService, hashManager, cfg.Auth),
 		Nickname:        nickname.NewService(repo, *mailService),

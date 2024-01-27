@@ -5,10 +5,10 @@ go 1.20
 require (
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.8.0
-	github.com/jackc/pgx/v5 v5.3.1
+	github.com/jackc/pgx/v5 v5.4.2
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/mephistolie/chefbook-backend-auth/api v1.3.1
-	github.com/mephistolie/chefbook-backend-common/firebase v0.6.0
+	github.com/mephistolie/chefbook-backend-auth/api v1.6.0
+	github.com/mephistolie/chefbook-backend-common/firebase v0.9.0
 	github.com/mephistolie/chefbook-backend-common/hash v0.6.0
 	github.com/mephistolie/chefbook-backend-common/log v0.6.0
 	github.com/mephistolie/chefbook-backend-common/mail v0.6.0
@@ -16,7 +16,9 @@ require (
 	github.com/mephistolie/chefbook-backend-common/random v0.7.0
 	github.com/mephistolie/chefbook-backend-common/responses v0.9.0
 	github.com/mephistolie/chefbook-backend-common/shutdown v0.6.0
+	github.com/mephistolie/chefbook-backend-common/subscription v0.12.0
 	github.com/mephistolie/chefbook-backend-common/tokens v0.9.0
+	github.com/mephistolie/chefbook-backend-subscription/api v1.0.0
 	github.com/mssola/useragent v1.0.0
 	github.com/peterbourgon/ff/v3 v3.3.0
 	github.com/wagslane/go-rabbitmq v0.12.3
@@ -58,13 +60,13 @@ require (
 	github.com/jackc/pgx/v4 v4.10.1 // indirect
 	github.com/lib/pq v1.10.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.8.1 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
+	github.com/sirupsen/logrus v1.9.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect

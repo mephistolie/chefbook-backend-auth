@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
+	"github.com/mephistolie/chefbook-backend-auth/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/mail"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/ip"
@@ -19,6 +20,7 @@ const (
 
 type Service struct {
 	repo                 repository.Data
+	grpc                 *grpc.Repository
 	mq                   repository.MessageQueue
 	mail                 mail.Service
 	oauthProviders       oauth.Providers
@@ -33,6 +35,7 @@ type Service struct {
 
 func NewService(
 	repo repository.Data,
+	grpc *grpc.Repository,
 	mq repository.MessageQueue,
 	mailService mail.Service,
 	oauthProviders oauth.Providers,
@@ -44,6 +47,7 @@ func NewService(
 ) *Service {
 	return &Service{
 		repo:                 repo,
+		grpc:                 grpc,
 		mq:                   mq,
 		mail:                 mailService,
 		oauthProviders:       oauthProviders,

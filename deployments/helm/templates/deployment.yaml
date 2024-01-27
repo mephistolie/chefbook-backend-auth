@@ -95,6 +95,11 @@ spec:
             - name: DELETE_PROFILE_CHECK_INTERVAL
               value: {{ .Values.config.profileDelete.checkInterval }}
 
+            # Subscription Microservice
+
+            - name: SUBSCRIPTION_ADDR
+              value: "{{ .Values.services.subscription.name }}.{{ .Values.services.subscription.namespace | default .Release.Namespace }}.svc.cluster.local:{{ .Values.services.subscription.port }}"
+
             # PostgreSQL
 
             - name: DB_HOST
