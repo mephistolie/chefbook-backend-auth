@@ -16,6 +16,7 @@ import "v1/delete-profile.proto";
 import "v1/cancel-delete-profile.proto";
 import "v1/request-google-oauth.proto";
 import "v1/sign-in-google.proto";
+import "v1/sign-in-google-token.proto";
 import "v1/connect-google.proto";
 import "v1/delete-google-connection.proto";
 import "v1/request-vk-oauth.proto";
@@ -46,6 +47,7 @@ service AuthService {
 
   rpc RequestGoogleOAuth(RequestGoogleOAuthRequest) returns (RequestGoogleOAuthResponse);
   rpc SignInGoogle(SignInGoogleRequest) returns (SessionResponse);
+  rpc SignInGoogleToken(SignInGoogleTokenRequest) returns (SessionResponse);
   rpc ConnectGoogle(ConnectGoogleRequest) returns (ConnectGoogleResponse);
   rpc DeleteGoogleConnection(DeleteGoogleConnectionRequest) returns (DeleteGoogleConnectionResponse);
   rpc RequestVkOAuth(RequestVkOAuthRequest) returns (RequestVkOAuthResponse);

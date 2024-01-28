@@ -31,6 +31,7 @@ const (
 	AuthService_CancelProfileDeletion_FullMethodName     = "/v1.AuthService/CancelProfileDeletion"
 	AuthService_RequestGoogleOAuth_FullMethodName        = "/v1.AuthService/RequestGoogleOAuth"
 	AuthService_SignInGoogle_FullMethodName              = "/v1.AuthService/SignInGoogle"
+	AuthService_SignInGoogleToken_FullMethodName         = "/v1.AuthService/SignInGoogleToken"
 	AuthService_ConnectGoogle_FullMethodName             = "/v1.AuthService/ConnectGoogle"
 	AuthService_DeleteGoogleConnection_FullMethodName    = "/v1.AuthService/DeleteGoogleConnection"
 	AuthService_RequestVkOAuth_FullMethodName            = "/v1.AuthService/RequestVkOAuth"
@@ -63,6 +64,7 @@ type AuthServiceClient interface {
 	CancelProfileDeletion(ctx context.Context, in *CancelProfileDeletionRequest, opts ...grpc.CallOption) (*CancelProfileDeletionResponse, error)
 	RequestGoogleOAuth(ctx context.Context, in *RequestGoogleOAuthRequest, opts ...grpc.CallOption) (*RequestGoogleOAuthResponse, error)
 	SignInGoogle(ctx context.Context, in *SignInGoogleRequest, opts ...grpc.CallOption) (*SessionResponse, error)
+	SignInGoogleToken(ctx context.Context, in *SignInGoogleTokenRequest, opts ...grpc.CallOption) (*SessionResponse, error)
 	ConnectGoogle(ctx context.Context, in *ConnectGoogleRequest, opts ...grpc.CallOption) (*ConnectGoogleResponse, error)
 	DeleteGoogleConnection(ctx context.Context, in *DeleteGoogleConnectionRequest, opts ...grpc.CallOption) (*DeleteGoogleConnectionResponse, error)
 	RequestVkOAuth(ctx context.Context, in *RequestVkOAuthRequest, opts ...grpc.CallOption) (*RequestVkOAuthResponse, error)
@@ -189,6 +191,15 @@ func (c *authServiceClient) RequestGoogleOAuth(ctx context.Context, in *RequestG
 func (c *authServiceClient) SignInGoogle(ctx context.Context, in *SignInGoogleRequest, opts ...grpc.CallOption) (*SessionResponse, error) {
 	out := new(SessionResponse)
 	err := c.cc.Invoke(ctx, AuthService_SignInGoogle_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) SignInGoogleToken(ctx context.Context, in *SignInGoogleTokenRequest, opts ...grpc.CallOption) (*SessionResponse, error) {
+	out := new(SessionResponse)
+	err := c.cc.Invoke(ctx, AuthService_SignInGoogleToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -337,6 +348,7 @@ type AuthServiceServer interface {
 	CancelProfileDeletion(context.Context, *CancelProfileDeletionRequest) (*CancelProfileDeletionResponse, error)
 	RequestGoogleOAuth(context.Context, *RequestGoogleOAuthRequest) (*RequestGoogleOAuthResponse, error)
 	SignInGoogle(context.Context, *SignInGoogleRequest) (*SessionResponse, error)
+	SignInGoogleToken(context.Context, *SignInGoogleTokenRequest) (*SessionResponse, error)
 	ConnectGoogle(context.Context, *ConnectGoogleRequest) (*ConnectGoogleResponse, error)
 	DeleteGoogleConnection(context.Context, *DeleteGoogleConnectionRequest) (*DeleteGoogleConnectionResponse, error)
 	RequestVkOAuth(context.Context, *RequestVkOAuthRequest) (*RequestVkOAuthResponse, error)
@@ -393,6 +405,9 @@ func (UnimplementedAuthServiceServer) RequestGoogleOAuth(context.Context, *Reque
 }
 func (UnimplementedAuthServiceServer) SignInGoogle(context.Context, *SignInGoogleRequest) (*SessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignInGoogle not implemented")
+}
+func (UnimplementedAuthServiceServer) SignInGoogleToken(context.Context, *SignInGoogleTokenRequest) (*SessionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignInGoogleToken not implemented")
 }
 func (UnimplementedAuthServiceServer) ConnectGoogle(context.Context, *ConnectGoogleRequest) (*ConnectGoogleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConnectGoogle not implemented")
@@ -661,6 +676,24 @@ func _AuthService_SignInGoogle_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).SignInGoogle(ctx, req.(*SignInGoogleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_SignInGoogleToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SignInGoogleTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).SignInGoogleToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_SignInGoogleToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).SignInGoogleToken(ctx, req.(*SignInGoogleTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -971,6 +1004,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SignInGoogle",
 			Handler:    _AuthService_SignInGoogle_Handler,
+		},
+		{
+			MethodName: "SignInGoogleToken",
+			Handler:    _AuthService_SignInGoogleToken_Handler,
 		},
 		{
 			MethodName: "ConnectGoogle",
