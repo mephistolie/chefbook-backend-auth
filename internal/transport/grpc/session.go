@@ -8,7 +8,6 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/transport/grpc/dto"
 	credentialUtils "github.com/mephistolie/chefbook-backend-auth/internal/transport/utils/credentials"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *AuthServer) SignUp(_ context.Context, req *api.SignUpRequest) (*api.SignUpResponse, error) {
@@ -46,7 +45,7 @@ func (s *AuthServer) ActivateProfile(_ context.Context, req *api.ActivateProfile
 	return &api.ActivateProfileResponse{Message: "profile activated"}, nil
 }
 
-func (s *AuthServer) SignIn(_ context.Context, req *api.SignInRequest) (*api.SignInResponse, error) {
+func (s *AuthServer) SignIn(_ context.Context, req *api.SignInRequest) (*api.SessionResponse, error) {
 	if len(req.Email) == 0 && len(req.Nickname) == 0 {
 		return nil, fail.GrpcInvalidBody
 	}
@@ -65,40 +64,20 @@ func (s *AuthServer) SignIn(_ context.Context, req *api.SignInRequest) (*api.Sig
 		return nil, err
 	}
 
-	var deletionTimestamp *timestamppb.Timestamp
-	if tokens.DeletionTimestamp != nil {
-		deletionTimestamp = timestamppb.New(*tokens.DeletionTimestamp)
-	}
-
-	return &api.SignInResponse{
-		AccessToken:              tokens.AccessToken,
-		RefreshToken:             tokens.RefreshToken,
-		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),
-		ProfileDeletionTimestamp: deletionTimestamp,
-	}, nil
+	return dto.NewSessionResponse(tokens), nil
 }
 
 func (s *AuthServer) GetAccessTokenPublicKey(_ context.Context, _ *api.GetAccessTokenPublicKeyRequest) (*api.GetAccessTokenPublicKeyResponse, error) {
 	return &api.GetAccessTokenPublicKeyResponse{PublicKey: s.service.Session.GetAccessTokenPublicKey()}, nil
 }
 
-func (s *AuthServer) RefreshSession(_ context.Context, req *api.RefreshSessionRequest) (*api.RefreshSessionResponse, error) {
+func (s *AuthServer) RefreshSession(_ context.Context, req *api.RefreshSessionRequest) (*api.SessionResponse, error) {
 	tokens, err := s.service.Session.Refresh(req.RefreshToken, req.Ip, req.UserAgent)
 	if err != nil {
 		return nil, err
 	}
 
-	var deletionTimestamp *timestamppb.Timestamp
-	if tokens.DeletionTimestamp != nil {
-		deletionTimestamp = timestamppb.New(*tokens.DeletionTimestamp)
-	}
-
-	return &api.RefreshSessionResponse{
-		AccessToken:              tokens.AccessToken,
-		RefreshToken:             tokens.RefreshToken,
-		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),
-		ProfileDeletionTimestamp: deletionTimestamp,
-	}, nil
+	return dto.NewSessionResponse(tokens), nil
 }
 
 func (s *AuthServer) SignOut(_ context.Context, req *api.SignOutRequest) (*api.SignOutResponse, error) {

@@ -53,20 +53,20 @@ const (
 type AuthServiceClient interface {
 	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error)
 	ActivateProfile(ctx context.Context, in *ActivateProfileRequest, opts ...grpc.CallOption) (*ActivateProfileResponse, error)
-	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInResponse, error)
+	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SessionResponse, error)
 	GetAccessTokenPublicKey(ctx context.Context, in *GetAccessTokenPublicKeyRequest, opts ...grpc.CallOption) (*GetAccessTokenPublicKeyResponse, error)
-	RefreshSession(ctx context.Context, in *RefreshSessionRequest, opts ...grpc.CallOption) (*RefreshSessionResponse, error)
+	RefreshSession(ctx context.Context, in *RefreshSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error)
 	SignOut(ctx context.Context, in *SignOutRequest, opts ...grpc.CallOption) (*SignOutResponse, error)
 	GetAuthInfo(ctx context.Context, in *GetAuthInfoRequest, opts ...grpc.CallOption) (*GetAuthInfoResponse, error)
 	GetProfileDeletionStatus(ctx context.Context, in *GetProfileDeletionStatusRequest, opts ...grpc.CallOption) (*GetProfileDeletionStatusResponse, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error)
 	CancelProfileDeletion(ctx context.Context, in *CancelProfileDeletionRequest, opts ...grpc.CallOption) (*CancelProfileDeletionResponse, error)
 	RequestGoogleOAuth(ctx context.Context, in *RequestGoogleOAuthRequest, opts ...grpc.CallOption) (*RequestGoogleOAuthResponse, error)
-	SignInGoogle(ctx context.Context, in *SignInGoogleRequest, opts ...grpc.CallOption) (*SignInGoogleResponse, error)
+	SignInGoogle(ctx context.Context, in *SignInGoogleRequest, opts ...grpc.CallOption) (*SessionResponse, error)
 	ConnectGoogle(ctx context.Context, in *ConnectGoogleRequest, opts ...grpc.CallOption) (*ConnectGoogleResponse, error)
 	DeleteGoogleConnection(ctx context.Context, in *DeleteGoogleConnectionRequest, opts ...grpc.CallOption) (*DeleteGoogleConnectionResponse, error)
 	RequestVkOAuth(ctx context.Context, in *RequestVkOAuthRequest, opts ...grpc.CallOption) (*RequestVkOAuthResponse, error)
-	SignInVk(ctx context.Context, in *SignInVkRequest, opts ...grpc.CallOption) (*SignInVkResponse, error)
+	SignInVk(ctx context.Context, in *SignInVkRequest, opts ...grpc.CallOption) (*SessionResponse, error)
 	ConnectVk(ctx context.Context, in *ConnectVkRequest, opts ...grpc.CallOption) (*ConnectVkResponse, error)
 	DeleteVkConnection(ctx context.Context, in *DeleteVkConnectionRequest, opts ...grpc.CallOption) (*DeleteVkConnectionResponse, error)
 	GetSessions(ctx context.Context, in *GetSessionsRequest, opts ...grpc.CallOption) (*GetSessionsResponse, error)
@@ -105,8 +105,8 @@ func (c *authServiceClient) ActivateProfile(ctx context.Context, in *ActivatePro
 	return out, nil
 }
 
-func (c *authServiceClient) SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInResponse, error) {
-	out := new(SignInResponse)
+func (c *authServiceClient) SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SessionResponse, error) {
+	out := new(SessionResponse)
 	err := c.cc.Invoke(ctx, AuthService_SignIn_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -123,8 +123,8 @@ func (c *authServiceClient) GetAccessTokenPublicKey(ctx context.Context, in *Get
 	return out, nil
 }
 
-func (c *authServiceClient) RefreshSession(ctx context.Context, in *RefreshSessionRequest, opts ...grpc.CallOption) (*RefreshSessionResponse, error) {
-	out := new(RefreshSessionResponse)
+func (c *authServiceClient) RefreshSession(ctx context.Context, in *RefreshSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error) {
+	out := new(SessionResponse)
 	err := c.cc.Invoke(ctx, AuthService_RefreshSession_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -186,8 +186,8 @@ func (c *authServiceClient) RequestGoogleOAuth(ctx context.Context, in *RequestG
 	return out, nil
 }
 
-func (c *authServiceClient) SignInGoogle(ctx context.Context, in *SignInGoogleRequest, opts ...grpc.CallOption) (*SignInGoogleResponse, error) {
-	out := new(SignInGoogleResponse)
+func (c *authServiceClient) SignInGoogle(ctx context.Context, in *SignInGoogleRequest, opts ...grpc.CallOption) (*SessionResponse, error) {
+	out := new(SessionResponse)
 	err := c.cc.Invoke(ctx, AuthService_SignInGoogle_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -222,8 +222,8 @@ func (c *authServiceClient) RequestVkOAuth(ctx context.Context, in *RequestVkOAu
 	return out, nil
 }
 
-func (c *authServiceClient) SignInVk(ctx context.Context, in *SignInVkRequest, opts ...grpc.CallOption) (*SignInVkResponse, error) {
-	out := new(SignInVkResponse)
+func (c *authServiceClient) SignInVk(ctx context.Context, in *SignInVkRequest, opts ...grpc.CallOption) (*SessionResponse, error) {
+	out := new(SessionResponse)
 	err := c.cc.Invoke(ctx, AuthService_SignInVk_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -327,20 +327,20 @@ func (c *authServiceClient) SetNickname(ctx context.Context, in *SetNicknameRequ
 type AuthServiceServer interface {
 	SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error)
 	ActivateProfile(context.Context, *ActivateProfileRequest) (*ActivateProfileResponse, error)
-	SignIn(context.Context, *SignInRequest) (*SignInResponse, error)
+	SignIn(context.Context, *SignInRequest) (*SessionResponse, error)
 	GetAccessTokenPublicKey(context.Context, *GetAccessTokenPublicKeyRequest) (*GetAccessTokenPublicKeyResponse, error)
-	RefreshSession(context.Context, *RefreshSessionRequest) (*RefreshSessionResponse, error)
+	RefreshSession(context.Context, *RefreshSessionRequest) (*SessionResponse, error)
 	SignOut(context.Context, *SignOutRequest) (*SignOutResponse, error)
 	GetAuthInfo(context.Context, *GetAuthInfoRequest) (*GetAuthInfoResponse, error)
 	GetProfileDeletionStatus(context.Context, *GetProfileDeletionStatusRequest) (*GetProfileDeletionStatusResponse, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error)
 	CancelProfileDeletion(context.Context, *CancelProfileDeletionRequest) (*CancelProfileDeletionResponse, error)
 	RequestGoogleOAuth(context.Context, *RequestGoogleOAuthRequest) (*RequestGoogleOAuthResponse, error)
-	SignInGoogle(context.Context, *SignInGoogleRequest) (*SignInGoogleResponse, error)
+	SignInGoogle(context.Context, *SignInGoogleRequest) (*SessionResponse, error)
 	ConnectGoogle(context.Context, *ConnectGoogleRequest) (*ConnectGoogleResponse, error)
 	DeleteGoogleConnection(context.Context, *DeleteGoogleConnectionRequest) (*DeleteGoogleConnectionResponse, error)
 	RequestVkOAuth(context.Context, *RequestVkOAuthRequest) (*RequestVkOAuthResponse, error)
-	SignInVk(context.Context, *SignInVkRequest) (*SignInVkResponse, error)
+	SignInVk(context.Context, *SignInVkRequest) (*SessionResponse, error)
 	ConnectVk(context.Context, *ConnectVkRequest) (*ConnectVkResponse, error)
 	DeleteVkConnection(context.Context, *DeleteVkConnectionRequest) (*DeleteVkConnectionResponse, error)
 	GetSessions(context.Context, *GetSessionsRequest) (*GetSessionsResponse, error)
@@ -364,13 +364,13 @@ func (UnimplementedAuthServiceServer) SignUp(context.Context, *SignUpRequest) (*
 func (UnimplementedAuthServiceServer) ActivateProfile(context.Context, *ActivateProfileRequest) (*ActivateProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ActivateProfile not implemented")
 }
-func (UnimplementedAuthServiceServer) SignIn(context.Context, *SignInRequest) (*SignInResponse, error) {
+func (UnimplementedAuthServiceServer) SignIn(context.Context, *SignInRequest) (*SessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignIn not implemented")
 }
 func (UnimplementedAuthServiceServer) GetAccessTokenPublicKey(context.Context, *GetAccessTokenPublicKeyRequest) (*GetAccessTokenPublicKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccessTokenPublicKey not implemented")
 }
-func (UnimplementedAuthServiceServer) RefreshSession(context.Context, *RefreshSessionRequest) (*RefreshSessionResponse, error) {
+func (UnimplementedAuthServiceServer) RefreshSession(context.Context, *RefreshSessionRequest) (*SessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshSession not implemented")
 }
 func (UnimplementedAuthServiceServer) SignOut(context.Context, *SignOutRequest) (*SignOutResponse, error) {
@@ -391,7 +391,7 @@ func (UnimplementedAuthServiceServer) CancelProfileDeletion(context.Context, *Ca
 func (UnimplementedAuthServiceServer) RequestGoogleOAuth(context.Context, *RequestGoogleOAuthRequest) (*RequestGoogleOAuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestGoogleOAuth not implemented")
 }
-func (UnimplementedAuthServiceServer) SignInGoogle(context.Context, *SignInGoogleRequest) (*SignInGoogleResponse, error) {
+func (UnimplementedAuthServiceServer) SignInGoogle(context.Context, *SignInGoogleRequest) (*SessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignInGoogle not implemented")
 }
 func (UnimplementedAuthServiceServer) ConnectGoogle(context.Context, *ConnectGoogleRequest) (*ConnectGoogleResponse, error) {
@@ -403,7 +403,7 @@ func (UnimplementedAuthServiceServer) DeleteGoogleConnection(context.Context, *D
 func (UnimplementedAuthServiceServer) RequestVkOAuth(context.Context, *RequestVkOAuthRequest) (*RequestVkOAuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestVkOAuth not implemented")
 }
-func (UnimplementedAuthServiceServer) SignInVk(context.Context, *SignInVkRequest) (*SignInVkResponse, error) {
+func (UnimplementedAuthServiceServer) SignInVk(context.Context, *SignInVkRequest) (*SessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignInVk not implemented")
 }
 func (UnimplementedAuthServiceServer) ConnectVk(context.Context, *ConnectVkRequest) (*ConnectVkResponse, error) {

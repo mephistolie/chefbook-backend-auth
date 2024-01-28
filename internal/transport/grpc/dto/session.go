@@ -25,3 +25,17 @@ func NewGetSessionsResponse(infos []entity.SessionInfo) *api.GetSessionsResponse
 	})
 	return &api.GetSessionsResponse{Sessions: sessions}
 }
+
+func NewSessionResponse(tokens entity.Tokens) *api.SessionResponse {
+	var deletionTimestamp *timestamppb.Timestamp
+	if tokens.DeletionTimestamp != nil {
+		deletionTimestamp = timestamppb.New(*tokens.DeletionTimestamp)
+	}
+
+	return &api.SessionResponse{
+		AccessToken:              tokens.AccessToken,
+		RefreshToken:             tokens.RefreshToken,
+		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),
+		ProfileDeletionTimestamp: deletionTimestamp,
+	}
+}

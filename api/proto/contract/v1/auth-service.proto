@@ -5,6 +5,7 @@ option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
 import "v1/sign-up.proto";
 import "v1/activate-profile.proto";
+import "v1/session.proto";
 import "v1/sign-in.proto";
 import "v1/get-access-token-public-key.proto";
 import "v1/refresh-session.proto";
@@ -33,9 +34,9 @@ import "v1/set-nickname.proto";
 service AuthService {
   rpc SignUp(SignUpRequest) returns (SignUpResponse);
   rpc ActivateProfile(ActivateProfileRequest) returns (ActivateProfileResponse);
-  rpc SignIn(SignInRequest) returns (SignInResponse);
+  rpc SignIn(SignInRequest) returns (SessionResponse);
   rpc GetAccessTokenPublicKey(GetAccessTokenPublicKeyRequest) returns (GetAccessTokenPublicKeyResponse);
-  rpc RefreshSession(RefreshSessionRequest) returns (RefreshSessionResponse);
+  rpc RefreshSession(RefreshSessionRequest) returns (SessionResponse);
   rpc SignOut(SignOutRequest) returns (SignOutResponse);
   rpc GetAuthInfo(GetAuthInfoRequest) returns (GetAuthInfoResponse);
 
@@ -44,11 +45,11 @@ service AuthService {
   rpc CancelProfileDeletion(CancelProfileDeletionRequest) returns (CancelProfileDeletionResponse);
 
   rpc RequestGoogleOAuth(RequestGoogleOAuthRequest) returns (RequestGoogleOAuthResponse);
-  rpc SignInGoogle(SignInGoogleRequest) returns (SignInGoogleResponse);
+  rpc SignInGoogle(SignInGoogleRequest) returns (SessionResponse);
   rpc ConnectGoogle(ConnectGoogleRequest) returns (ConnectGoogleResponse);
   rpc DeleteGoogleConnection(DeleteGoogleConnectionRequest) returns (DeleteGoogleConnectionResponse);
   rpc RequestVkOAuth(RequestVkOAuthRequest) returns (RequestVkOAuthResponse);
-  rpc SignInVk(SignInVkRequest) returns (SignInVkResponse);
+  rpc SignInVk(SignInVkRequest) returns (SessionResponse);
   rpc ConnectVk(ConnectVkRequest) returns (ConnectVkResponse);
   rpc DeleteVkConnection(DeleteVkConnectionRequest) returns (DeleteVkConnectionResponse);
 

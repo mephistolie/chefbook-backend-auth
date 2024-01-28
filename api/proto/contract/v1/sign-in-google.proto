@@ -1,8 +1,6 @@
 syntax = "proto3";
 package v1;
 
-import "google/protobuf/timestamp.proto";
-
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
 message SignInGoogleRequest {
@@ -11,11 +9,4 @@ message SignInGoogleRequest {
   string redirectUrl = 3;
   string ip = 4;
   string userAgent = 5;
-}
-
-message SignInGoogleResponse {
-  string accessToken = 1;
-  string refreshToken = 2;
-  google.protobuf.Timestamp expirationTimestamp = 3;
-  google.protobuf.Timestamp profileDeletionTimestamp = 4;
 }

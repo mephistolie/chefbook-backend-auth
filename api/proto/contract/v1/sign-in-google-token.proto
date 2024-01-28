@@ -3,8 +3,8 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
-message RefreshSessionRequest {
-  string refreshToken = 1;
+message SignInGoogleTokenRequest {
+  string token = 1;
   string ip = 2;
   string userAgent = 3;
 }

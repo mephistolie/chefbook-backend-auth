@@ -14,8 +14,21 @@ func (s *Service) SignInGoogle(credentials entity.OAuthCredentials, client entit
 		return entity.Tokens{}, authFail.GrpcInvalidCode
 	}
 
+	return s.handleGoogleInfoResponse(googleInfo, client)
+}
+
+func (s *Service) SignInGoogleToken(token string, client entity.ClientData) (entity.Tokens, error) {
+	googleInfo, err := s.oauthProviders.Google.GetUserInfoByToken(token)
+	if err != nil {
+		return entity.Tokens{}, authFail.GrpcInvalidCode
+	}
+
+	return s.handleGoogleInfoResponse(googleInfo, client)
+}
+
+func (s *Service) handleGoogleInfoResponse(googleInfo *google.UserInfoResponse, client entity.ClientData) (entity.Tokens, error) {
 	var authInfo entity.AuthInfo
-	authInfo, err = s.repo.GetAuthInfoByGoogleId(googleInfo.UserId)
+	authInfo, err := s.repo.GetAuthInfoByGoogleId(googleInfo.UserId)
 	if err != nil && len(googleInfo.Email) > 0 {
 		authInfo, err = s.repo.GetAuthInfoByEmail(googleInfo.Email)
 	}

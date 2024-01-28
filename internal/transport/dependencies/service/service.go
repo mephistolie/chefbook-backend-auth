@@ -39,6 +39,7 @@ type Session interface {
 	ActivateProfile(userId uuid.UUID, code string) error
 	SignIn(credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error)
 	SignInGoogle(credentials entity.OAuthCredentials, client entity.ClientData, redirectUrl string) (entity.Tokens, error)
+	SignInGoogleToken(token string, client entity.ClientData) (entity.Tokens, error)
 	SignInVk(credentials entity.OAuthCredentials, client entity.ClientData, redirectUri string) (entity.Tokens, error)
 	GetAccessTokenPublicKey() []byte
 	Refresh(refreshToken, ip, userAgent string) (entity.Tokens, error)
