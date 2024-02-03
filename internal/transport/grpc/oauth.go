@@ -34,7 +34,7 @@ func (s *AuthServer) SignInGoogle(_ context.Context, req *api.SignInGoogleReques
 }
 
 func (s *AuthServer) SignInGoogleToken(_ context.Context, req *api.SignInGoogleTokenRequest) (*api.SessionResponse, error) {
-	tokens, err := s.service.Session.SignInGoogleToken(req.Token, entity.ClientData{Ip: req.Ip, UserAgent: req.UserAgent})
+	tokens, err := s.service.Session.SignInGoogleIdToken(req.Token, entity.ClientData{Ip: req.Ip, UserAgent: req.UserAgent})
 	if err != nil {
 		return nil, err
 	}

@@ -17,8 +17,8 @@ func (s *Service) SignInGoogle(credentials entity.OAuthCredentials, client entit
 	return s.handleGoogleInfoResponse(googleInfo, client)
 }
 
-func (s *Service) SignInGoogleToken(token string, client entity.ClientData) (entity.Tokens, error) {
-	googleInfo, err := s.oauthProviders.Google.GetUserInfoByToken(token)
+func (s *Service) SignInGoogleIdToken(token string, client entity.ClientData) (entity.Tokens, error) {
+	googleInfo, err := s.oauthProviders.Google.GetUserInfoByIdToken(token)
 	if err != nil {
 		return entity.Tokens{}, authFail.GrpcInvalidCode
 	}

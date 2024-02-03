@@ -2,8 +2,8 @@ package credentials
 
 import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
+	"net/mail"
 	"regexp"
-	"strings"
 	"unicode"
 )
 
@@ -12,10 +12,8 @@ const (
 )
 
 func ValidateEmail(email string) error {
-	if !strings.Contains(email, "@") || !strings.Contains(email, ".") || len(email) > 64 {
-		return fail.GrpcInvalidEmail
-	}
-	return nil
+	_, err := mail.ParseAddress(email)
+	return err
 }
 
 func ValidatePassword(password string) error {

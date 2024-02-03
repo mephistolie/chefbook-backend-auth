@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	userInfoEndpoint = "https://www.googleapis.com/oauth2/v2/userinfo"
+	userInfoEndpoint  = "https://www.googleapis.com/oauth2/v2/userinfo"
+	tokenInfoEndpoint = "https://oauth2.googleapis.com/tokeninfo"
 )
 
 type OAuthParams struct {
@@ -22,9 +23,8 @@ type OAuthParams struct {
 }
 
 type UserInfoResponse struct {
-	UserId    string `json:"id" binding:"required"`
-	Email     string `json:"email" binding:"required"`
-	AvatarUrl string `json:"picture"`
+	UserId string `json:"id" binding:"required"`
+	Email  string `json:"email" binding:"required"`
 }
 
 type OAuthProvider struct {
@@ -65,14 +65,26 @@ func (p *OAuthProvider) GetAccessToken(code, state string, redirectUrl string) (
 	return tokens.AccessToken, nil
 }
 
-func (p *OAuthProvider) GetUserInfoByToken(accessToken string) (*UserInfoResponse, error) {
+func (p *OAuthProvider) GetUserInfoByAccessToken(accessToken string) (*UserInfoResponse, error) {
 	bearer := fmt.Sprintf("Bearer %s", accessToken)
 	req, err := http.NewRequest("GET", userInfoEndpoint, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Authorization", bearer)
+	return p.getUserInfoByRequest(req)
+}
 
+func (p *OAuthProvider) GetUserInfoByIdToken(idToken string) (*UserInfoResponse, error) {
+	url := fmt.Sprintf("%s?id_token=%s", tokenInfoEndpoint, idToken)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return p.getUserInfoByRequest(req)
+}
+
+func (p *OAuthProvider) getUserInfoByRequest(req *http.Request) (*UserInfoResponse, error) {
 	res, err := p.client.Do(req)
 	if err != nil || res.StatusCode != 200 {
 		return nil, errors.New("error google response")
@@ -95,7 +107,7 @@ func (p *OAuthProvider) GetUserInfoByCode(code, state, redirectUrl string) (*Use
 		return nil, err
 	}
 
-	info, err := p.GetUserInfoByToken(accessToken)
+	info, err := p.GetUserInfoByAccessToken(accessToken)
 	if err != nil {
 		return nil, err
 	}
