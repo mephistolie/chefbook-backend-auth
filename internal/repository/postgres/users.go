@@ -11,7 +11,6 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres/dto"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"strings"
 	"time"
 )
 
@@ -219,7 +218,7 @@ func (r *Repository) getAuthInfoByCondition(condition string, args ...interface{
 	return info.Entity(), nil
 }
 
-func (r *Repository) GetNicknamesWithFallback(userIds []uuid.UUID) (map[uuid.UUID]string, error) {
+func (r *Repository) GetNicknames(userIds []uuid.UUID) (map[uuid.UUID]string, error) {
 	nicknames := make(map[uuid.UUID]string)
 
 	query := fmt.Sprintf(`
@@ -245,10 +244,6 @@ func (r *Repository) GetNicknamesWithFallback(userIds []uuid.UUID) (map[uuid.UUI
 
 		if nickname != nil {
 			nicknames[userId] = *nickname
-		} else {
-			fallbackNickname := userId.String()
-			separatorIndex := strings.Index(fallbackNickname, "-")
-			nicknames[userId] = fallbackNickname[0:separatorIndex]
 		}
 	}
 

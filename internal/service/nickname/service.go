@@ -18,8 +18,8 @@ func NewService(repo repository.Data, mailService mail.Service) *Service {
 	}
 }
 
-func (s *Service) GetMultipleWithFallback(userIds []uuid.UUID) (map[uuid.UUID]string, error) {
-	return s.repo.GetNicknamesWithFallback(userIds)
+func (s *Service) Get(userIds []uuid.UUID) (map[uuid.UUID]string, error) {
+	return s.repo.GetNicknames(userIds)
 }
 
 func (s *Service) CheckAvailability(nickname string) (bool, error) {

@@ -33,6 +33,7 @@ func NewSessionResponse(tokens entity.Tokens) *api.SessionResponse {
 	}
 
 	return &api.SessionResponse{
+		ProfileId:                tokens.ProfileId.String(),
 		AccessToken:              tokens.AccessToken,
 		RefreshToken:             tokens.RefreshToken,
 		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),

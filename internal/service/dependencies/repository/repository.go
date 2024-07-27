@@ -41,7 +41,7 @@ type Data interface {
 	CancelProfileDeletion(userId uuid.UUID) error
 	DeleteUser(userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error)
 
-	GetNicknamesWithFallback(userIds []uuid.UUID) (map[uuid.UUID]string, error)
+	GetNicknames(userIds []uuid.UUID) (map[uuid.UUID]string, error)
 	SetNickname(userId uuid.UUID, nickname string) (string, error)
 
 	CreatePasswordResetRequest(userId uuid.UUID, expiration time.Time) (uuid.UUID, error)

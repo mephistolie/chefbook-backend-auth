@@ -15,7 +15,7 @@ func (s *AuthServer) GetVisibleNames(_ context.Context, req *api.GetVisibleNames
 		}
 	}
 
-	response, err := s.service.Nickname.GetMultipleWithFallback(userIds)
+	response, err := s.service.Nickname.Get(userIds)
 
 	visibleNames := make(map[string]string)
 	for id, name := range response {

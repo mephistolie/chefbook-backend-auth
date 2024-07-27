@@ -72,6 +72,7 @@ func (s *Service) createSessionEntity(
 		plan = sub.Plan
 	}
 
+	res.ProfileId = authInfo.Id
 	res.AccessToken, err = s.tokenManager.CreateAccess(access.Payload{
 		UserId:           authInfo.Id,
 		Email:            authInfo.Email,
