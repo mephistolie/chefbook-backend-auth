@@ -59,11 +59,16 @@ func (r *Repository) ResetPassword(userId uuid.UUID, resetCode string, passwordH
 	userResetCodeQuery := fmt.Sprintf(`
 		UPDATE %s
 		SET used=true
-		WHERE user_id=$1 AND reset_code=$2
+		WHERE user_id=$1 AND reset_code=$2 AND used=false AND expires_at>$3
 	`, passwordResetsTable)
 
-	if _, err := tx.Exec(userResetCodeQuery, userId, resetCode); err != nil {
+	res, err := tx.Exec(userResetCodeQuery, userId, resetCode, time.Now())
+	if err != nil {
 		log.Errorf("invalid reset code %s for user %s: %s", resetCode, userId, err)
+		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
+	}
+	if rows, err := res.RowsAffected(); err != nil || rows == 0 {
+		log.Infof("invalid or expired reset code %s for user %s: %s", resetCode, userId, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
 	}
 
@@ -71,10 +76,9 @@ func (r *Repository) ResetPassword(userId uuid.UUID, resetCode string, passwordH
 		UPDATE %s
 		SET password=$1
 		WHERE user_id=$2
-		RETURNING user_id
 	`, usersTable)
 
-	if _, err := r.db.Exec(changePasswordQuery, passwordHash, userId); err != nil {
+	if _, err := tx.Exec(changePasswordQuery, passwordHash, userId); err != nil {
 		log.Errorf("error while updating password for user %s: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
