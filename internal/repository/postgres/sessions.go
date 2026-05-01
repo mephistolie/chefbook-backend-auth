@@ -111,7 +111,7 @@ func (r *Repository) DeleteAllSessions(userId uuid.UUID) {
 func (r *Repository) DeleteOutdatedSessions(userId uuid.UUID, sessionsThreshold int) {
 	query := fmt.Sprintf(`
 		DELETE FROM %[1]v
-		WHERE session_id NOT IN
+		WHERE user_id=$1 AND session_id NOT IN
 		(
 			SELECT session_id
 			FROM %[1]v
