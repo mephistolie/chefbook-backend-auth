@@ -12,12 +12,12 @@ require (
 	github.com/mephistolie/chefbook-backend-common/hash v0.6.0
 	github.com/mephistolie/chefbook-backend-common/log v0.6.0
 	github.com/mephistolie/chefbook-backend-common/mail v0.6.0
-	github.com/mephistolie/chefbook-backend-common/migrate/sql v0.6.0
+	github.com/mephistolie/chefbook-backend-common/migrate/sql v0.7.0
 	github.com/mephistolie/chefbook-backend-common/random v0.7.0
 	github.com/mephistolie/chefbook-backend-common/responses v0.9.0
 	github.com/mephistolie/chefbook-backend-common/shutdown v0.6.0
 	github.com/mephistolie/chefbook-backend-common/subscription v0.12.0
-	github.com/mephistolie/chefbook-backend-common/tokens v0.9.0
+	github.com/mephistolie/chefbook-backend-common/tokens v0.10.0
 	github.com/mephistolie/chefbook-backend-subscription/api v1.0.0
 	github.com/mssola/useragent v1.0.0
 	github.com/peterbourgon/ff/v3 v3.4.0
@@ -52,8 +52,8 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang-migrate/migrate/v4 v4.19.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
@@ -66,8 +66,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.3 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgtype v1.14.4 // indirect
-	github.com/jackc/pgx/v4 v4.18.3 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
