@@ -96,7 +96,7 @@ func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entit
 
 func (s *Service) resendActivationMail(authInfo entity.AuthInfo, password, linkPattern string) (uuid.UUID, bool, error) {
 	if authInfo.IsActivated {
-		log.Warn("user with email %s already exists", authInfo.Email)
+		log.Warnf("user with email %s already exists", authInfo.Email)
 		return uuid.UUID{}, false, authFail.GrpcUserAlreadyExists
 	}
 

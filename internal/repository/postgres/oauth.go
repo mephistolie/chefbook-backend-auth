@@ -52,7 +52,7 @@ func (r *Repository) ConnectVk(userId uuid.UUID, vkId int64) error {
 		WHERE user_id=$2
 	`, oauthTable)
 	if _, err := r.db.Exec(query, vkId, userId); err != nil {
-		log.Warnf("VK profile %s is occupied: %s", vkId, err)
+		log.Warnf("VK profile %d is occupied: %s", vkId, err)
 		return authFail.GrpcAccountOccupied
 	}
 
