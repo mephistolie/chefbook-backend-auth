@@ -1,6 +1,7 @@
 package vk
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -88,7 +89,7 @@ func (p *OAuthProvider) CreateOAuthLink(params OAuthParams) (string, error) {
 	return baseUrl.String(), nil
 }
 
-func (p *OAuthProvider) GetAccessToken(code, state string, redirectUri string) (*AccessTokenResponse, error) {
+func (p *OAuthProvider) GetAccessToken(ctx context.Context, code, state string, redirectUri string) (*AccessTokenResponse, error) {
 	if p.state != state {
 		return nil, errors.New("invalid state")
 	}
@@ -98,7 +99,12 @@ func (p *OAuthProvider) GetAccessToken(code, state string, redirectUri string) (
 		return nil, err
 	}
 
-	res, err := p.client.Get(requestUrl)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.client.Do(req)
 	if err != nil || res.StatusCode != 200 {
 		return nil, errors.New("error vk response")
 	}

@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func (s *Service) Refresh(refreshToken, ip, userAgent string) (entity.Tokens, error) {
+func (s *Service) Refresh(ctx context.Context, refreshToken, ip, userAgent string) (entity.Tokens, error) {
 	authInfo, err := s.repo.GetAuthInfoByRefreshToken(refreshToken)
 	if err != nil {
 		return entity.Tokens{}, err
@@ -28,7 +28,7 @@ func (s *Service) Refresh(refreshToken, ip, userAgent string) (entity.Tokens, er
 		return entity.Tokens{}, authFail.GrpcProfileIsBlocked
 	}
 
-	tokenPair, session, err := s.createSessionEntity(authInfo, ip, userAgent)
+	tokenPair, session, err := s.createSessionEntity(ctx, authInfo, ip, userAgent)
 	if err != nil {
 		return entity.Tokens{}, err
 	}
@@ -55,6 +55,7 @@ func (s *Service) DeleteMultiple(userId uuid.UUID, sessionIds []int64) {
 }
 
 func (s *Service) createSessionEntity(
+	ctx context.Context,
 	authInfo entity.AuthInfo,
 	ip string,
 	userAgent string,
@@ -66,7 +67,7 @@ func (s *Service) createSessionEntity(
 	)
 
 	if sub, err := s.grpc.Subscription.GetProfileCurrentSubscription(
-		context.Background(),
+		ctx,
 		&subscriptionApi.GetProfileCurrentSubscriptionRequest{UserId: authInfo.Id.String()},
 	); err == nil {
 		plan = sub.Plan

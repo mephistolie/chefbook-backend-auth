@@ -10,7 +10,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
-func (s *AuthServer) SignUp(_ context.Context, req *api.SignUpRequest) (*api.SignUpResponse, error) {
+func (s *AuthServer) SignUp(ctx context.Context, req *api.SignUpRequest) (*api.SignUpResponse, error) {
 	var requestedIdPtr *uuid.UUID = nil
 	requestedId, err := uuid.Parse(req.Id)
 	if err == nil {
@@ -27,7 +27,7 @@ func (s *AuthServer) SignUp(_ context.Context, req *api.SignUpRequest) (*api.Sig
 		Email:    req.Email,
 		Password: req.Password,
 	}
-	id, activated, err := s.service.Session.SignUp(credentials, req.ActivationLinkPattern)
+	id, activated, err := s.service.Session.SignUp(ctx, credentials, req.ActivationLinkPattern)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (s *AuthServer) ActivateProfile(_ context.Context, req *api.ActivateProfile
 	return &api.ActivateProfileResponse{Message: "profile activated"}, nil
 }
 
-func (s *AuthServer) SignIn(_ context.Context, req *api.SignInRequest) (*api.SessionResponse, error) {
+func (s *AuthServer) SignIn(ctx context.Context, req *api.SignInRequest) (*api.SessionResponse, error) {
 	if len(req.Email) == 0 && len(req.Nickname) == 0 {
 		return nil, fail.GrpcInvalidBody
 	}
@@ -59,7 +59,7 @@ func (s *AuthServer) SignIn(_ context.Context, req *api.SignInRequest) (*api.Ses
 		credentials.Nickname = &req.Nickname
 	}
 
-	tokens, err := s.service.Session.SignIn(credentials, entity.ClientData{Ip: req.Ip, UserAgent: req.UserAgent})
+	tokens, err := s.service.Session.SignIn(ctx, credentials, entity.ClientData{Ip: req.Ip, UserAgent: req.UserAgent})
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +71,8 @@ func (s *AuthServer) GetAccessTokenPublicKey(_ context.Context, _ *api.GetAccess
 	return &api.GetAccessTokenPublicKeyResponse{PublicKey: s.service.Session.GetAccessTokenPublicKey()}, nil
 }
 
-func (s *AuthServer) RefreshSession(_ context.Context, req *api.RefreshSessionRequest) (*api.SessionResponse, error) {
-	tokens, err := s.service.Session.Refresh(req.RefreshToken, req.Ip, req.UserAgent)
+func (s *AuthServer) RefreshSession(ctx context.Context, req *api.RefreshSessionRequest) (*api.SessionResponse, error) {
+	tokens, err := s.service.Session.Refresh(ctx, req.RefreshToken, req.Ip, req.UserAgent)
 	if err != nil {
 		return nil, err
 	}

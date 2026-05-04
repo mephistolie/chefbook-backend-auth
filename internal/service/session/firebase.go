@@ -9,7 +9,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
-func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo, error) {
+func (s *Service) importFirebaseProfile(ctx context.Context, email, password string) (entity.AuthInfo, error) {
 	firebaseProfile, err := s.firebase.SignIn(email, password)
 	if err != nil {
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
@@ -27,7 +27,7 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
-	profile, err := s.firebase.GetProfile(context.Background(), firebaseProfile.LocalId)
+	profile, err := s.firebase.GetProfile(ctx, firebaseProfile.LocalId)
 	if err != nil {
 		log.Errorf("unable to get firebase profile %s data: %s", firebaseProfile.LocalId, err)
 		return entity.AuthInfo{}, fail.GrpcUnknown
@@ -52,8 +52,8 @@ func (s *Service) importFirebaseProfile(email, password string) (entity.AuthInfo
 	return s.repo.GetAuthInfoById(userId)
 }
 
-func (s *Service) connectFirebaseProfile(userId uuid.UUID, email string) error {
-	profile, err := s.firebase.GetProfileByEmail(context.Background(), email)
+func (s *Service) connectFirebaseProfile(ctx context.Context, userId uuid.UUID, email string) error {
+	profile, err := s.firebase.GetProfileByEmail(ctx, email)
 	if err != nil {
 		return fail.GrpcUnknown
 	}

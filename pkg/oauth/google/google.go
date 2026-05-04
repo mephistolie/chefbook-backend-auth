@@ -52,22 +52,22 @@ func (p *OAuthProvider) CreateOAuthLink(redirectUrl string) string {
 	return config.AuthCodeURL(p.state)
 }
 
-func (p *OAuthProvider) GetAccessToken(code, state string, redirectUrl string) (string, error) {
+func (p *OAuthProvider) GetAccessToken(ctx context.Context, code, state string, redirectUrl string) (string, error) {
 	config := p.baseConfig
 	config.RedirectURL = redirectUrl
 	if p.state != state {
 		return "", errors.New("invalid state")
 	}
-	tokens, err := config.Exchange(context.Background(), code)
+	tokens, err := config.Exchange(ctx, code)
 	if err != nil {
 		return "", err
 	}
 	return tokens.AccessToken, nil
 }
 
-func (p *OAuthProvider) GetUserInfoByAccessToken(accessToken string) (*UserInfoResponse, error) {
+func (p *OAuthProvider) GetUserInfoByAccessToken(ctx context.Context, accessToken string) (*UserInfoResponse, error) {
 	bearer := fmt.Sprintf("Bearer %s", accessToken)
-	req, err := http.NewRequest("GET", userInfoEndpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", userInfoEndpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -75,9 +75,9 @@ func (p *OAuthProvider) GetUserInfoByAccessToken(accessToken string) (*UserInfoR
 	return p.getUserInfoByRequest(req)
 }
 
-func (p *OAuthProvider) GetUserInfoByIdToken(idToken string) (*UserInfoResponse, error) {
+func (p *OAuthProvider) GetUserInfoByIdToken(ctx context.Context, idToken string) (*UserInfoResponse, error) {
 	url := fmt.Sprintf("%s?id_token=%s", tokenInfoEndpoint, idToken)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +101,13 @@ func (p *OAuthProvider) getUserInfoByRequest(req *http.Request) (*UserInfoRespon
 	return &resBody, nil
 }
 
-func (p *OAuthProvider) GetUserInfoByCode(code, state, redirectUrl string) (*UserInfoResponse, error) {
-	accessToken, err := p.GetAccessToken(code, state, redirectUrl)
+func (p *OAuthProvider) GetUserInfoByCode(ctx context.Context, code, state, redirectUrl string) (*UserInfoResponse, error) {
+	accessToken, err := p.GetAccessToken(ctx, code, state, redirectUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	info, err := p.GetUserInfoByAccessToken(accessToken)
+	info, err := p.GetUserInfoByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}

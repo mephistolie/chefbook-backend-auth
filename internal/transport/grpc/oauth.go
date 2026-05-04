@@ -14,8 +14,9 @@ func (s *AuthServer) RequestGoogleOAuth(_ context.Context, req *api.RequestGoogl
 	return &api.RequestGoogleOAuthResponse{Link: s.service.OAuth.GenerateGoogleLink(req.RedirectUrl)}, nil
 }
 
-func (s *AuthServer) SignInGoogle(_ context.Context, req *api.SignInGoogleRequest) (*api.SessionResponse, error) {
+func (s *AuthServer) SignInGoogle(ctx context.Context, req *api.SignInGoogleRequest) (*api.SessionResponse, error) {
 	tokens, err := s.service.Session.SignInGoogle(
+		ctx,
 		entity.OAuthCredentials{
 			Code:  query.Decode(req.Code),
 			State: req.State,
@@ -33,8 +34,8 @@ func (s *AuthServer) SignInGoogle(_ context.Context, req *api.SignInGoogleReques
 	return dto.NewSessionResponse(tokens), nil
 }
 
-func (s *AuthServer) SignInGoogleToken(_ context.Context, req *api.SignInGoogleTokenRequest) (*api.SessionResponse, error) {
-	tokens, err := s.service.Session.SignInGoogleIdToken(req.Token, entity.ClientData{Ip: req.Ip, UserAgent: req.UserAgent})
+func (s *AuthServer) SignInGoogleToken(ctx context.Context, req *api.SignInGoogleTokenRequest) (*api.SessionResponse, error) {
+	tokens, err := s.service.Session.SignInGoogleIdToken(ctx, req.Token, entity.ClientData{Ip: req.Ip, UserAgent: req.UserAgent})
 	if err != nil {
 		return nil, err
 	}
@@ -42,13 +43,13 @@ func (s *AuthServer) SignInGoogleToken(_ context.Context, req *api.SignInGoogleT
 	return dto.NewSessionResponse(tokens), nil
 }
 
-func (s *AuthServer) ConnectGoogle(_ context.Context, req *api.ConnectGoogleRequest) (*api.ConnectGoogleResponse, error) {
+func (s *AuthServer) ConnectGoogle(ctx context.Context, req *api.ConnectGoogleRequest) (*api.ConnectGoogleResponse, error) {
 	id, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err := s.service.OAuth.ConnectGoogle(id, query.Decode(req.Code), req.State, req.RedirectUrl); err != nil {
+	if err := s.service.OAuth.ConnectGoogle(ctx, id, query.Decode(req.Code), req.State, req.RedirectUrl); err != nil {
 		return nil, err
 	}
 
@@ -76,8 +77,9 @@ func (s *AuthServer) RequestVkOAuth(_ context.Context, req *api.RequestVkOAuthRe
 	return &api.RequestVkOAuthResponse{Link: link}, nil
 }
 
-func (s *AuthServer) SignInVk(_ context.Context, req *api.SignInVkRequest) (*api.SessionResponse, error) {
+func (s *AuthServer) SignInVk(ctx context.Context, req *api.SignInVkRequest) (*api.SessionResponse, error) {
 	tokens, err := s.service.Session.SignInVk(
+		ctx,
 		entity.OAuthCredentials{
 			Code:  query.Decode(req.Code),
 			State: req.State,
@@ -95,13 +97,13 @@ func (s *AuthServer) SignInVk(_ context.Context, req *api.SignInVkRequest) (*api
 	return dto.NewSessionResponse(tokens), nil
 }
 
-func (s *AuthServer) ConnectVk(_ context.Context, req *api.ConnectVkRequest) (*api.ConnectVkResponse, error) {
+func (s *AuthServer) ConnectVk(ctx context.Context, req *api.ConnectVkRequest) (*api.ConnectVkResponse, error) {
 	id, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err := s.service.OAuth.ConnectVk(id, query.Decode(req.Code), req.State, req.RedirectUri); err != nil {
+	if err := s.service.OAuth.ConnectVk(ctx, id, query.Decode(req.Code), req.State, req.RedirectUri); err != nil {
 		return nil, err
 	}
 

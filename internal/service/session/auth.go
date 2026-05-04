@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"crypto/x509"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
@@ -11,12 +12,12 @@ import (
 	"time"
 )
 
-func (s *Service) SignUp(credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error) {
+func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error) {
 	if authInfo, err := s.repo.GetAuthInfoByEmail(credentials.Email); err == nil {
 		return s.resendActivationMail(authInfo, credentials.Password, activationLinkPattern)
 	}
 
-	if authInfo, err := s.importFirebaseProfile(credentials.Email, credentials.Password); err == nil {
+	if authInfo, err := s.importFirebaseProfile(ctx, credentials.Email, credentials.Password); err == nil {
 		return authInfo.Id, true, nil
 	}
 
@@ -41,13 +42,13 @@ func (s *Service) SignUp(credentials entity.SignUpCredentials, activationLinkPat
 func (s *Service) ActivateProfile(userId uuid.UUID, code string) error {
 	return s.repo.ActivateProfile(userId, code)
 }
-func (s *Service) SignIn(credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error) {
+func (s *Service) SignIn(ctx context.Context, credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error) {
 	authInfo, err := s.repo.GetAuthInfoByIdentifiers(entity.UserIdentifiers{Email: credentials.Email, Nickname: credentials.Nickname})
 	if err != nil {
 		if credentials.Email == nil || s.firebase == nil {
 			return entity.Tokens{}, err
 		}
-		if authInfo, err = s.importFirebaseProfile(*credentials.Email, credentials.Password); err != nil {
+		if authInfo, err = s.importFirebaseProfile(ctx, *credentials.Email, credentials.Password); err != nil {
 			return entity.Tokens{}, err
 		}
 	}
@@ -60,7 +61,7 @@ func (s *Service) SignIn(credentials entity.SignInCredentials, client entity.Cli
 		return entity.Tokens{}, authFail.GrpcInvalidCredentials
 	}
 
-	return s.createSession(authInfo, client)
+	return s.createSession(ctx, authInfo, client)
 }
 
 func (s *Service) GetAccessTokenPublicKey() []byte {
@@ -122,9 +123,9 @@ func (s *Service) resendActivationMail(authInfo entity.AuthInfo, password, linkP
 	return authInfo.Id, false, nil
 }
 
-func (s *Service) createSession(authInfo entity.AuthInfo, client entity.ClientData) (entity.Tokens, error) {
+func (s *Service) createSession(ctx context.Context, authInfo entity.AuthInfo, client entity.ClientData) (entity.Tokens, error) {
 	log.Infof("creating session for user %s with IP %s...", authInfo.Id, client.Ip)
-	tokenPair, session, err := s.createSessionEntity(authInfo, client.Ip, client.UserAgent)
+	tokenPair, session, err := s.createSessionEntity(ctx, authInfo, client.Ip, client.UserAgent)
 	if err != nil {
 		return entity.Tokens{}, err
 	}

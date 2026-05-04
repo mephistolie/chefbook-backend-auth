@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"github.com/google/uuid"
@@ -35,14 +36,14 @@ type Service struct {
 }
 
 type Session interface {
-	SignUp(credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error)
+	SignUp(ctx context.Context, credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error)
 	ActivateProfile(userId uuid.UUID, code string) error
-	SignIn(credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error)
-	SignInGoogle(credentials entity.OAuthCredentials, client entity.ClientData, redirectUrl string) (entity.Tokens, error)
-	SignInGoogleIdToken(token string, client entity.ClientData) (entity.Tokens, error)
-	SignInVk(credentials entity.OAuthCredentials, client entity.ClientData, redirectUri string) (entity.Tokens, error)
+	SignIn(ctx context.Context, credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error)
+	SignInGoogle(ctx context.Context, credentials entity.OAuthCredentials, client entity.ClientData, redirectUrl string) (entity.Tokens, error)
+	SignInGoogleIdToken(ctx context.Context, token string, client entity.ClientData) (entity.Tokens, error)
+	SignInVk(ctx context.Context, credentials entity.OAuthCredentials, client entity.ClientData, redirectUri string) (entity.Tokens, error)
 	GetAccessTokenPublicKey() []byte
-	Refresh(refreshToken, ip, userAgent string) (entity.Tokens, error)
+	Refresh(ctx context.Context, refreshToken, ip, userAgent string) (entity.Tokens, error)
 	SignOut(refreshToken string) error
 	GetAuthInfo(identifiers entity.UserIdentifiers) (entity.AuthInfo, error)
 	GetAll(userId uuid.UUID) []entity.SessionInfo
@@ -51,10 +52,10 @@ type Session interface {
 
 type OAuth interface {
 	GenerateGoogleLink(redirectUrl string) string
-	ConnectGoogle(userId uuid.UUID, code, state, redirectUri string) error
+	ConnectGoogle(ctx context.Context, userId uuid.UUID, code, state, redirectUri string) error
 	DeleteGoogleConnection(userId uuid.UUID) error
 	GenerateVkLink(display, responseType, redirectUrl string) (string, error)
-	ConnectVk(userId uuid.UUID, code, state, redirectUri string) error
+	ConnectVk(ctx context.Context, userId uuid.UUID, code, state, redirectUri string) error
 	DeleteVkConnection(userId uuid.UUID) error
 }
 
@@ -79,6 +80,7 @@ type ProfileDeletion interface {
 }
 
 func New(
+	ctx context.Context,
 	cfg *config.Config,
 	repo repository.Data,
 	grpc *grpc.Repository,

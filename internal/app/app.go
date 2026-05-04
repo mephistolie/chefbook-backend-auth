@@ -52,7 +52,7 @@ func Run(cfg *config.Config) {
 		log.Info("MQ server initialized")
 	}
 
-	authService, err := service.New(cfg, repository, grpcRepository, mq)
+	authService, err := service.New(context.Background(), cfg, repository, grpcRepository, mq)
 	if err != nil {
 		log.Fatal(err)
 		return
