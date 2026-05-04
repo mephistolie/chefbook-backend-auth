@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
@@ -10,13 +11,13 @@ import (
 	"time"
 )
 
-func (r *Repository) CreateSession(session entity.SessionInput) error {
+func (r *Repository) CreateSession(ctx context.Context, session entity.SessionInput) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (user_id, refresh_token, ip, user_agent, expires_at)
 		VALUES ($1, $2, $3, $4, $5)
 	`, sessionsTable)
 
-	if _, err := r.db.Exec(query, session.UserId, session.RefreshToken, session.Ip, session.UserAgent,
+	if _, err := r.db.ExecContext(ctx, query, session.UserId, session.RefreshToken, session.Ip, session.UserAgent,
 		session.ExpiresAt); err != nil {
 		log.Error("error while creating session: ", err)
 		return fail.GrpcUnknown
@@ -24,7 +25,7 @@ func (r *Repository) CreateSession(session entity.SessionInput) error {
 	return nil
 }
 
-func (r *Repository) GetSessions(userId uuid.UUID) []entity.SessionRawInfo {
+func (r *Repository) GetSessions(ctx context.Context, userId uuid.UUID) []entity.SessionRawInfo {
 	var sessions []entity.SessionRawInfo
 
 	query := fmt.Sprintf(`
@@ -33,7 +34,7 @@ func (r *Repository) GetSessions(userId uuid.UUID) []entity.SessionRawInfo {
 		WHERE user_id=$1
 	`, sessionsTable)
 
-	rows, err := r.db.Query(query, userId)
+	rows, err := r.db.QueryContext(ctx, query, userId)
 	if err != nil {
 		log.Errorf("unable to get user %s sessions: %s", userId, err)
 		return []entity.SessionRawInfo{}
@@ -52,14 +53,14 @@ func (r *Repository) GetSessions(userId uuid.UUID) []entity.SessionRawInfo {
 	return sessions
 }
 
-func (r *Repository) UpdateSession(session entity.SessionInput, oldRefreshToken string) error {
+func (r *Repository) UpdateSession(ctx context.Context, session entity.SessionInput, oldRefreshToken string) error {
 	query := fmt.Sprintf(`
 		UPDATE %s
 		SET refresh_token=$1, ip=$2, user_agent=$3, last_access=$4, expires_at=$5
 		WHERE refresh_token=$6
 	`, sessionsTable)
 
-	if _, err := r.db.Exec(query, session.RefreshToken, session.Ip, session.UserAgent, time.Now(), session.ExpiresAt,
+	if _, err := r.db.ExecContext(ctx, query, session.RefreshToken, session.Ip, session.UserAgent, time.Now(), session.ExpiresAt,
 		oldRefreshToken); err != nil {
 		log.Debugf("unable to update session for user %s: %s", session.UserId, err)
 		return fail.GrpcUnknown
@@ -68,7 +69,7 @@ func (r *Repository) UpdateSession(session entity.SessionInput, oldRefreshToken 
 	return nil
 }
 
-func (r *Repository) DeleteSession(refreshToken string) error {
+func (r *Repository) DeleteSession(ctx context.Context, refreshToken string) error {
 	var id = ""
 
 	deleteSessionQuery := fmt.Sprintf(`
@@ -77,7 +78,7 @@ func (r *Repository) DeleteSession(refreshToken string) error {
 		RETURNING session_id
 	`, sessionsTable)
 
-	row := r.db.QueryRow(deleteSessionQuery, refreshToken)
+	row := r.db.QueryRowContext(ctx, deleteSessionQuery, refreshToken)
 	if err := row.Scan(&id); err != nil || id == "" {
 		log.Warn("unable to delete session: ", err)
 		return authFail.GrpcSessionNotFound
@@ -86,29 +87,29 @@ func (r *Repository) DeleteSession(refreshToken string) error {
 	return nil
 }
 
-func (r *Repository) DeleteSessions(userId uuid.UUID, sessionIds []int64) {
+func (r *Repository) DeleteSessions(ctx context.Context, userId uuid.UUID, sessionIds []int64) {
 	query := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE user_id=$1 AND session_id=ANY($2)
 	`, sessionsTable)
 
-	if _, err := r.db.Exec(query, userId, sessionIds); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, userId, sessionIds); err != nil {
 		log.Warnf("unable to delete sessions for user %s: %s", userId, err)
 	}
 }
 
-func (r *Repository) DeleteAllSessions(userId uuid.UUID) {
+func (r *Repository) DeleteAllSessions(ctx context.Context, userId uuid.UUID) {
 	query := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE user_id=$1
 	`, sessionsTable)
 
-	if _, err := r.db.Exec(query, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
 		log.Warnf("unable to delete sessions for user %s: %s", userId, err)
 	}
 }
 
-func (r *Repository) DeleteOutdatedSessions(userId uuid.UUID, sessionsThreshold int) {
+func (r *Repository) DeleteOutdatedSessions(ctx context.Context, userId uuid.UUID, sessionsThreshold int) {
 	query := fmt.Sprintf(`
 		DELETE FROM %[1]v
 		WHERE user_id=$1 AND session_id NOT IN
@@ -121,7 +122,7 @@ func (r *Repository) DeleteOutdatedSessions(userId uuid.UUID, sessionsThreshold 
 		)
 	`, sessionsTable, sessionsThreshold)
 
-	if _, err := r.db.Exec(query, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
 		log.Warnf("unable to delete sessions for user %s: %s", userId, err)
 	}
 }

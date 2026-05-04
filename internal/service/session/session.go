@@ -17,14 +17,14 @@ import (
 )
 
 func (s *Service) Refresh(ctx context.Context, refreshToken, ip, userAgent string) (entity.Tokens, error) {
-	authInfo, err := s.repo.GetAuthInfoByRefreshToken(refreshToken)
+	authInfo, err := s.repo.GetAuthInfoByRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return entity.Tokens{}, err
 	}
 
 	if authInfo.IsBlocked {
 		log.Warnf("try to login blocked profile %s", authInfo.Id)
-		_ = s.repo.DeleteSession(refreshToken)
+		_ = s.repo.DeleteSession(ctx, refreshToken)
 		return entity.Tokens{}, authFail.GrpcProfileIsBlocked
 	}
 
@@ -33,11 +33,11 @@ func (s *Service) Refresh(ctx context.Context, refreshToken, ip, userAgent strin
 		return entity.Tokens{}, err
 	}
 
-	return tokenPair, s.repo.UpdateSession(session, refreshToken)
+	return tokenPair, s.repo.UpdateSession(ctx, session, refreshToken)
 }
 
-func (s *Service) GetAll(userId uuid.UUID) []entity.SessionInfo {
-	rawInfos := s.repo.GetSessions(userId)
+func (s *Service) GetAll(ctx context.Context, userId uuid.UUID) []entity.SessionInfo {
+	rawInfos := s.repo.GetSessions(ctx, userId)
 	sessionsCount := len(rawInfos)
 
 	locationMap := s.getIpLocationMap(rawInfos)
@@ -50,8 +50,8 @@ func (s *Service) GetAll(userId uuid.UUID) []entity.SessionInfo {
 	return infos
 }
 
-func (s *Service) DeleteMultiple(userId uuid.UUID, sessionIds []int64) {
-	s.repo.DeleteSessions(userId, sessionIds)
+func (s *Service) DeleteMultiple(ctx context.Context, userId uuid.UUID, sessionIds []int64) {
+	s.repo.DeleteSessions(ctx, userId, sessionIds)
 }
 
 func (s *Service) createSessionEntity(

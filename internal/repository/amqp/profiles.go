@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	api "github.com/mephistolie/chefbook-backend-auth/api/mq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -26,7 +27,7 @@ func (r *Repository) PublishProfilesMessage(msg *entity.MessageData) error {
 	}
 
 	if err == nil {
-		_ = r.outbox.MarkMessageSent(msg.Id)
+		_ = r.outbox.MarkMessageSent(context.Background(), msg.Id)
 	}
 
 	return err

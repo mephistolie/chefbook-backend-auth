@@ -13,8 +13,8 @@ import (
 )
 
 func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error) {
-	if authInfo, err := s.repo.GetAuthInfoByEmail(credentials.Email); err == nil {
-		return s.resendActivationMail(authInfo, credentials.Password, activationLinkPattern)
+	if authInfo, err := s.repo.GetAuthInfoByEmail(ctx, credentials.Email); err == nil {
+		return s.resendActivationMail(ctx, authInfo, credentials.Password, activationLinkPattern)
 	}
 
 	if authInfo, err := s.importFirebaseProfile(ctx, credentials.Email, credentials.Password); err == nil {
@@ -26,7 +26,7 @@ func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentia
 		return uuid.UUID{}, false, err
 	}
 
-	userId, msg, err := s.repo.CreateUser(credentialsHash, activationCode, entity.OAuth{})
+	userId, msg, err := s.repo.CreateUser(ctx, credentialsHash, activationCode, entity.OAuth{})
 	if err != nil {
 		return uuid.UUID{}, activationCode == nil, err
 	}
@@ -39,11 +39,11 @@ func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentia
 	return userId, activationCode == nil, nil
 }
 
-func (s *Service) ActivateProfile(userId uuid.UUID, code string) error {
-	return s.repo.ActivateProfile(userId, code)
+func (s *Service) ActivateProfile(ctx context.Context, userId uuid.UUID, code string) error {
+	return s.repo.ActivateProfile(ctx, userId, code)
 }
 func (s *Service) SignIn(ctx context.Context, credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error) {
-	authInfo, err := s.repo.GetAuthInfoByIdentifiers(entity.UserIdentifiers{Email: credentials.Email, Nickname: credentials.Nickname})
+	authInfo, err := s.repo.GetAuthInfoByIdentifiers(ctx, entity.UserIdentifiers{Email: credentials.Email, Nickname: credentials.Nickname})
 	if err != nil {
 		if credentials.Email == nil || s.firebase == nil {
 			return entity.Tokens{}, err
@@ -69,12 +69,12 @@ func (s *Service) GetAccessTokenPublicKey() []byte {
 	return x509.MarshalPKCS1PublicKey(key)
 }
 
-func (s *Service) SignOut(refreshToken string) error {
-	return s.repo.DeleteSession(refreshToken)
+func (s *Service) SignOut(ctx context.Context, refreshToken string) error {
+	return s.repo.DeleteSession(ctx, refreshToken)
 }
 
-func (s *Service) GetAuthInfo(identifiers entity.UserIdentifiers) (entity.AuthInfo, error) {
-	return s.repo.GetAuthInfoByIdentifiers(identifiers)
+func (s *Service) GetAuthInfo(ctx context.Context, identifiers entity.UserIdentifiers) (entity.AuthInfo, error) {
+	return s.repo.GetAuthInfoByIdentifiers(ctx, identifiers)
 }
 
 func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entity.CredentialsHash, *string, error) {
@@ -95,7 +95,7 @@ func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entit
 	}, activationCode, nil
 }
 
-func (s *Service) resendActivationMail(authInfo entity.AuthInfo, password, linkPattern string) (uuid.UUID, bool, error) {
+func (s *Service) resendActivationMail(ctx context.Context, authInfo entity.AuthInfo, password, linkPattern string) (uuid.UUID, bool, error) {
 	if authInfo.IsActivated {
 		log.Warnf("user with email %s already exists", authInfo.Email)
 		return uuid.UUID{}, false, authFail.GrpcUserAlreadyExists
@@ -107,13 +107,13 @@ func (s *Service) resendActivationMail(authInfo entity.AuthInfo, password, linkP
 			log.Errorf("unable to hash password: %s", err)
 			return uuid.UUID{}, false, fail.GrpcUnknown
 		}
-		err = s.repo.SetPassword(authInfo.Id, passwordHash)
+		err = s.repo.SetPassword(ctx, authInfo.Id, passwordHash)
 		if err != nil {
 			return uuid.UUID{}, false, fail.GrpcUnknown
 		}
 	}
 
-	activationCode, err := s.repo.GetProfileActivationCode(authInfo.Id)
+	activationCode, err := s.repo.GetProfileActivationCode(ctx, authInfo.Id)
 	if err != nil {
 		return uuid.UUID{}, false, fail.GrpcUnknown
 	}
@@ -130,11 +130,11 @@ func (s *Service) createSession(ctx context.Context, authInfo entity.AuthInfo, c
 		return entity.Tokens{}, err
 	}
 
-	if err = s.repo.CreateSession(session); err != nil {
+	if err = s.repo.CreateSession(ctx, session); err != nil {
 		return entity.Tokens{}, err
 	}
 
-	go s.repo.DeleteOutdatedSessions(authInfo.Id, maxSessionsCount)
+	go s.repo.DeleteOutdatedSessions(context.WithoutCancel(ctx), authInfo.Id, maxSessionsCount)
 	go s.mail.SendNewLoginMail(authInfo.Email, client, time.Now())
 
 	return tokenPair, nil

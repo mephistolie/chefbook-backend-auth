@@ -37,46 +37,46 @@ type Service struct {
 
 type Session interface {
 	SignUp(ctx context.Context, credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error)
-	ActivateProfile(userId uuid.UUID, code string) error
+	ActivateProfile(ctx context.Context, userId uuid.UUID, code string) error
 	SignIn(ctx context.Context, credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error)
 	SignInGoogle(ctx context.Context, credentials entity.OAuthCredentials, client entity.ClientData, redirectUrl string) (entity.Tokens, error)
 	SignInGoogleIdToken(ctx context.Context, token string, client entity.ClientData) (entity.Tokens, error)
 	SignInVk(ctx context.Context, credentials entity.OAuthCredentials, client entity.ClientData, redirectUri string) (entity.Tokens, error)
 	GetAccessTokenPublicKey() []byte
 	Refresh(ctx context.Context, refreshToken, ip, userAgent string) (entity.Tokens, error)
-	SignOut(refreshToken string) error
-	GetAuthInfo(identifiers entity.UserIdentifiers) (entity.AuthInfo, error)
-	GetAll(userId uuid.UUID) []entity.SessionInfo
-	DeleteMultiple(userId uuid.UUID, sessionIds []int64)
+	SignOut(ctx context.Context, refreshToken string) error
+	GetAuthInfo(ctx context.Context, identifiers entity.UserIdentifiers) (entity.AuthInfo, error)
+	GetAll(ctx context.Context, userId uuid.UUID) []entity.SessionInfo
+	DeleteMultiple(ctx context.Context, userId uuid.UUID, sessionIds []int64)
 }
 
 type OAuth interface {
 	GenerateGoogleLink(redirectUrl string) string
 	ConnectGoogle(ctx context.Context, userId uuid.UUID, code, state, redirectUri string) error
-	DeleteGoogleConnection(userId uuid.UUID) error
+	DeleteGoogleConnection(ctx context.Context, userId uuid.UUID) error
 	GenerateVkLink(display, responseType, redirectUrl string) (string, error)
 	ConnectVk(ctx context.Context, userId uuid.UUID, code, state, redirectUri string) error
-	DeleteVkConnection(userId uuid.UUID) error
+	DeleteVkConnection(ctx context.Context, userId uuid.UUID) error
 }
 
 type Password interface {
-	RequestReset(email, nickname *string, resetLinkPattern string) error
-	Reset(userId uuid.UUID, resetCode, newPassword string) error
-	Change(userId uuid.UUID, oldPassword, newPassword string) error
+	RequestReset(ctx context.Context, email, nickname *string, resetLinkPattern string) error
+	Reset(ctx context.Context, userId uuid.UUID, resetCode, newPassword string) error
+	Change(ctx context.Context, userId uuid.UUID, oldPassword, newPassword string) error
 }
 
 type Nickname interface {
-	Get(userIds []uuid.UUID) (map[uuid.UUID]string, error)
-	CheckAvailability(nickname string) (bool, error)
-	Set(userId uuid.UUID, nickname string) error
+	Get(ctx context.Context, userIds []uuid.UUID) (map[uuid.UUID]string, error)
+	CheckAvailability(ctx context.Context, nickname string) (bool, error)
+	Set(ctx context.Context, userId uuid.UUID, nickname string) error
 }
 
 type ProfileDeletion interface {
-	GetInfo(userId uuid.UUID) (*time.Time, bool)
-	Request(userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error)
+	GetInfo(ctx context.Context, userId uuid.UUID) (*time.Time, bool)
+	Request(ctx context.Context, userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error)
 	ExecuteAll()
-	Execute(request entity.DeleteProfileRequest) error
-	Cancel(userId uuid.UUID) error
+	Execute(ctx context.Context, request entity.DeleteProfileRequest) error
+	Cancel(ctx context.Context, userId uuid.UUID) error
 }
 
 func New(

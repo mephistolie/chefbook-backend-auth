@@ -29,9 +29,9 @@ func (s *Service) SignInGoogleIdToken(ctx context.Context, token string, client 
 
 func (s *Service) handleGoogleInfoResponse(ctx context.Context, googleInfo *google.UserInfoResponse, client entity.ClientData) (entity.Tokens, error) {
 	var authInfo entity.AuthInfo
-	authInfo, err := s.repo.GetAuthInfoByGoogleId(googleInfo.UserId)
+	authInfo, err := s.repo.GetAuthInfoByGoogleId(ctx, googleInfo.UserId)
 	if err != nil && len(googleInfo.Email) > 0 {
-		authInfo, err = s.repo.GetAuthInfoByEmail(googleInfo.Email)
+		authInfo, err = s.repo.GetAuthInfoByEmail(ctx, googleInfo.Email)
 	}
 
 	if err == nil {
@@ -48,7 +48,7 @@ func (s *Service) signInGoogleWithExistingProfile(
 	client entity.ClientData,
 ) (entity.Tokens, error) {
 	if authInfo.OAuth.GoogleId == nil || *authInfo.OAuth.GoogleId != googleInfo.UserId {
-		if err := s.repo.ConnectGoogle(authInfo.Id, googleInfo.UserId); err != nil {
+		if err := s.repo.ConnectGoogle(ctx, authInfo.Id, googleInfo.UserId); err != nil {
 			return entity.Tokens{}, err
 		}
 	}
@@ -69,13 +69,13 @@ func (s *Service) signInGoogleWithProfileCreation(
 	}
 
 	credentials := entity.CredentialsHash{Email: googleInfo.Email}
-	userId, msg, err := s.repo.CreateUser(credentials, nil, entity.OAuth{GoogleId: &googleInfo.UserId})
+	userId, msg, err := s.repo.CreateUser(ctx, credentials, nil, entity.OAuth{GoogleId: &googleInfo.UserId})
 	if err != nil {
 		return entity.Tokens{}, err
 	}
 	go s.mq.PublishProfilesMessage(msg)
 
-	authInfo, err = s.repo.GetAuthInfoById(userId)
+	authInfo, err = s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
 		return entity.Tokens{}, err
 	}
@@ -97,9 +97,9 @@ func (s *Service) SignInVk(ctx context.Context, credentials entity.OAuthCredenti
 	}
 
 	var authInfo entity.AuthInfo
-	authInfo, err = s.repo.GetAuthInfoByVkId(vkInfo.UserId)
+	authInfo, err = s.repo.GetAuthInfoByVkId(ctx, vkInfo.UserId)
 	if err != nil && len(vkInfo.Email) > 0 {
-		authInfo, err = s.repo.GetAuthInfoByEmail(vkInfo.Email)
+		authInfo, err = s.repo.GetAuthInfoByEmail(ctx, vkInfo.Email)
 	}
 
 	if err == nil {
@@ -116,7 +116,7 @@ func (s *Service) signInVkWithExistingProfile(
 	client entity.ClientData,
 ) (entity.Tokens, error) {
 	if authInfo.OAuth.VkId == nil || *authInfo.OAuth.VkId != vkInfo.UserId {
-		if err := s.repo.ConnectVk(authInfo.Id, vkInfo.UserId); err != nil {
+		if err := s.repo.ConnectVk(ctx, authInfo.Id, vkInfo.UserId); err != nil {
 			return entity.Tokens{}, err
 		}
 	}
@@ -137,13 +137,13 @@ func (s *Service) signInVkWithProfileCreation(
 	}
 
 	credentials := entity.CredentialsHash{Email: vkInfo.Email}
-	userId, msg, err := s.repo.CreateUser(credentials, nil, entity.OAuth{VkId: &vkInfo.UserId})
+	userId, msg, err := s.repo.CreateUser(ctx, credentials, nil, entity.OAuth{VkId: &vkInfo.UserId})
 	if err != nil {
 		return entity.Tokens{}, err
 	}
 	go s.mq.PublishProfilesMessage(msg)
 
-	authInfo, err = s.repo.GetAuthInfoById(userId)
+	authInfo, err = s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
 		return entity.Tokens{}, err
 	}

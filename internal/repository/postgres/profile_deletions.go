@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -12,7 +13,7 @@ import (
 	"time"
 )
 
-func (r *Repository) GetProfilesToDelete() []entity.DeleteProfileRequest {
+func (r *Repository) GetProfilesToDelete(ctx context.Context) []entity.DeleteProfileRequest {
 	var requests []entity.DeleteProfileRequest
 
 	query := fmt.Sprintf(`
@@ -21,7 +22,7 @@ func (r *Repository) GetProfilesToDelete() []entity.DeleteProfileRequest {
 		WHERE deletion_timestamp<=$1
 	`, deleteProfileRequestsTable)
 
-	rows, err := r.db.Query(query, time.Now())
+	rows, err := r.db.QueryContext(ctx, query, time.Now())
 	if err != nil {
 		log.Error("unable to get delete profile requests: ", err)
 		return []entity.DeleteProfileRequest{}
@@ -40,7 +41,7 @@ func (r *Repository) GetProfilesToDelete() []entity.DeleteProfileRequest {
 	return requests
 }
 
-func (r *Repository) GetDeleteProfileRequest(userId uuid.UUID) (entity.DeleteProfileRequest, error) {
+func (r *Repository) GetDeleteProfileRequest(ctx context.Context, userId uuid.UUID) (entity.DeleteProfileRequest, error) {
 	var request entity.DeleteProfileRequest
 
 	query := fmt.Sprintf(`
@@ -49,7 +50,7 @@ func (r *Repository) GetDeleteProfileRequest(userId uuid.UUID) (entity.DeletePro
 		WHERE user_id=$1
 	`, deleteProfileRequestsTable)
 
-	row := r.db.QueryRow(query, request.UserId)
+	row := r.db.QueryRowContext(ctx, query, userId)
 	if err := row.Scan(&request.UserId, &request.WithSharedData, &request.Timestamp); err != nil {
 		log.Warnf("delete profile request for user %s not found: %s", userId, err)
 		return entity.DeleteProfileRequest{}, fail.GrpcNotFound
@@ -58,7 +59,7 @@ func (r *Repository) GetDeleteProfileRequest(userId uuid.UUID) (entity.DeletePro
 	return request, nil
 }
 
-func (r *Repository) RequestDeleteProfile(userId uuid.UUID, deleteSharedData bool) (time.Time, error) {
+func (r *Repository) RequestDeleteProfile(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (time.Time, error) {
 	deletionTimestamp := time.Now().Add(r.profileDeleteOffset)
 
 	query := fmt.Sprintf(`
@@ -66,9 +67,9 @@ func (r *Repository) RequestDeleteProfile(userId uuid.UUID, deleteSharedData boo
 		VALUES ($1, $2, $3)
 	`, deleteProfileRequestsTable)
 
-	if _, err := r.db.Exec(query, userId, deleteSharedData, deletionTimestamp); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, userId, deleteSharedData, deletionTimestamp); err != nil {
 		if isUniqueViolationError(err) {
-			request, err := r.GetDeleteProfileRequest(userId)
+			request, err := r.GetDeleteProfileRequest(ctx, userId)
 			if err != nil {
 				return time.Time{}, fail.GrpcUnknown
 			}
@@ -82,13 +83,13 @@ func (r *Repository) RequestDeleteProfile(userId uuid.UUID, deleteSharedData boo
 	return deletionTimestamp, nil
 }
 
-func (r *Repository) CancelProfileDeletion(userId uuid.UUID) error {
+func (r *Repository) CancelProfileDeletion(ctx context.Context, userId uuid.UUID) error {
 	query := fmt.Sprintf(`
 		DELETE FROM %s
 		WHERE user_id=$1
 	`, deleteProfileRequestsTable)
 
-	if _, err := r.db.Exec(query, userId); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
 		log.Infof("unable to cancel delete profile %s request: %s", userId, err)
 		return fail.GrpcUnknown
 	}
@@ -96,8 +97,8 @@ func (r *Repository) CancelProfileDeletion(userId uuid.UUID) error {
 	return nil
 }
 
-func (r *Repository) DeleteUser(userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error) {
-	tx, err := r.db.Begin()
+func (r *Repository) DeleteUser(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		log.Error("unable to begin transaction: ", err)
 		return nil, fail.GrpcUnknown
@@ -108,12 +109,12 @@ func (r *Repository) DeleteUser(userId uuid.UUID, deleteSharedData bool) (*entit
 		WHERE user_id=$1
 	`, usersTable)
 
-	if _, err := tx.Exec(query, userId); err != nil {
+	if _, err := tx.ExecContext(ctx, query, userId); err != nil {
 		log.Infof("unable to delete user %s: %s", userId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	msg, err := r.addOutboxProfileDeletedMsg(userId, deleteSharedData, tx)
+	msg, err := r.addOutboxProfileDeletedMsg(ctx, userId, deleteSharedData, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +122,7 @@ func (r *Repository) DeleteUser(userId uuid.UUID, deleteSharedData bool) (*entit
 	return msg, commitTransaction(tx)
 }
 
-func (r *Repository) addOutboxProfileDeletedMsg(id uuid.UUID, deleteSharedData bool, tx *sql.Tx) (*entity.MessageData, error) {
+func (r *Repository) addOutboxProfileDeletedMsg(ctx context.Context, id uuid.UUID, deleteSharedData bool, tx *sql.Tx) (*entity.MessageData, error) {
 	msgBody := api.MsgBodyProfileDeleted{
 		UserId:           id.String(),
 		DeleteSharedData: deleteSharedData,
@@ -138,5 +139,5 @@ func (r *Repository) addOutboxProfileDeletedMsg(id uuid.UUID, deleteSharedData b
 		Body:     msgBodyBson,
 	}
 
-	return &msg, r.createOutboxMsg(&msg, tx)
+	return &msg, r.createOutboxMsg(ctx, &msg, tx)
 }

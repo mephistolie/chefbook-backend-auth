@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"fmt"
 	api "github.com/mephistolie/chefbook-backend-auth/api/mq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
@@ -49,7 +50,7 @@ func (r *Repository) Start() error {
 func (r *Repository) observeOutbox() {
 	for {
 		fails := 0
-		if msgs, err := r.outbox.GetPendingMessages(); err == nil {
+		if msgs, err := r.outbox.GetPendingMessages(context.Background()); err == nil {
 			for _, msg := range msgs {
 				if err = r.PublishProfilesMessage(msg); err != nil {
 					fails += 1

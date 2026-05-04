@@ -1,6 +1,7 @@
 package password
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
@@ -34,13 +35,13 @@ func NewService(
 	}
 }
 
-func (s *Service) RequestReset(email, nickname *string, resetLinkPattern string) error {
-	authInfo, err := s.repo.GetAuthInfoByIdentifiers(entity.UserIdentifiers{Email: email, Nickname: nickname})
+func (s *Service) RequestReset(ctx context.Context, email, nickname *string, resetLinkPattern string) error {
+	authInfo, err := s.repo.GetAuthInfoByIdentifiers(ctx, entity.UserIdentifiers{Email: email, Nickname: nickname})
 	if err != nil || !authInfo.IsActivated {
 		return nil
 	}
 
-	resetCode, err := s.repo.CreatePasswordResetRequest(authInfo.Id, time.Now().Add(s.resetPasswordCodeTTL))
+	resetCode, err := s.repo.CreatePasswordResetRequest(ctx, authInfo.Id, time.Now().Add(s.resetPasswordCodeTTL))
 	if err != nil {
 		return err
 	}
@@ -50,17 +51,17 @@ func (s *Service) RequestReset(email, nickname *string, resetLinkPattern string)
 	return nil
 }
 
-func (s *Service) Reset(userId uuid.UUID, resetCode, newPassword string) error {
+func (s *Service) Reset(ctx context.Context, userId uuid.UUID, resetCode, newPassword string) error {
 	passwordHash, err := s.hashManager.Hash(newPassword)
 	if err != nil {
 		log.Errorf("unable to hash password: %s", err)
 		return fail.GrpcUnknown
 	}
-	return s.repo.ResetPassword(userId, resetCode, passwordHash)
+	return s.repo.ResetPassword(ctx, userId, resetCode, passwordHash)
 }
 
-func (s *Service) Change(userId uuid.UUID, oldPassword, newPassword string) error {
-	authInfo, err := s.repo.GetAuthInfoById(userId)
+func (s *Service) Change(ctx context.Context, userId uuid.UUID, oldPassword, newPassword string) error {
+	authInfo, err := s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
 		return authFail.GrpcUserNotFound
 	}
@@ -77,7 +78,7 @@ func (s *Service) Change(userId uuid.UUID, oldPassword, newPassword string) erro
 		log.Errorf("unable to hash password: %s", err)
 		return fail.GrpcUnknown
 	}
-	if err = s.repo.SetPassword(userId, passwordHash); err != nil {
+	if err = s.repo.SetPassword(ctx, userId, passwordHash); err != nil {
 		return err
 	}
 

@@ -8,7 +8,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
-func (s *AuthServer) RequestPasswordReset(_ context.Context, req *api.RequestPasswordResetRequest) (*api.RequestPasswordResetResponse, error) {
+func (s *AuthServer) RequestPasswordReset(ctx context.Context, req *api.RequestPasswordResetRequest) (*api.RequestPasswordResetResponse, error) {
 	if len(req.Email) == 0 && len(req.Nickname) == 0 {
 		return nil, fail.GrpcInvalidBody
 	}
@@ -22,13 +22,13 @@ func (s *AuthServer) RequestPasswordReset(_ context.Context, req *api.RequestPas
 		nickname = &req.Nickname
 	}
 
-	if err := s.service.Password.RequestReset(email, nickname, req.ResetPasswordLinkPattern); err != nil {
+	if err := s.service.Password.RequestReset(ctx, email, nickname, req.ResetPasswordLinkPattern); err != nil {
 		return nil, err
 	}
 	return &api.RequestPasswordResetResponse{Message: "if the profile exists, reset link has been sent"}, nil
 }
 
-func (s *AuthServer) ResetPassword(_ context.Context, req *api.ResetPasswordRequest) (*api.ResetPasswordResponse, error) {
+func (s *AuthServer) ResetPassword(ctx context.Context, req *api.ResetPasswordRequest) (*api.ResetPasswordResponse, error) {
 	if err := credentials.ValidatePassword(req.NewPassword); err != nil {
 		return nil, err
 	}
@@ -37,13 +37,13 @@ func (s *AuthServer) ResetPassword(_ context.Context, req *api.ResetPasswordRequ
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
-	if err = s.service.Password.Reset(userId, req.ResetCode, req.NewPassword); err != nil {
+	if err = s.service.Password.Reset(ctx, userId, req.ResetCode, req.NewPassword); err != nil {
 		return nil, err
 	}
 	return &api.ResetPasswordResponse{Message: "password reset"}, nil
 }
 
-func (s *AuthServer) ChangePassword(_ context.Context, req *api.ChangePasswordRequest) (*api.ChangePasswordResponse, error) {
+func (s *AuthServer) ChangePassword(ctx context.Context, req *api.ChangePasswordRequest) (*api.ChangePasswordResponse, error) {
 	if err := credentials.ValidatePassword(req.NewPassword); err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (s *AuthServer) ChangePassword(_ context.Context, req *api.ChangePasswordRe
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
-	if err = s.service.Password.Change(userId, req.OldPassword, req.NewPassword); err != nil {
+	if err = s.service.Password.Change(ctx, userId, req.OldPassword, req.NewPassword); err != nil {
 		return nil, err
 	}
 	return &api.ChangePasswordResponse{Message: "password changed"}, nil

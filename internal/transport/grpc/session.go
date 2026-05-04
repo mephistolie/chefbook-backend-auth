@@ -34,12 +34,12 @@ func (s *AuthServer) SignUp(ctx context.Context, req *api.SignUpRequest) (*api.S
 	return &api.SignUpResponse{Id: id.String(), Activated: activated}, nil
 }
 
-func (s *AuthServer) ActivateProfile(_ context.Context, req *api.ActivateProfileRequest) (*api.ActivateProfileResponse, error) {
+func (s *AuthServer) ActivateProfile(ctx context.Context, req *api.ActivateProfileRequest) (*api.ActivateProfileResponse, error) {
 	id, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
-	if err = s.service.Session.ActivateProfile(id, req.ActivationCode); err != nil {
+	if err = s.service.Session.ActivateProfile(ctx, id, req.ActivationCode); err != nil {
 		return nil, err
 	}
 	return &api.ActivateProfileResponse{Message: "profile activated"}, nil
@@ -80,14 +80,14 @@ func (s *AuthServer) RefreshSession(ctx context.Context, req *api.RefreshSession
 	return dto.NewSessionResponse(tokens), nil
 }
 
-func (s *AuthServer) SignOut(_ context.Context, req *api.SignOutRequest) (*api.SignOutResponse, error) {
-	if err := s.service.Session.SignOut(req.RefreshToken); err != nil {
+func (s *AuthServer) SignOut(ctx context.Context, req *api.SignOutRequest) (*api.SignOutResponse, error) {
+	if err := s.service.Session.SignOut(ctx, req.RefreshToken); err != nil {
 		return nil, err
 	}
 	return &api.SignOutResponse{Message: "session closed"}, nil
 }
 
-func (s *AuthServer) GetAuthInfo(_ context.Context, req *api.GetAuthInfoRequest) (*api.GetAuthInfoResponse, error) {
+func (s *AuthServer) GetAuthInfo(ctx context.Context, req *api.GetAuthInfoRequest) (*api.GetAuthInfoResponse, error) {
 	if len(req.Id) == 0 && len(req.Email) == 0 && len(req.Nickname) == 0 {
 		return nil, fail.GrpcInvalidBody
 	}
@@ -104,7 +104,7 @@ func (s *AuthServer) GetAuthInfo(_ context.Context, req *api.GetAuthInfoRequest)
 		identifiers.Nickname = &req.Nickname
 	}
 
-	authInfo, err := s.service.Session.GetAuthInfo(identifiers)
+	authInfo, err := s.service.Session.GetAuthInfo(ctx, identifiers)
 	if err != nil {
 		return nil, err
 	}
@@ -112,24 +112,24 @@ func (s *AuthServer) GetAuthInfo(_ context.Context, req *api.GetAuthInfoRequest)
 	return dto.NewGetAuthInfoResponse(authInfo), nil
 }
 
-func (s *AuthServer) GetSessions(_ context.Context, req *api.GetSessionsRequest) (*api.GetSessionsResponse, error) {
+func (s *AuthServer) GetSessions(ctx context.Context, req *api.GetSessionsRequest) (*api.GetSessionsResponse, error) {
 	userId, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	sessions := s.service.Session.GetAll(userId)
+	sessions := s.service.Session.GetAll(ctx, userId)
 
 	return dto.NewGetSessionsResponse(sessions), nil
 }
 
-func (s *AuthServer) EndSessions(_ context.Context, req *api.EndSessionsRequest) (*api.EndSessionsResponse, error) {
+func (s *AuthServer) EndSessions(ctx context.Context, req *api.EndSessionsRequest) (*api.EndSessionsResponse, error) {
 	userId, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	s.service.Session.DeleteMultiple(userId, req.Sessions)
+	s.service.Session.DeleteMultiple(ctx, userId, req.Sessions)
 
 	return &api.EndSessionsResponse{Message: "sessions deleted"}, nil
 }

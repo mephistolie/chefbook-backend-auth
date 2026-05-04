@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
@@ -9,17 +10,17 @@ import (
 	"time"
 )
 
-func (r *Repository) CreatePasswordResetRequest(userId uuid.UUID, expiration time.Time) (uuid.UUID, error) {
+func (r *Repository) CreatePasswordResetRequest(ctx context.Context, userId uuid.UUID, expiration time.Time) (uuid.UUID, error) {
 	resetCode := uuid.UUID{}
 
-	r.removeOutdatedPasswordResetRequests(userId)
+	r.removeOutdatedPasswordResetRequests(ctx, userId)
 
 	getExistingResetCodeQuery := fmt.Sprintf(`
 		SELECT reset_code
 		FROM %s
 		WHERE user_id=$1 AND used=false
 	`, passwordResetsTable)
-	if err := r.db.Get(&resetCode, getExistingResetCodeQuery, userId); err == nil {
+	if err := r.db.GetContext(ctx, &resetCode, getExistingResetCodeQuery, userId); err == nil {
 		log.Infof("found existing password reset code for user %s", userId)
 		return resetCode, nil
 	}
@@ -29,7 +30,7 @@ func (r *Repository) CreatePasswordResetRequest(userId uuid.UUID, expiration tim
 		INSERT INTO %s (user_id, reset_code, expires_at)
 		VALUES ($1, $2, $3)
 	`, passwordResetsTable)
-	if _, err := r.db.Exec(createResetCodeQuery, userId, resetCode.String(), expiration); err != nil {
+	if _, err := r.db.ExecContext(ctx, createResetCodeQuery, userId, resetCode.String(), expiration); err != nil {
 		log.Errorf("error while creating reset code for user %s: %s", userId, err)
 		return uuid.UUID{}, fail.GrpcUnknown
 	}
@@ -37,20 +38,20 @@ func (r *Repository) CreatePasswordResetRequest(userId uuid.UUID, expiration tim
 	return resetCode, nil
 }
 
-func (r *Repository) removeOutdatedPasswordResetRequests(userId uuid.UUID) {
+func (r *Repository) removeOutdatedPasswordResetRequests(ctx context.Context, userId uuid.UUID) {
 	query := fmt.Sprintf(`
 		DELETE FROM %[1]v
 		WHERE user_id=$1 AND used=false AND expires_at<=$2
 	`, passwordResetsTable)
 
-	if _, err := r.db.Exec(query, userId, time.Now()); err != nil {
+	if _, err := r.db.ExecContext(ctx, query, userId, time.Now()); err != nil {
 		log.Errorf("error while delete outdated reset codes for user %s: %s", userId, err)
 	}
 }
 
-func (r *Repository) ResetPassword(userId uuid.UUID, resetCode string, passwordHash string) error {
+func (r *Repository) ResetPassword(ctx context.Context, userId uuid.UUID, resetCode string, passwordHash string) error {
 
-	tx, err := r.db.Begin()
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		log.Error("unable to begin transaction: ", err)
 		return fail.GrpcUnknown
@@ -62,7 +63,7 @@ func (r *Repository) ResetPassword(userId uuid.UUID, resetCode string, passwordH
 		WHERE user_id=$1 AND reset_code=$2 AND used=false AND expires_at>$3
 	`, passwordResetsTable)
 
-	res, err := tx.Exec(userResetCodeQuery, userId, resetCode, time.Now())
+	res, err := tx.ExecContext(ctx, userResetCodeQuery, userId, resetCode, time.Now())
 	if err != nil {
 		log.Errorf("invalid reset code %s for user %s: %s", resetCode, userId, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
@@ -78,7 +79,7 @@ func (r *Repository) ResetPassword(userId uuid.UUID, resetCode string, passwordH
 		WHERE user_id=$2
 	`, usersTable)
 
-	if _, err := tx.Exec(changePasswordQuery, passwordHash, userId); err != nil {
+	if _, err := tx.ExecContext(ctx, changePasswordQuery, passwordHash, userId); err != nil {
 		log.Errorf("error while updating password for user %s: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -86,7 +87,7 @@ func (r *Repository) ResetPassword(userId uuid.UUID, resetCode string, passwordH
 	return commitTransaction(tx)
 }
 
-func (r *Repository) SetPassword(userId uuid.UUID, passwordHash string) error {
+func (r *Repository) SetPassword(ctx context.Context, userId uuid.UUID, passwordHash string) error {
 	id := ""
 
 	changePasswordQuery := fmt.Sprintf(`
@@ -96,7 +97,7 @@ func (r *Repository) SetPassword(userId uuid.UUID, passwordHash string) error {
 		RETURNING user_id
 	`, usersTable)
 
-	row := r.db.QueryRow(changePasswordQuery, passwordHash, userId)
+	row := r.db.QueryRowContext(ctx, changePasswordQuery, passwordHash, userId)
 	if err := row.Scan(&id); err != nil || id == "" {
 		log.Errorf("error while updating password for user %s: %s", userId, err)
 		return fail.GrpcUnknown

@@ -37,11 +37,11 @@ func (s *Service) ConnectGoogle(ctx context.Context, userId uuid.UUID, code stri
 		return authFail.GrpcInvalidCode
 	}
 
-	return s.repo.ConnectGoogle(userId, googleInfo.UserId)
+	return s.repo.ConnectGoogle(ctx, userId, googleInfo.UserId)
 }
 
-func (s *Service) DeleteGoogleConnection(userId uuid.UUID) error {
-	authInfo, err := s.repo.GetAuthInfoById(userId)
+func (s *Service) DeleteGoogleConnection(ctx context.Context, userId uuid.UUID) error {
+	authInfo, err := s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (s *Service) DeleteGoogleConnection(userId uuid.UUID) error {
 	if !s.hasMultipleSignInMethods(authInfo) {
 		return authFail.GrpcFewSignInMethods
 	}
-	return s.repo.DeleteGoogleConnection(userId)
+	return s.repo.DeleteGoogleConnection(ctx, userId)
 }
 
 func (s *Service) GenerateVkLink(display, responseType, redirectUri string) (string, error) {
@@ -74,11 +74,11 @@ func (s *Service) ConnectVk(ctx context.Context, userId uuid.UUID, code, state s
 		return authFail.GrpcInvalidCode
 	}
 
-	return s.repo.ConnectVk(userId, vkResponse.UserId)
+	return s.repo.ConnectVk(ctx, userId, vkResponse.UserId)
 }
 
-func (s *Service) DeleteVkConnection(userId uuid.UUID) error {
-	authInfo, err := s.repo.GetAuthInfoById(userId)
+func (s *Service) DeleteVkConnection(ctx context.Context, userId uuid.UUID) error {
+	authInfo, err := s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (s *Service) DeleteVkConnection(userId uuid.UUID) error {
 	if !s.hasMultipleSignInMethods(authInfo) {
 		return authFail.GrpcFewSignInMethods
 	}
-	return s.repo.DeleteVkConnection(userId)
+	return s.repo.DeleteVkConnection(ctx, userId)
 }
 
 func (s *Service) hasMultipleSignInMethods(authInfo entity.AuthInfo) bool {

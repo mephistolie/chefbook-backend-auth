@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -12,7 +13,7 @@ import (
 	"time"
 )
 
-func (r *Repository) IsFirebaseProfileConnected(firebaseId string) bool {
+func (r *Repository) IsFirebaseProfileConnected(ctx context.Context, firebaseId string) bool {
 	var userId uuid.UUID
 
 	query := fmt.Sprintf(`
@@ -21,14 +22,14 @@ func (r *Repository) IsFirebaseProfileConnected(firebaseId string) bool {
 		WHERE firebase_id=$1
 	`, firebaseTable)
 
-	if err := r.db.Get(&userId, query, firebaseId); err != nil || len(userId.String()) == 0 {
+	if err := r.db.GetContext(ctx, &userId, query, firebaseId); err != nil || len(userId.String()) == 0 {
 		return false
 	}
 	return true
 }
 
-func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (*entity.MessageData, error) {
-	tx, err := r.db.Begin()
+func (r *Repository) ConnectFirebase(ctx context.Context, userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (*entity.MessageData, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		log.Error("unable to begin transaction: ", err)
 		return nil, fail.GrpcUnknown
@@ -40,7 +41,7 @@ func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creati
 		WHERE user_id=$2
 	`, usersTable)
 
-	if _, err := tx.Exec(clarifyRegistrationTimestampQuery, creationTimestamp, userId); err != nil {
+	if _, err := tx.ExecContext(ctx, clarifyRegistrationTimestampQuery, creationTimestamp, userId); err != nil {
 		log.Errorf("failed to set profile creation timestamp for user %s: %s", userId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
@@ -50,12 +51,12 @@ func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creati
 		VALUES ($1, $2)
 	`, firebaseTable)
 
-	if _, err := tx.Exec(addFirebaseConnectionQuery, userId, firebaseId); err != nil {
+	if _, err := tx.ExecContext(ctx, addFirebaseConnectionQuery, userId, firebaseId); err != nil {
 		log.Errorf("failed to add Firebase connection fo user %s with firebase id %s: %s", userId, firebaseId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	msg, err := r.addOutboxProfileFirebaseImportMsg(userId, firebaseId, tx)
+	msg, err := r.addOutboxProfileFirebaseImportMsg(ctx, userId, firebaseId, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func (r *Repository) ConnectFirebase(userId uuid.UUID, firebaseId string, creati
 	return msg, commitTransaction(tx)
 }
 
-func (r *Repository) addOutboxProfileFirebaseImportMsg(id uuid.UUID, firebaseId string, tx *sql.Tx) (*entity.MessageData, error) {
+func (r *Repository) addOutboxProfileFirebaseImportMsg(ctx context.Context, id uuid.UUID, firebaseId string, tx *sql.Tx) (*entity.MessageData, error) {
 	msgBody := api.MsgBodyProfileFirebaseImport{
 		UserId:     id.String(),
 		FirebaseId: firebaseId,
@@ -80,5 +81,5 @@ func (r *Repository) addOutboxProfileFirebaseImportMsg(id uuid.UUID, firebaseId 
 		Body:     msgBodyBson,
 	}
 
-	return &msgInfo, r.createOutboxMsg(&msgInfo, tx)
+	return &msgInfo, r.createOutboxMsg(ctx, &msgInfo, tx)
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
-func (s *AuthServer) GetVisibleNames(_ context.Context, req *api.GetVisibleNamesRequest) (*api.GetVisibleNamesResponse, error) {
+func (s *AuthServer) GetVisibleNames(ctx context.Context, req *api.GetVisibleNamesRequest) (*api.GetVisibleNamesResponse, error) {
 	var userIds []uuid.UUID
 	for _, rawId := range req.UserIds {
 		if userId, err := uuid.Parse(rawId); err == nil {
@@ -15,7 +15,7 @@ func (s *AuthServer) GetVisibleNames(_ context.Context, req *api.GetVisibleNames
 		}
 	}
 
-	response, err := s.service.Nickname.Get(userIds)
+	response, err := s.service.Nickname.Get(ctx, userIds)
 
 	visibleNames := make(map[string]string)
 	for id, name := range response {
@@ -25,16 +25,16 @@ func (s *AuthServer) GetVisibleNames(_ context.Context, req *api.GetVisibleNames
 	return &api.GetVisibleNamesResponse{UserVisibleNames: visibleNames}, err
 }
 
-func (s *AuthServer) CheckNicknameAvailability(_ context.Context, req *api.CheckNicknameAvailabilityRequest) (*api.CheckNicknameAvailabilityResponse, error) {
+func (s *AuthServer) CheckNicknameAvailability(ctx context.Context, req *api.CheckNicknameAvailabilityRequest) (*api.CheckNicknameAvailabilityResponse, error) {
 	if err := s.nicknameValidator.Validate(req.Nickname); err != nil {
 		return nil, err
 	}
 
-	available, err := s.service.Nickname.CheckAvailability(req.Nickname)
+	available, err := s.service.Nickname.CheckAvailability(ctx, req.Nickname)
 	return &api.CheckNicknameAvailabilityResponse{Available: available}, err
 }
 
-func (s *AuthServer) SetNickname(_ context.Context, req *api.SetNicknameRequest) (*api.SetNicknameResponse, error) {
+func (s *AuthServer) SetNickname(ctx context.Context, req *api.SetNicknameRequest) (*api.SetNicknameResponse, error) {
 	userId, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
@@ -43,7 +43,7 @@ func (s *AuthServer) SetNickname(_ context.Context, req *api.SetNicknameRequest)
 		return nil, err
 	}
 
-	if err = s.service.Nickname.Set(userId, req.Nickname); err != nil {
+	if err = s.service.Nickname.Set(ctx, userId, req.Nickname); err != nil {
 		return nil, err
 	}
 	return &api.SetNicknameResponse{Message: "nickname set"}, nil

@@ -8,13 +8,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *AuthServer) GetProfileDeletionStatus(_ context.Context, req *api.GetProfileDeletionStatusRequest) (*api.GetProfileDeletionStatusResponse, error) {
+func (s *AuthServer) GetProfileDeletionStatus(ctx context.Context, req *api.GetProfileDeletionStatusRequest) (*api.GetProfileDeletionStatusResponse, error) {
 	userId, err := uuid.Parse(req.ProfileId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	timestamp, deleted := s.service.ProfileDeletion.GetInfo(userId)
+	timestamp, deleted := s.service.ProfileDeletion.GetInfo(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -27,13 +27,13 @@ func (s *AuthServer) GetProfileDeletionStatus(_ context.Context, req *api.GetPro
 	return &api.GetProfileDeletionStatusResponse{DeletionTimestamp: deletionTimestamp, Deleted: deleted}, nil
 }
 
-func (s *AuthServer) DeleteProfile(_ context.Context, req *api.DeleteProfileRequest) (*api.DeleteProfileResponse, error) {
+func (s *AuthServer) DeleteProfile(ctx context.Context, req *api.DeleteProfileRequest) (*api.DeleteProfileResponse, error) {
 	userId, err := uuid.Parse(req.ProfileId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	timestamp, err := s.service.ProfileDeletion.Request(userId, req.Password, req.DeleteSharedData)
+	timestamp, err := s.service.ProfileDeletion.Request(ctx, userId, req.Password, req.DeleteSharedData)
 	if err != nil {
 		return nil, err
 	}
@@ -41,13 +41,13 @@ func (s *AuthServer) DeleteProfile(_ context.Context, req *api.DeleteProfileRequ
 	return &api.DeleteProfileResponse{DeletionTimestamp: timestamppb.New(timestamp)}, nil
 }
 
-func (s *AuthServer) CancelProfileDeletion(_ context.Context, req *api.CancelProfileDeletionRequest) (*api.CancelProfileDeletionResponse, error) {
+func (s *AuthServer) CancelProfileDeletion(ctx context.Context, req *api.CancelProfileDeletionRequest) (*api.CancelProfileDeletionResponse, error) {
 	userId, err := uuid.Parse(req.ProfileId)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err = s.service.ProfileDeletion.Cancel(userId); err != nil {
+	if err = s.service.ProfileDeletion.Cancel(ctx, userId); err != nil {
 		return nil, err
 	}
 

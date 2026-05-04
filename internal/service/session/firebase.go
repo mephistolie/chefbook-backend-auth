@@ -16,7 +16,7 @@ func (s *Service) importFirebaseProfile(ctx context.Context, email, password str
 	}
 	log.Infof("found Firebase profile %s for email %s; importing...", firebaseProfile.LocalId, email)
 
-	if s.repo.IsFirebaseProfileConnected(firebaseProfile.LocalId) {
+	if s.repo.IsFirebaseProfileConnected(ctx, firebaseProfile.LocalId) {
 		log.Warnf("Firebase profile %s already connected to other user", firebaseProfile.LocalId)
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
 	}
@@ -33,7 +33,7 @@ func (s *Service) importFirebaseProfile(ctx context.Context, email, password str
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
-	userId, msg, err := s.repo.CreateUser(entity.CredentialsHash{
+	userId, msg, err := s.repo.CreateUser(ctx, entity.CredentialsHash{
 		Email:        email,
 		PasswordHash: &passwordHash,
 	}, nil, entity.OAuth{})
@@ -43,13 +43,14 @@ func (s *Service) importFirebaseProfile(ctx context.Context, email, password str
 	go s.mq.PublishProfilesMessage(msg)
 
 	go func() {
-		msg, err := s.repo.ConnectFirebase(userId, firebaseProfile.LocalId, profile.CreationTimestamp)
+		ctx := context.WithoutCancel(ctx)
+		msg, err := s.repo.ConnectFirebase(ctx, userId, firebaseProfile.LocalId, profile.CreationTimestamp)
 		if err == nil {
 			_ = s.mq.PublishProfilesMessage(msg)
 		}
 	}()
 
-	return s.repo.GetAuthInfoById(userId)
+	return s.repo.GetAuthInfoById(ctx, userId)
 }
 
 func (s *Service) connectFirebaseProfile(ctx context.Context, userId uuid.UUID, email string) error {
@@ -57,7 +58,7 @@ func (s *Service) connectFirebaseProfile(ctx context.Context, userId uuid.UUID, 
 	if err != nil {
 		return fail.GrpcUnknown
 	}
-	msg, err := s.repo.ConnectFirebase(userId, profile.Id, profile.CreationTimestamp)
+	msg, err := s.repo.ConnectFirebase(ctx, userId, profile.Id, profile.CreationTimestamp)
 	if err != nil {
 		return nil
 	}

@@ -56,13 +56,13 @@ func (s *AuthServer) ConnectGoogle(ctx context.Context, req *api.ConnectGoogleRe
 	return &api.ConnectGoogleResponse{Message: "Google profile connected"}, nil
 }
 
-func (s *AuthServer) DeleteGoogleConnection(_ context.Context, req *api.DeleteGoogleConnectionRequest) (*api.DeleteGoogleConnectionResponse, error) {
+func (s *AuthServer) DeleteGoogleConnection(ctx context.Context, req *api.DeleteGoogleConnectionRequest) (*api.DeleteGoogleConnectionResponse, error) {
 	id, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	err = s.service.OAuth.DeleteGoogleConnection(id)
+	err = s.service.OAuth.DeleteGoogleConnection(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -110,13 +110,13 @@ func (s *AuthServer) ConnectVk(ctx context.Context, req *api.ConnectVkRequest) (
 	return &api.ConnectVkResponse{Message: "VK profile connected"}, nil
 }
 
-func (s *AuthServer) DeleteVkConnection(_ context.Context, req *api.DeleteVkConnectionRequest) (*api.DeleteVkConnectionResponse, error) {
+func (s *AuthServer) DeleteVkConnection(ctx context.Context, req *api.DeleteVkConnectionRequest) (*api.DeleteVkConnectionResponse, error) {
 	id, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
 
-	err = s.service.OAuth.DeleteVkConnection(id)
+	err = s.service.OAuth.DeleteVkConnection(ctx, id)
 	if err != nil {
 		return nil, err
 	}

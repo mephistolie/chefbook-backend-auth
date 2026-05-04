@@ -1,6 +1,7 @@
 package profile_deletion
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
@@ -32,8 +33,8 @@ func NewService(
 	}
 }
 
-func (s *Service) GetInfo(userId uuid.UUID) (*time.Time, bool) {
-	authInfo, err := s.repo.GetAuthInfoById(userId)
+func (s *Service) GetInfo(ctx context.Context, userId uuid.UUID) (*time.Time, bool) {
+	authInfo, err := s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
 		return nil, true
 	}
@@ -41,8 +42,8 @@ func (s *Service) GetInfo(userId uuid.UUID) (*time.Time, bool) {
 	return authInfo.DeletionTimestamp, false
 }
 
-func (s *Service) Request(userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error) {
-	authInfo, err := s.repo.GetAuthInfoById(userId)
+func (s *Service) Request(ctx context.Context, userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error) {
+	authInfo, err := s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
 		return time.Time{}, authFail.GrpcUserNotFound
 	}
@@ -52,7 +53,7 @@ func (s *Service) Request(userId uuid.UUID, password string, deleteSharedData bo
 		return time.Time{}, authFail.GrpcInvalidPassword
 	}
 
-	timestamp, err := s.repo.RequestDeleteProfile(userId, deleteSharedData)
+	timestamp, err := s.repo.RequestDeleteProfile(ctx, userId, deleteSharedData)
 	if err != nil {
 		return time.Time{}, err
 	} else {
@@ -63,20 +64,21 @@ func (s *Service) Request(userId uuid.UUID, password string, deleteSharedData bo
 }
 
 func (s *Service) ExecuteAll() {
-	requests := s.repo.GetProfilesToDelete()
+	ctx := context.Background()
+	requests := s.repo.GetProfilesToDelete(ctx)
 	for _, request := range requests {
-		_ = s.Execute(request)
+		_ = s.Execute(ctx, request)
 	}
 }
 
-func (s *Service) Execute(request entity.DeleteProfileRequest) error {
-	authInfo, err := s.repo.GetAuthInfoById(request.UserId)
+func (s *Service) Execute(ctx context.Context, request entity.DeleteProfileRequest) error {
+	authInfo, err := s.repo.GetAuthInfoById(ctx, request.UserId)
 	if err != nil {
 		log.Warnf("profile %s to delete not found: %s", request.UserId, err)
 		return authFail.GrpcUserNotFound
 	}
 
-	msg, err := s.repo.DeleteUser(request.UserId, request.WithSharedData)
+	msg, err := s.repo.DeleteUser(ctx, request.UserId, request.WithSharedData)
 	if err == nil {
 		s.mail.SendProfileDeletedMail(authInfo.Email)
 		_ = s.mq.PublishProfilesMessage(msg)
@@ -85,6 +87,6 @@ func (s *Service) Execute(request entity.DeleteProfileRequest) error {
 	return err
 }
 
-func (s *Service) Cancel(userId uuid.UUID) error {
-	return s.repo.CancelProfileDeletion(userId)
+func (s *Service) Cancel(ctx context.Context, userId uuid.UUID) error {
+	return s.repo.CancelProfileDeletion(ctx, userId)
 }
