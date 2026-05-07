@@ -24,9 +24,15 @@ func Run(cfg *config.Config) {
 	log.InitWithService("auth", *cfg.LogsPath, *cfg.Environment == config.EnvDev)
 	cfg.Print()
 
+	ctx := context.Background()
+
 	db, err := postgres.Connect(cfg.Database)
 	if err != nil {
-		log.Fatal(err)
+		log.LogFatal(ctx, log.Event{
+			Event:     "app.startup.failed",
+			Message:   "service startup failed",
+			Component: "app",
+		}, err)
 		return
 	}
 
@@ -34,7 +40,11 @@ func Run(cfg *config.Config) {
 
 	grpcRepository, err := grpcRepo.NewRepository(cfg)
 	if err != nil {
-		log.Fatal(err)
+		log.LogFatal(ctx, log.Event{
+			Event:     "app.startup.failed",
+			Message:   "service startup failed",
+			Component: "app",
+		}, err)
 		return
 	}
 
@@ -42,25 +52,45 @@ func Run(cfg *config.Config) {
 	if len(*cfg.Amqp.Host) > 0 {
 		mq, err = amqp.NewRepository(cfg.Amqp, repository)
 		if err != nil {
-			log.Fatal(err)
+			log.LogFatal(ctx, log.Event{
+				Event:     "app.startup.failed",
+				Message:   "service startup failed",
+				Component: "app",
+			}, err)
 			return
 		}
 		if err = mq.Start(); err != nil {
-			log.Fatal(err)
+			log.LogFatal(ctx, log.Event{
+				Event:     "app.startup.failed",
+				Message:   "service startup failed",
+				Component: "app",
+			}, err)
 			return
 		}
-		log.Info("MQ server initialized")
+		log.Log(ctx, log.Event{
+			Event:     "mq.server.initialized",
+			Message:   "mq server initialized",
+			Component: log.ComponentAMQP,
+		})
 	}
 
-	authService, err := service.New(context.Background(), cfg, repository, grpcRepository, mq)
+	authService, err := service.New(ctx, cfg, repository, grpcRepository, mq)
 	if err != nil {
-		log.Fatal(err)
+		log.LogFatal(ctx, log.Event{
+			Event:     "app.startup.failed",
+			Message:   "service startup failed",
+			Component: "app",
+		}, err)
 		return
 	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *cfg.Port))
 	if err != nil {
-		log.Fatal(err)
+		log.LogFatal(ctx, log.Event{
+			Event:     "app.startup.failed",
+			Message:   "service startup failed",
+			Component: "app",
+		}, err)
 		return
 	}
 
@@ -80,16 +110,24 @@ func Run(cfg *config.Config) {
 
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
-			log.Errorf("error occurred while running http server: %s\n", err.Error())
+			log.LogError(ctx, log.Event{
+				Event:     "grpc.server.failed",
+				Message:   "error occurred while running grpc server",
+				Component: log.ComponentGRPC,
+			}, err)
 		} else {
-			log.Info("gRPC server started")
+			log.Log(ctx, log.Event{
+				Event:     "grpc.server.started",
+				Message:   "grpc server started",
+				Component: log.ComponentGRPC,
+			})
 		}
 	}()
 
 	daemonService := daemon.New(authService.ProfileDeletion, cfg.ProfileDeletion)
 	go daemonService.Start()
 
-	wait := shutdown.Graceful(context.Background(), 5*time.Second, map[string]shutdown.Operation{
+	wait := shutdown.Graceful(ctx, 5*time.Second, map[string]shutdown.Operation{
 		"grpc-server": func(ctx context.Context) error {
 			grpcServer.GracefulStop()
 			return nil

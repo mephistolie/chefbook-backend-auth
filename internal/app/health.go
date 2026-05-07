@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"github.com/jmoiron/sqlx"
 	authpb "github.com/mephistolie/chefbook-backend-auth/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-common/log"
@@ -14,7 +15,11 @@ func monitorHealthChecking(db *sqlx.DB, healthServer *health.Server) {
 		status := healthpb.HealthCheckResponse_SERVING
 		if db.Ping() != nil {
 			status = healthpb.HealthCheckResponse_NOT_SERVING
-			log.Error("database is unavailable")
+			log.LogWarn(context.Background(), log.Event{
+				Event:     "postgres.health_check.failed",
+				Message:   "database is unavailable",
+				Component: log.ComponentPostgres,
+			})
 		}
 		setHealthStatus(healthServer, status)
 		time.Sleep(1 * time.Minute)
