@@ -24,7 +24,7 @@ type Validator struct {
 func NewValidator() *Validator {
 	fileBytes, err := os.ReadFile(assets.ForbiddenNicknamesFilePath)
 	if err != nil {
-		log.Error("error during nickname validator initialization: ", err)
+		log.AutoError("error during nickname validator initialization: ", err)
 	}
 	return &Validator{
 		forbiddenNicknames: strings.Split(string(fileBytes), "\n"),

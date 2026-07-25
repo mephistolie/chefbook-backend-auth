@@ -25,7 +25,7 @@ func (r *Repository) ConnectGoogle(ctx context.Context, userId uuid.UUID, google
 		WHERE user_id=$2
 	`, oauthTable)
 	if _, err := r.db.ExecContext(ctx, query, googleId, userId); err != nil {
-		log.Warnf("Google profile %s is occupied: %s", googleId, err)
+		log.AutoWarnf("Google profile %s is occupied: %s", googleId, err)
 		return authFail.GrpcAccountOccupied
 	}
 
@@ -39,7 +39,7 @@ func (r *Repository) DeleteGoogleConnection(ctx context.Context, userId uuid.UUI
 		WHERE user_id=$1
 	`, oauthTable)
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.Errorf("unable to delete Google profile connection for user %s: %s", userId, err)
+		log.AutoErrorf("unable to delete Google profile connection for user %s: %s", userId, err)
 		return fail.GrpcUnknown
 	}
 
@@ -53,7 +53,7 @@ func (r *Repository) ConnectVk(ctx context.Context, userId uuid.UUID, vkId int64
 		WHERE user_id=$2
 	`, oauthTable)
 	if _, err := r.db.ExecContext(ctx, query, vkId, userId); err != nil {
-		log.Warnf("VK profile %d is occupied: %s", vkId, err)
+		log.AutoWarnf("VK profile %d is occupied: %s", vkId, err)
 		return authFail.GrpcAccountOccupied
 	}
 
@@ -67,7 +67,7 @@ func (r *Repository) DeleteVkConnection(ctx context.Context, userId uuid.UUID) e
 		WHERE user_id=$1
 	`, oauthTable)
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.Errorf("unable to delete VK profile connection for user %s: %s", userId, err)
+		log.AutoErrorf("unable to delete VK profile connection for user %s: %s", userId, err)
 		return fail.GrpcUnknown
 	}
 

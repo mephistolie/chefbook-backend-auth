@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"github.com/mephistolie/chefbook-backend-common/log"
 	"time"
@@ -116,37 +117,9 @@ func (c Config) Validate() error {
 }
 
 func (c Config) Print() {
-	log.Infof("AUTH SERVICE CONFIGURATION\n"+
-		"Environment: %v\n"+
-		"Port: %v\n"+
-		"Logs path: %v\n\n"+
-		"Salt cost: %v\n"+
-		"Access token TTL: %v\n"+
-		"Refresh token TTL: %v\n"+
-		"Password reset code TTL: %v\n\n"+
-		"Profile deletion offset: %v\n"+
-		"Profile deletion check interval: %v\n\n"+
-		"Subscription service address: %v\n\n"+
-		"Database host: %v\n"+
-		"Database port: %v\n"+
-		"Database name: %v\n\n"+
-		"MQ host: %v\n"+
-		"MQ port: %v\n"+
-		"MQ vhost: %v\n\n"+
-		"SMTP host: %v\n"+
-		"SMTP port: %v\n\n"+
-		"OAuth state: %v\n"+
-		"Google Client ID: %v\n"+
-		"VK Client ID: %v\n",
-		*c.Environment, *c.Port, *c.LogsPath,
-		*c.Auth.SaltCost, *c.Auth.Ttl.AccessToken, *c.Auth.Ttl.RefreshToken, *c.Auth.Ttl.PasswordResetCode,
-		*c.ProfileDeletion.Offset, *c.ProfileDeletion.CheckInterval,
-		*c.SubscriptionService.Addr,
-		*c.Database.Host, *c.Database.Port, *c.Database.DBName,
-		*c.Amqp.Host, *c.Amqp.Port, *c.Amqp.VHost,
-		*c.Smtp.Host, *c.Smtp.Port,
-		*c.OAuth.State,
-		*c.OAuth.Google.ClientId,
-		*c.OAuth.Vk.ClientId,
-	)
+	log.Log(context.Background(), log.Event{
+		Event:     "config.loaded",
+		Message:   "service configuration loaded",
+		Component: "config",
+	})
 }

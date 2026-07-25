@@ -57,7 +57,7 @@ func (s *Service) SignIn(ctx context.Context, credentials entity.SignInCredentia
 		return entity.Tokens{}, err
 	}
 	if err = s.hashManager.Validate(credentials.Password, authInfo.PasswordHash); err != nil {
-		log.Infof("invalid password for user %s: %s", authInfo.Id, err)
+		log.AutoInfof("invalid password for user %s: %s", authInfo.Id, err)
 		return entity.Tokens{}, authFail.GrpcInvalidCredentials
 	}
 
@@ -80,7 +80,7 @@ func (s *Service) GetAuthInfo(ctx context.Context, identifiers entity.UserIdenti
 func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entity.CredentialsHash, *string, error) {
 	passwordHash, err := s.hashManager.Hash(credentials.Password)
 	if err != nil {
-		log.Error("unable to hash password: ", err)
+		log.AutoError("unable to hash password: ", err)
 		return entity.CredentialsHash{}, nil, fail.GrpcUnknown
 	}
 	var activationCode *string = nil
@@ -97,14 +97,14 @@ func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entit
 
 func (s *Service) resendActivationMail(ctx context.Context, authInfo entity.AuthInfo, password, linkPattern string) (uuid.UUID, bool, error) {
 	if authInfo.IsActivated {
-		log.Warnf("user with email %s already exists", authInfo.Email)
+		log.AutoWarnf("user with email %s already exists", authInfo.Email)
 		return uuid.UUID{}, false, authFail.GrpcUserAlreadyExists
 	}
 
 	if err := s.hashManager.Validate(password, authInfo.PasswordHash); err != nil {
 		passwordHash, err := s.hashManager.Hash(password)
 		if err != nil {
-			log.Errorf("unable to hash password: %s", err)
+			log.AutoErrorf("unable to hash password: %s", err)
 			return uuid.UUID{}, false, fail.GrpcUnknown
 		}
 		err = s.repo.SetPassword(ctx, authInfo.Id, passwordHash)
@@ -124,7 +124,7 @@ func (s *Service) resendActivationMail(ctx context.Context, authInfo entity.Auth
 }
 
 func (s *Service) createSession(ctx context.Context, authInfo entity.AuthInfo, client entity.ClientData) (entity.Tokens, error) {
-	log.Infof("creating session for user %s with IP %s...", authInfo.Id, client.Ip)
+	log.AutoInfof("creating session for user %s with IP %s...", authInfo.Id, client.Ip)
 	tokenPair, session, err := s.createSessionEntity(ctx, authInfo, client.Ip, client.UserAgent)
 	if err != nil {
 		return entity.Tokens{}, err
@@ -142,11 +142,11 @@ func (s *Service) createSession(ctx context.Context, authInfo entity.AuthInfo, c
 
 func (s *Service) checkProfileAvailability(authInfo entity.AuthInfo) error {
 	if authInfo.IsActivated == false {
-		log.Infof("try to login not activated profile %s", authInfo.Id)
+		log.AutoInfof("try to login not activated profile %s", authInfo.Id)
 		return authFail.GrpcProfileNotActivated
 	}
 	if authInfo.IsBlocked == true {
-		log.Warnf("try to login blocked profile %s", authInfo.Id)
+		log.AutoWarnf("try to login blocked profile %s", authInfo.Id)
 		return authFail.GrpcProfileIsBlocked
 	}
 	return nil

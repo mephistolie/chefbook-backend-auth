@@ -49,7 +49,7 @@ func (s *Service) Request(ctx context.Context, userId uuid.UUID, password string
 	}
 
 	if err = s.hashManager.Validate(password, authInfo.PasswordHash); err != nil {
-		log.Infof("invalid password for user %s: %s", userId, err)
+		log.AutoInfof("invalid password for user %s: %s", userId, err)
 		return time.Time{}, authFail.GrpcInvalidPassword
 	}
 
@@ -74,7 +74,7 @@ func (s *Service) ExecuteAll() {
 func (s *Service) Execute(ctx context.Context, request entity.DeleteProfileRequest) error {
 	authInfo, err := s.repo.GetAuthInfoById(ctx, request.UserId)
 	if err != nil {
-		log.Warnf("profile %s to delete not found: %s", request.UserId, err)
+		log.AutoWarnf("profile %s to delete not found: %s", request.UserId, err)
 		return authFail.GrpcUserNotFound
 	}
 

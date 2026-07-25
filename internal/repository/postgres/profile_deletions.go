@@ -24,7 +24,7 @@ func (r *Repository) GetProfilesToDelete(ctx context.Context) []entity.DeletePro
 
 	rows, err := r.db.QueryContext(ctx, query, time.Now())
 	if err != nil {
-		log.Error("unable to get delete profile requests: ", err)
+		log.AutoError("unable to get delete profile requests: ", err)
 		return []entity.DeleteProfileRequest{}
 	}
 
@@ -32,7 +32,7 @@ func (r *Repository) GetProfilesToDelete(ctx context.Context) []entity.DeletePro
 		var request entity.DeleteProfileRequest
 		err = rows.Scan(&request.UserId, &request.WithSharedData, &request.Timestamp)
 		if err != nil {
-			log.Errorf("unable to parse delete profile request: %s", err)
+			log.AutoErrorf("unable to parse delete profile request: %s", err)
 			continue
 		}
 		requests = append(requests, request)
@@ -52,7 +52,7 @@ func (r *Repository) GetDeleteProfileRequest(ctx context.Context, userId uuid.UU
 
 	row := r.db.QueryRowContext(ctx, query, userId)
 	if err := row.Scan(&request.UserId, &request.WithSharedData, &request.Timestamp); err != nil {
-		log.Warnf("delete profile request for user %s not found: %s", userId, err)
+		log.AutoWarnf("delete profile request for user %s not found: %s", userId, err)
 		return entity.DeleteProfileRequest{}, fail.GrpcNotFound
 	}
 
@@ -75,7 +75,7 @@ func (r *Repository) RequestDeleteProfile(ctx context.Context, userId uuid.UUID,
 			}
 			return request.Timestamp, nil
 		} else {
-			log.Errorf("unable to add profile deletion request for user %s: %s", userId, err)
+			log.AutoErrorf("unable to add profile deletion request for user %s: %s", userId, err)
 			return time.Time{}, fail.GrpcUnknown
 		}
 	}
@@ -90,7 +90,7 @@ func (r *Repository) CancelProfileDeletion(ctx context.Context, userId uuid.UUID
 	`, deleteProfileRequestsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.Infof("unable to cancel delete profile %s request: %s", userId, err)
+		log.AutoInfof("unable to cancel delete profile %s request: %s", userId, err)
 		return fail.GrpcUnknown
 	}
 
@@ -100,7 +100,7 @@ func (r *Repository) CancelProfileDeletion(ctx context.Context, userId uuid.UUID
 func (r *Repository) DeleteUser(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Error("unable to begin transaction: ", err)
+		log.AutoError("unable to begin transaction: ", err)
 		return nil, fail.GrpcUnknown
 	}
 
@@ -110,7 +110,7 @@ func (r *Repository) DeleteUser(ctx context.Context, userId uuid.UUID, deleteSha
 	`, usersTable)
 
 	if _, err := tx.ExecContext(ctx, query, userId); err != nil {
-		log.Infof("unable to delete user %s: %s", userId, err)
+		log.AutoInfof("unable to delete user %s: %s", userId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -129,7 +129,7 @@ func (r *Repository) addOutboxProfileDeletedMsg(ctx context.Context, id uuid.UUI
 	}
 	var msgBodyBson, err = json.Marshal(msgBody)
 	if err != nil {
-		log.Error("unable to marshal profile deleted message body: ", err)
+		log.AutoError("unable to marshal profile deleted message body: ", err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msg := entity.MessageData{

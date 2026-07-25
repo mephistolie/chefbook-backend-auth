@@ -18,7 +18,7 @@ func (r *Repository) GetProfileActivationCode(ctx context.Context, userId uuid.U
 	`, activationCodesTable)
 
 	if err := r.db.GetContext(ctx, &code, query, userId); err != nil {
-		log.Errorf("activation code for user %s not found: %s", userId, err)
+		log.AutoErrorf("activation code for user %s not found: %s", userId, err)
 		return "", fail.GrpcActivationLinkNotFound
 	}
 
@@ -40,7 +40,7 @@ func (r *Repository) ActivateProfile(ctx context.Context, userId uuid.UUID, code
 
 	res, queryErr := r.db.ExecContext(ctx, activateProfileQuery, userId, code)
 	if rows, err := res.RowsAffected(); queryErr != nil || err != nil || rows == 0 {
-		log.Infof("invalid activation code %s for user %s: %s", code, userId, err)
+		log.AutoInfof("invalid activation code %s for user %s: %s", code, userId, err)
 		return fail.GrpcInvalidActivationCode
 	}
 

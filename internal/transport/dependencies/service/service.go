@@ -135,7 +135,7 @@ func New(
 		credentials := []byte(*cfg.Auth.Firebase.Credentials)
 		if client, err := firebase.NewClient(credentials, *cfg.Auth.Firebase.GoogleApiKey); err == nil {
 			firebaseClient = client
-			log.Info("Firebase client initialized")
+			log.AutoInfo("Firebase client initialized")
 		}
 	}
 

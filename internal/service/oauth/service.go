@@ -33,7 +33,7 @@ func (s *Service) GenerateGoogleLink(redirectUrl string) string {
 func (s *Service) ConnectGoogle(ctx context.Context, userId uuid.UUID, code string, state, redirectUrl string) error {
 	googleInfo, err := s.providers.Google.GetUserInfoByCode(ctx, code, state, redirectUrl)
 	if err != nil {
-		log.Warnf("invalid google oauth for user %s: %s", code, err)
+		log.AutoWarnf("invalid google oauth for user %s: %s", code, err)
 		return authFail.GrpcInvalidCode
 	}
 
@@ -70,7 +70,7 @@ func (s *Service) GenerateVkLink(display, responseType, redirectUri string) (str
 func (s *Service) ConnectVk(ctx context.Context, userId uuid.UUID, code, state string, redirectUri string) error {
 	vkResponse, err := s.providers.Vk.GetAccessToken(ctx, code, state, redirectUri)
 	if err != nil {
-		log.Warnf("invalid vk oauth for user %s: %s", code, err)
+		log.AutoWarnf("invalid vk oauth for user %s: %s", code, err)
 		return authFail.GrpcInvalidCode
 	}
 

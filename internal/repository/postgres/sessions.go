@@ -19,7 +19,7 @@ func (r *Repository) CreateSession(ctx context.Context, session entity.SessionIn
 
 	if _, err := r.db.ExecContext(ctx, query, session.UserId, session.RefreshToken, session.Ip, session.UserAgent,
 		session.ExpiresAt); err != nil {
-		log.Error("error while creating session: ", err)
+		log.AutoError("error while creating session: ", err)
 		return fail.GrpcUnknown
 	}
 	return nil
@@ -36,7 +36,7 @@ func (r *Repository) GetSessions(ctx context.Context, userId uuid.UUID) []entity
 
 	rows, err := r.db.QueryContext(ctx, query, userId)
 	if err != nil {
-		log.Errorf("unable to get user %s sessions: %s", userId, err)
+		log.AutoErrorf("unable to get user %s sessions: %s", userId, err)
 		return []entity.SessionRawInfo{}
 	}
 
@@ -44,7 +44,7 @@ func (r *Repository) GetSessions(ctx context.Context, userId uuid.UUID) []entity
 		var session entity.SessionRawInfo
 		err = rows.Scan(&session.SessionId, &session.UserId, &session.Ip, &session.UserAgent, &session.AccessTime)
 		if err != nil {
-			log.Errorf("unable to parse user %s session: %s", userId, err)
+			log.AutoErrorf("unable to parse user %s session: %s", userId, err)
 			continue
 		}
 		sessions = append(sessions, session)
@@ -62,7 +62,7 @@ func (r *Repository) UpdateSession(ctx context.Context, session entity.SessionIn
 
 	if _, err := r.db.ExecContext(ctx, query, session.RefreshToken, session.Ip, session.UserAgent, time.Now(), session.ExpiresAt,
 		oldRefreshToken); err != nil {
-		log.Debugf("unable to update session for user %s: %s", session.UserId, err)
+		log.AutoDebugf("unable to update session for user %s: %s", session.UserId, err)
 		return fail.GrpcUnknown
 	}
 
@@ -80,7 +80,7 @@ func (r *Repository) DeleteSession(ctx context.Context, refreshToken string) err
 
 	row := r.db.QueryRowContext(ctx, deleteSessionQuery, refreshToken)
 	if err := row.Scan(&id); err != nil || id == "" {
-		log.Warn("unable to delete session: ", err)
+		log.AutoWarn("unable to delete session: ", err)
 		return authFail.GrpcSessionNotFound
 	}
 
@@ -94,7 +94,7 @@ func (r *Repository) DeleteSessions(ctx context.Context, userId uuid.UUID, sessi
 	`, sessionsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, userId, sessionIds); err != nil {
-		log.Warnf("unable to delete sessions for user %s: %s", userId, err)
+		log.AutoWarnf("unable to delete sessions for user %s: %s", userId, err)
 	}
 }
 
@@ -105,7 +105,7 @@ func (r *Repository) DeleteAllSessions(ctx context.Context, userId uuid.UUID) {
 	`, sessionsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.Warnf("unable to delete sessions for user %s: %s", userId, err)
+		log.AutoWarnf("unable to delete sessions for user %s: %s", userId, err)
 	}
 }
 
@@ -123,6 +123,6 @@ func (r *Repository) DeleteOutdatedSessions(ctx context.Context, userId uuid.UUI
 	`, sessionsTable, sessionsThreshold)
 
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.Warnf("unable to delete sessions for user %s: %s", userId, err)
+		log.AutoWarnf("unable to delete sessions for user %s: %s", userId, err)
 	}
 }

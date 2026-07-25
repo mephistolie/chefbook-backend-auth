@@ -70,7 +70,7 @@ func NewService(ipInfoProvider ip.InfoProvider, cfg *config.Config) (*Service, e
 }
 
 func (s *Service) SendProfileActivationMail(userId uuid.UUID, email, code, linkPattern string) {
-	log.Info("sending profile activation mail to ", email)
+	log.AutoInfo("sending profile activation mail to ", email)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Activation",
@@ -80,13 +80,13 @@ func (s *Service) SendProfileActivationMail(userId uuid.UUID, email, code, linkP
 		ActivationLink: fmt.Sprintf(linkPattern, userId, code),
 	}
 	if err := payload.SetHtmlBody(assets.ProfileActivationMailTmplFilePath, mailValues); err != nil {
-		log.Error("failed to set HTML Body for mail: ", err)
+		log.AutoError("failed to set HTML Body for mail: ", err)
 	}
 	s.sendMessage(payload)
 }
 
 func (s *Service) SendNewLoginMail(email string, client entity.ClientData, timestamp time.Time) {
-	log.Info("sending new login mail to ", email)
+	log.AutoInfo("sending new login mail to ", email)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook New Profile Login",
@@ -106,13 +106,13 @@ func (s *Service) SendNewLoginMail(email string, client entity.ClientData, times
 		Timestamp: timestamp.Format(time.RFC1123),
 	}
 	if err := payload.SetHtmlBody(assets.NewLoginFilePath, mailValues); err != nil {
-		log.Error("failed to set HTML Body for mail: ", err)
+		log.AutoError("failed to set HTML Body for mail: ", err)
 	}
 	s.sendMessage(payload)
 }
 
 func (s *Service) SendResetPasswordMail(userId uuid.UUID, email string, code string, linkPattern string) {
-	log.Info("sending password reset mail to ", email)
+	log.AutoInfo("sending password reset mail to ", email)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Password Reset",
@@ -121,25 +121,25 @@ func (s *Service) SendResetPasswordMail(userId uuid.UUID, email string, code str
 		ResetLink: fmt.Sprintf(linkPattern, userId, code),
 	}
 	if err := payload.SetHtmlBody(assets.PasswordResetMailTmplFilePath, mailValues); err != nil {
-		log.Error("failed to set HTML Body for mail: ", err)
+		log.AutoError("failed to set HTML Body for mail: ", err)
 	}
 	s.sendMessage(payload)
 }
 
 func (s *Service) SendPasswordChangedMail(email string) {
-	log.Info("sending password changed mail to ", email)
+	log.AutoInfo("sending password changed mail to ", email)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Password Update",
 	}
 	if err := payload.SetHtmlBody(assets.PasswordChangedMailTmplFilePath, nil); err != nil {
-		log.Error("failed to set HTML Body for mail: ", err)
+		log.AutoError("failed to set HTML Body for mail: ", err)
 	}
 	s.sendMessage(payload)
 }
 
 func (s *Service) SendNicknameChangedMail(email, nickname string) {
-	log.Info("sending nickname changed mail to ", email)
+	log.AutoInfo("sending nickname changed mail to ", email)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Nickname Update",
@@ -148,13 +148,13 @@ func (s *Service) SendNicknameChangedMail(email, nickname string) {
 		Nickname: nickname,
 	}
 	if err := payload.SetHtmlBody(assets.NicknameChangedMailTmplFilePath, mailValues); err != nil {
-		log.Error("failed to set HTML Body for mail: ", err)
+		log.AutoError("failed to set HTML Body for mail: ", err)
 	}
 	s.sendMessage(payload)
 }
 
 func (s *Service) SendProfileDeletionRequestMail(email string, timestamp time.Time, withSharedData bool) {
-	log.Info("sending profile deletion request mail to ", email)
+	log.AutoInfo("sending profile deletion request mail to ", email)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Deletion Request",
@@ -168,19 +168,19 @@ func (s *Service) SendProfileDeletionRequestMail(email string, timestamp time.Ti
 	}
 
 	if err := payload.SetHtmlBody(assets.ProfileDeletionRequestMailTmplFilePath, mailValues); err != nil {
-		log.Error("failed to set HTML Body for mail: ", err)
+		log.AutoError("failed to set HTML Body for mail: ", err)
 	}
 	s.sendMessage(payload)
 }
 
 func (s *Service) SendProfileDeletedMail(email string) {
-	log.Info("sending profile deleted mail to ", email)
+	log.AutoInfo("sending profile deleted mail to ", email)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Deleted",
 	}
 	if err := payload.SetHtmlBody(assets.ProfileDeletedMailTmplFilePath, nil); err != nil {
-		log.Error("failed to set HTML Body for mail: ", err)
+		log.AutoError("failed to set HTML Body for mail: ", err)
 	}
 	s.sendMessage(payload)
 }

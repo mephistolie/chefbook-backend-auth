@@ -21,7 +21,7 @@ func (r *Repository) CreateUser(
 	activationCode *string,
 	oauth entity.OAuth,
 ) (uuid.UUID, *entity.MessageData, error) {
-	log.Infof("creating user for email %s...", credentials.Email)
+	log.AutoInfof("creating user for email %s...", credentials.Email)
 	var id uuid.UUID
 	if credentials.Id != nil {
 		id = *credentials.Id
@@ -31,7 +31,7 @@ func (r *Repository) CreateUser(
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Error("unable to begin transaction: ", err)
+		log.AutoError("unable to begin transaction: ", err)
 		return uuid.UUID{}, nil, fail.GrpcUnknown
 	}
 
@@ -60,7 +60,7 @@ func (r *Repository) addUsersRow(ctx context.Context, id uuid.UUID, credentials 
 	`, usersTable)
 
 	if _, err := tx.ExecContext(ctx, query, id, credentials.Email, credentials.PasswordHash, activated); err != nil {
-		log.Errorf("unable to create user %s: %s", id, err)
+		log.AutoErrorf("unable to create user %s: %s", id, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcUnableCreateProfile)
 	}
 
@@ -74,7 +74,7 @@ func (r *Repository) addOauthRow(ctx context.Context, id uuid.UUID, oauth entity
 	`, oauthTable)
 
 	if _, err := tx.ExecContext(ctx, query, id, oauth.GoogleId, oauth.VkId); err != nil {
-		log.Errorf("unable to create user %s oauth data: %s", id, err)
+		log.AutoErrorf("unable to create user %s oauth data: %s", id, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcUnableCreateProfile)
 	}
 
@@ -89,7 +89,7 @@ func (r *Repository) addActivationCodeRow(ctx context.Context, id uuid.UUID, act
 		`, activationCodesTable)
 
 		if _, err := tx.ExecContext(ctx, query, *activationCode, id); err != nil {
-			log.Errorf("unable to create user %s activation code: %s", id, err)
+			log.AutoErrorf("unable to create user %s activation code: %s", id, err)
 			return errorWithTransactionRollback(tx, authFail.GrpcUnableCreateProfile)
 		}
 	}
@@ -103,7 +103,7 @@ func (r *Repository) addOutboxProfileCreatedMsg(ctx context.Context, id uuid.UUI
 	}
 	var msgBodyBson, err = json.Marshal(msgBody)
 	if err != nil {
-		log.Error("unable to marshal profile created message body: ", err)
+		log.AutoError("unable to marshal profile created message body: ", err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msg := entity.MessageData{
@@ -119,7 +119,7 @@ func (r *Repository) addOutboxProfileCreatedMsg(ctx context.Context, id uuid.UUI
 func (r *Repository) GetAuthInfoById(ctx context.Context, userId uuid.UUID) (entity.AuthInfo, error) {
 	info, err := r.getAuthInfoByCondition(ctx, fmt.Sprintf("%s.user_id=$1", usersTable), userId)
 	if err != nil {
-		log.Infof("user %s not found: %s", userId, err)
+		log.AutoInfof("user %s not found: %s", userId, err)
 		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
 	return info, nil
@@ -128,7 +128,7 @@ func (r *Repository) GetAuthInfoById(ctx context.Context, userId uuid.UUID) (ent
 func (r *Repository) GetAuthInfoByEmail(ctx context.Context, email string) (entity.AuthInfo, error) {
 	info, err := r.getAuthInfoByCondition(ctx, fmt.Sprintf("%s.email=$1", usersTable), email)
 	if err != nil {
-		log.Infof("user with email %s not found: %s", email, err)
+		log.AutoInfof("user with email %s not found: %s", email, err)
 		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
 	return info, nil
@@ -137,7 +137,7 @@ func (r *Repository) GetAuthInfoByEmail(ctx context.Context, email string) (enti
 func (r *Repository) GetAuthInfoByNickname(ctx context.Context, nickname string) (entity.AuthInfo, error) {
 	info, err := r.getAuthInfoByCondition(ctx, fmt.Sprintf("%s.nickname=$1", usersTable), nickname)
 	if err != nil {
-		log.Infof("user with nickname %s not found: %s", nickname, err)
+		log.AutoInfof("user with nickname %s not found: %s", nickname, err)
 		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
 	return info, nil
@@ -172,7 +172,7 @@ func (r *Repository) GetAuthInfoByRefreshToken(ctx context.Context, refreshToken
 
 	row := r.db.QueryRowContext(ctx, getUserIdQuery, refreshToken)
 	if err := row.Scan(&userId, &session.ExpiresAt); err != nil {
-		log.Warnf("session for refresh token %s not found: %s", refreshToken, err)
+		log.AutoWarnf("session for refresh token %s not found: %s", refreshToken, err)
 		return entity.AuthInfo{}, authFail.GrpcSessionNotFound
 	}
 
@@ -231,7 +231,7 @@ func (r *Repository) GetNicknames(ctx context.Context, userIds []uuid.UUID) (map
 
 	rows, err := r.db.QueryContext(ctx, query, userIds)
 	if err != nil {
-		log.Error("unable to get nicknames for users: ", err)
+		log.AutoError("unable to get nicknames for users: ", err)
 		return nil, fail.GrpcNotFound
 	}
 
@@ -240,7 +240,7 @@ func (r *Repository) GetNicknames(ctx context.Context, userIds []uuid.UUID) (map
 		var nickname *string
 
 		if err = rows.Scan(&userId, &nickname); err != nil {
-			log.Error("unable to parse nickname and email for user: ", err)
+			log.AutoError("unable to parse nickname and email for user: ", err)
 			continue
 		}
 
@@ -263,7 +263,7 @@ func (r *Repository) SetNickname(ctx context.Context, userId uuid.UUID, nickname
 	`, usersTable)
 
 	if err := r.db.GetContext(ctx, &email, query, nickname, userId); err != nil {
-		log.Infof("nickname %s is occupied: %s", nickname, err)
+		log.AutoInfof("nickname %s is occupied: %s", nickname, err)
 		return "", authFail.GrpcNicknameOccupied
 	}
 

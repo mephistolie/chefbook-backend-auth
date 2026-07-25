@@ -9,7 +9,7 @@ import (
 )
 
 func (r *Repository) PublishProfilesMessage(msg *entity.MessageData) error {
-	log.Infof("publishing message %s with type %s to exchange %s...", msg.Id, msg.Type, api.ExchangeProfiles)
+	log.AutoInfof("publishing message %s with type %s to exchange %s...", msg.Id, msg.Type, api.ExchangeProfiles)
 	err := r.publisherProfiles.Publish(
 		msg.Body,
 		[]string{""},
@@ -21,9 +21,9 @@ func (r *Repository) PublishProfilesMessage(msg *entity.MessageData) error {
 		amqp.WithPublishOptionsAppID(api.AppId),
 	)
 	if err == nil {
-		log.Infof("message %s with type %s sent successfully", msg.Id, msg.Type)
+		log.AutoInfof("message %s with type %s sent successfully", msg.Id, msg.Type)
 	} else {
-		log.Warnf("unable to send message %s with type %s: %s", msg.Id, msg.Type, err)
+		log.AutoWarnf("unable to send message %s with type %s: %s", msg.Id, msg.Type, err)
 	}
 
 	if err == nil {

@@ -21,7 +21,7 @@ func (r *Repository) CreatePasswordResetRequest(ctx context.Context, userId uuid
 		WHERE user_id=$1 AND used=false
 	`, passwordResetsTable)
 	if err := r.db.GetContext(ctx, &resetCode, getExistingResetCodeQuery, userId); err == nil {
-		log.Infof("found existing password reset code for user %s", userId)
+		log.AutoInfof("found existing password reset code for user %s", userId)
 		return resetCode, nil
 	}
 
@@ -31,7 +31,7 @@ func (r *Repository) CreatePasswordResetRequest(ctx context.Context, userId uuid
 		VALUES ($1, $2, $3)
 	`, passwordResetsTable)
 	if _, err := r.db.ExecContext(ctx, createResetCodeQuery, userId, resetCode.String(), expiration); err != nil {
-		log.Errorf("error while creating reset code for user %s: %s", userId, err)
+		log.AutoErrorf("error while creating reset code for user %s: %s", userId, err)
 		return uuid.UUID{}, fail.GrpcUnknown
 	}
 
@@ -45,7 +45,7 @@ func (r *Repository) removeOutdatedPasswordResetRequests(ctx context.Context, us
 	`, passwordResetsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, userId, time.Now()); err != nil {
-		log.Errorf("error while delete outdated reset codes for user %s: %s", userId, err)
+		log.AutoErrorf("error while delete outdated reset codes for user %s: %s", userId, err)
 	}
 }
 
@@ -53,7 +53,7 @@ func (r *Repository) ResetPassword(ctx context.Context, userId uuid.UUID, resetC
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Error("unable to begin transaction: ", err)
+		log.AutoError("unable to begin transaction: ", err)
 		return fail.GrpcUnknown
 	}
 
@@ -65,11 +65,11 @@ func (r *Repository) ResetPassword(ctx context.Context, userId uuid.UUID, resetC
 
 	res, err := tx.ExecContext(ctx, userResetCodeQuery, userId, resetCode, time.Now())
 	if err != nil {
-		log.Errorf("invalid reset code %s for user %s: %s", resetCode, userId, err)
+		log.AutoErrorf("invalid reset code %s for user %s: %s", resetCode, userId, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
 	}
 	if rows, err := res.RowsAffected(); err != nil || rows == 0 {
-		log.Infof("invalid or expired reset code %s for user %s: %s", resetCode, userId, err)
+		log.AutoInfof("invalid or expired reset code %s for user %s: %s", resetCode, userId, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
 	}
 
@@ -80,7 +80,7 @@ func (r *Repository) ResetPassword(ctx context.Context, userId uuid.UUID, resetC
 	`, usersTable)
 
 	if _, err := tx.ExecContext(ctx, changePasswordQuery, passwordHash, userId); err != nil {
-		log.Errorf("error while updating password for user %s: %s", userId, err)
+		log.AutoErrorf("error while updating password for user %s: %s", userId, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -99,7 +99,7 @@ func (r *Repository) SetPassword(ctx context.Context, userId uuid.UUID, password
 
 	row := r.db.QueryRowContext(ctx, changePasswordQuery, passwordHash, userId)
 	if err := row.Scan(&id); err != nil || id == "" {
-		log.Errorf("error while updating password for user %s: %s", userId, err)
+		log.AutoErrorf("error while updating password for user %s: %s", userId, err)
 		return fail.GrpcUnknown
 	}
 

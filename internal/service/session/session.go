@@ -23,7 +23,7 @@ func (s *Service) Refresh(ctx context.Context, refreshToken, ip, userAgent strin
 	}
 
 	if authInfo.IsBlocked {
-		log.Warnf("try to login blocked profile %s", authInfo.Id)
+		log.AutoWarnf("try to login blocked profile %s", authInfo.Id)
 		_ = s.repo.DeleteSession(ctx, refreshToken)
 		return entity.Tokens{}, authFail.GrpcProfileIsBlocked
 	}
@@ -83,7 +83,7 @@ func (s *Service) createSessionEntity(
 		Deleted:          authInfo.DeletionTimestamp != nil,
 	}, s.accessTokenTtl)
 	if err != nil {
-		log.Error("unable to create access token: ", err)
+		log.AutoError("unable to create access token: ", err)
 		return entity.Tokens{}, entity.SessionInput{}, fail.GrpcUnknown
 	}
 

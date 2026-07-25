@@ -14,22 +14,22 @@ func (s *Service) importFirebaseProfile(ctx context.Context, email, password str
 	if err != nil {
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
 	}
-	log.Infof("found Firebase profile %s for email %s; importing...", firebaseProfile.LocalId, email)
+	log.AutoInfof("found Firebase profile %s for email %s; importing...", firebaseProfile.LocalId, email)
 
 	if s.repo.IsFirebaseProfileConnected(ctx, firebaseProfile.LocalId) {
-		log.Warnf("Firebase profile %s already connected to other user", firebaseProfile.LocalId)
+		log.AutoWarnf("Firebase profile %s already connected to other user", firebaseProfile.LocalId)
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
 	}
 
 	passwordHash, err := s.hashManager.Hash(password)
 	if err != nil {
-		log.Error("unable to hash password: ", err)
+		log.AutoError("unable to hash password: ", err)
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
 	profile, err := s.firebase.GetProfile(ctx, firebaseProfile.LocalId)
 	if err != nil {
-		log.Errorf("unable to get firebase profile %s data: %s", firebaseProfile.LocalId, err)
+		log.AutoErrorf("unable to get firebase profile %s data: %s", firebaseProfile.LocalId, err)
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 

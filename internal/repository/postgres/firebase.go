@@ -31,7 +31,7 @@ func (r *Repository) IsFirebaseProfileConnected(ctx context.Context, firebaseId 
 func (r *Repository) ConnectFirebase(ctx context.Context, userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (*entity.MessageData, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Error("unable to begin transaction: ", err)
+		log.AutoError("unable to begin transaction: ", err)
 		return nil, fail.GrpcUnknown
 	}
 
@@ -42,7 +42,7 @@ func (r *Repository) ConnectFirebase(ctx context.Context, userId uuid.UUID, fire
 	`, usersTable)
 
 	if _, err := tx.ExecContext(ctx, clarifyRegistrationTimestampQuery, creationTimestamp, userId); err != nil {
-		log.Errorf("failed to set profile creation timestamp for user %s: %s", userId, err)
+		log.AutoErrorf("failed to set profile creation timestamp for user %s: %s", userId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -52,7 +52,7 @@ func (r *Repository) ConnectFirebase(ctx context.Context, userId uuid.UUID, fire
 	`, firebaseTable)
 
 	if _, err := tx.ExecContext(ctx, addFirebaseConnectionQuery, userId, firebaseId); err != nil {
-		log.Errorf("failed to add Firebase connection fo user %s with firebase id %s: %s", userId, firebaseId, err)
+		log.AutoErrorf("failed to add Firebase connection fo user %s with firebase id %s: %s", userId, firebaseId, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -71,7 +71,7 @@ func (r *Repository) addOutboxProfileFirebaseImportMsg(ctx context.Context, id u
 	}
 	var msgBodyBson, err = json.Marshal(msgBody)
 	if err != nil {
-		log.Error("unable to marshal firebase import message body: ", err)
+		log.AutoError("unable to marshal firebase import message body: ", err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msgInfo := entity.MessageData{

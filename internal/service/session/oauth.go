@@ -83,7 +83,7 @@ func (s *Service) signInGoogleWithProfileCreation(
 	go func() {
 		ctx := context.WithoutCancel(ctx)
 		if err = s.connectFirebaseProfile(ctx, authInfo.Id, authInfo.Email); err != nil {
-			log.Infof("firebase profile for user %s connected", authInfo.Id)
+			log.AutoInfof("firebase profile for user %s connected", authInfo.Id)
 		}
 	}()
 
@@ -151,7 +151,7 @@ func (s *Service) signInVkWithProfileCreation(
 	go func() {
 		ctx := context.WithoutCancel(ctx)
 		if err = s.connectFirebaseProfile(ctx, authInfo.Id, authInfo.Email); err != nil {
-			log.Infof("firebase profile for user %s connected", authInfo.Id)
+			log.AutoInfof("firebase profile for user %s connected", authInfo.Id)
 		}
 	}()
 

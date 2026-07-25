@@ -56,7 +56,7 @@ func errorWithTransactionRollback(tx *sql.Tx, err error) error {
 
 func commitTransaction(tx *sql.Tx) error {
 	if err := tx.Commit(); err != nil {
-		log.Error("unable to commit transaction: ", err)
+		log.AutoError("unable to commit transaction: ", err)
 		_ = tx.Rollback()
 		return fail.GrpcUnknown
 	}

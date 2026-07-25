@@ -54,7 +54,7 @@ func (s *Service) RequestReset(ctx context.Context, email, nickname *string, res
 func (s *Service) Reset(ctx context.Context, userId uuid.UUID, resetCode, newPassword string) error {
 	passwordHash, err := s.hashManager.Hash(newPassword)
 	if err != nil {
-		log.Errorf("unable to hash password: %s", err)
+		log.AutoErrorf("unable to hash password: %s", err)
 		return fail.GrpcUnknown
 	}
 	return s.repo.ResetPassword(ctx, userId, resetCode, passwordHash)
@@ -68,14 +68,14 @@ func (s *Service) Change(ctx context.Context, userId uuid.UUID, oldPassword, new
 
 	if len(authInfo.PasswordHash) > 0 {
 		if err = s.hashManager.Validate(oldPassword, authInfo.PasswordHash); err != nil {
-			log.Infof("invalid password for user %s: %s", userId, err)
+			log.AutoInfof("invalid password for user %s: %s", userId, err)
 			return authFail.GrpcInvalidPassword
 		}
 	}
 
 	passwordHash, err := s.hashManager.Hash(newPassword)
 	if err != nil {
-		log.Errorf("unable to hash password: %s", err)
+		log.AutoErrorf("unable to hash password: %s", err)
 		return fail.GrpcUnknown
 	}
 	if err = s.repo.SetPassword(ctx, userId, passwordHash); err != nil {
