@@ -5,7 +5,7 @@ option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
 message SignInRequest {
   string email = 1;
-  string nickname = 2;
+  string username = 2;
   string password = 3;
   string ip = 4;
   string userAgent = 5;

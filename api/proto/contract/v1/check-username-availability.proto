@@ -3,10 +3,10 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
-message CheckNicknameAvailabilityRequest {
-  string nickname = 1;
+message CheckUsernameAvailabilityRequest {
+  string username = 1;
 }
 
-message CheckNicknameAvailabilityResponse {
+message CheckUsernameAvailabilityResponse {
   bool available = 1;
 }

@@ -29,8 +29,8 @@ import "v1/request-password-reset.proto";
 import "v1/reset-password.proto";
 import "v1/change-password.proto";
 import "v1/get-visible-names.proto";
-import "v1/check-nickname-availability.proto";
-import "v1/set-nickname.proto";
+import "v1/check-username-availability.proto";
+import "v1/set-username.proto";
 
 service AuthService {
   rpc SignUp(SignUpRequest) returns (SignUpResponse);
@@ -63,6 +63,6 @@ service AuthService {
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
 
   rpc GetVisibleNames(GetVisibleNamesRequest) returns (GetVisibleNamesResponse);
-  rpc CheckNicknameAvailability(CheckNicknameAvailabilityRequest) returns (CheckNicknameAvailabilityResponse);
-  rpc SetNickname(SetNicknameRequest) returns (SetNicknameResponse);
+  rpc CheckUsernameAvailability(CheckUsernameAvailabilityRequest) returns (CheckUsernameAvailabilityResponse);
+  rpc SetUsername(SetUsernameRequest) returns (SetUsernameResponse);
 }

@@ -8,13 +8,13 @@ option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 message GetAuthInfoRequest {
   string id = 1;
   string email = 2;
-  string nickname = 3;
+  string username = 3;
 }
 
 message GetAuthInfoResponse {
   string id = 1;
   string email = 2;
-  optional string nickname = 3;
+  optional string username = 3;
   string role = 4;
   google.protobuf.Timestamp registrationTimestamp = 5;
   bool isActivated = 6;

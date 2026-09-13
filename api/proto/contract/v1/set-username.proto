@@ -3,11 +3,11 @@ package v1;
 
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
-message SetNicknameRequest {
+message SetUsernameRequest {
   string id = 1;
-  string nickname = 2;
+  string username = 2;
 }
 
-message SetNicknameResponse {
+message SetUsernameResponse {
   string message = 1;
 }
