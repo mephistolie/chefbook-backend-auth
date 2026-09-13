@@ -11,6 +11,9 @@ import (
 )
 
 func (s *Service) importFirebaseProfile(ctx context.Context, email, password string) (entity.AuthInfo, error) {
+	if s.firebase == nil {
+		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
+	}
 	firebaseProfile, err := s.firebase.SignIn(email, password)
 	if err != nil {
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
