@@ -1,16 +1,18 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"time"
 )
 
 const (
@@ -54,9 +56,12 @@ func errorWithTransactionRollback(tx *sql.Tx, err error) error {
 	return err
 }
 
-func commitTransaction(tx *sql.Tx) error {
+func commitTransaction(ctx context.Context, tx *sql.Tx) error {
 	if err := tx.Commit(); err != nil {
-		log.AutoError("unable to commit transaction: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "CommitTransaction",
+			Entity:    "transaction",
+		}, err)
 		_ = tx.Rollback()
 		return fail.GrpcUnknown
 	}

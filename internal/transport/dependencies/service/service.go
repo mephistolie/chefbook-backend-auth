@@ -7,21 +7,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/mail"
-	"github.com/mephistolie/chefbook-backend-auth/internal/service/nickname"
 	oauthService "github.com/mephistolie/chefbook-backend-auth/internal/service/oauth"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/password"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/profile_deletion"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/session"
+	"github.com/mephistolie/chefbook-backend-auth/internal/service/username"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/ip"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/google"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/vk"
 	firebase "github.com/mephistolie/chefbook-backend-common/firebase"
 	"github.com/mephistolie/chefbook-backend-common/hash"
-	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/tokens"
 	"strconv"
 	"time"
@@ -31,7 +31,7 @@ type Service struct {
 	Session         Session
 	OAuth           OAuth
 	Password        Password
-	Nickname        Nickname
+	Username        Username
 	ProfileDeletion ProfileDeletion
 }
 
@@ -60,15 +60,15 @@ type OAuth interface {
 }
 
 type Password interface {
-	RequestReset(ctx context.Context, email, nickname *string, resetLinkPattern string) error
+	RequestReset(ctx context.Context, email, username *string, resetLinkPattern string) error
 	Reset(ctx context.Context, userId uuid.UUID, resetCode, newPassword string) error
 	Change(ctx context.Context, userId uuid.UUID, oldPassword, newPassword string) error
 }
 
-type Nickname interface {
+type Username interface {
 	Get(ctx context.Context, userIds []uuid.UUID) (map[uuid.UUID]string, error)
-	CheckAvailability(ctx context.Context, nickname string) (bool, error)
-	Set(ctx context.Context, userId uuid.UUID, nickname string) error
+	CheckAvailability(ctx context.Context, username string) (bool, error)
+	Set(ctx context.Context, userId uuid.UUID, username string) error
 }
 
 type ProfileDeletion interface {
@@ -135,7 +135,7 @@ func New(
 		credentials := []byte(*cfg.Auth.Firebase.Credentials)
 		if client, err := firebase.NewClient(credentials, *cfg.Auth.Firebase.GoogleApiKey); err == nil {
 			firebaseClient = client
-			log.AutoInfo("Firebase client initialized")
+			authlog.Default.FirebaseClientInitialized(ctx)
 		}
 	}
 
@@ -143,7 +143,7 @@ func New(
 		Session:         session.NewService(repo, grpc, mq, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth),
 		OAuth:           oauthService.NewService(repo, oauthProviders),
 		Password:        password.NewService(repo, *mailService, hashManager, cfg.Auth),
-		Nickname:        nickname.NewService(repo, *mailService),
+		Username:        username.NewService(repo, *mailService),
 		ProfileDeletion: profile_deletion.NewService(repo, mq, mailService, hashManager),
 	}, nil
 }

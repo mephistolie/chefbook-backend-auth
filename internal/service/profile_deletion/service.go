@@ -2,14 +2,15 @@ package profile_deletion
 
 import (
 	"context"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/mail"
 	"github.com/mephistolie/chefbook-backend-common/hash"
-	"github.com/mephistolie/chefbook-backend-common/log"
-	"time"
 )
 
 type Service struct {
@@ -49,7 +50,7 @@ func (s *Service) Request(ctx context.Context, userId uuid.UUID, password string
 	}
 
 	if err = s.hashManager.Validate(password, authInfo.PasswordHash); err != nil {
-		log.AutoInfof("invalid password for user %s: %s", userId, err)
+		authlog.Default.PasswordInvalid(ctx, userId.String())
 		return time.Time{}, authFail.GrpcInvalidPassword
 	}
 
@@ -57,7 +58,7 @@ func (s *Service) Request(ctx context.Context, userId uuid.UUID, password string
 	if err != nil {
 		return time.Time{}, err
 	} else {
-		go s.mail.SendProfileDeletionRequestMail(authInfo.Email, timestamp, deleteSharedData)
+		go s.mail.SendProfileDeletionRequestMail(context.WithoutCancel(ctx), userId, authInfo.Email, timestamp, deleteSharedData)
 	}
 
 	return timestamp, nil
@@ -74,14 +75,14 @@ func (s *Service) ExecuteAll() {
 func (s *Service) Execute(ctx context.Context, request entity.DeleteProfileRequest) error {
 	authInfo, err := s.repo.GetAuthInfoById(ctx, request.UserId)
 	if err != nil {
-		log.AutoWarnf("profile %s to delete not found: %s", request.UserId, err)
+		authlog.Default.ProfileDeletionTargetMissing(ctx, request.UserId.String())
 		return authFail.GrpcUserNotFound
 	}
 
 	msg, err := s.repo.DeleteUser(ctx, request.UserId, request.WithSharedData)
 	if err == nil {
-		s.mail.SendProfileDeletedMail(authInfo.Email)
-		_ = s.mq.PublishProfilesMessage(msg)
+		s.mail.SendProfileDeletedMail(ctx, request.UserId, authInfo.Email)
+		_ = s.mq.PublishProfilesMessage(ctx, msg)
 	}
 
 	return err

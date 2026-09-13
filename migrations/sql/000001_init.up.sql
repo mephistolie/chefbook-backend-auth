@@ -4,7 +4,7 @@ CREATE TABLE users
 (
     user_id    uuid PRIMARY KEY         NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     email      VARCHAR(128)             NOT NULL UNIQUE,
-    nickname   VARCHAR(128) UNIQUE                      DEFAULT NULL,
+    username   VARCHAR(128) UNIQUE                      DEFAULT NULL,
     password   bytea                                    DEFAULT NULL,
 
     role       role                     NOT NULL        DEFAULT 'member',

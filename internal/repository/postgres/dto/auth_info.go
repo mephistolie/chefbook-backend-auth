@@ -9,7 +9,7 @@ import (
 type AuthInfo struct {
 	Id                    uuid.UUID  `db:"user_id"`
 	Email                 string     `db:"email"`
-	Nickname              *string    `db:"nickname"`
+	Username              *string    `db:"username"`
 	PasswordHash          *string    `db:"password"`
 	Role                  string     `db:"role"`
 	RegistrationTimestamp time.Time  `db:"registered"`
@@ -28,7 +28,7 @@ func (p *AuthInfo) Entity() entity.AuthInfo {
 	return entity.AuthInfo{
 		Id:                    p.Id,
 		Email:                 p.Email,
-		Nickname:              p.Nickname,
+		Username:              p.Username,
 		PasswordHash:          passwordHash,
 		Role:                  p.Role,
 		RegistrationTimestamp: p.RegistrationTimestamp,

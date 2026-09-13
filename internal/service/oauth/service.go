@@ -2,13 +2,14 @@ package oauth
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/vk"
-	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
@@ -33,7 +34,10 @@ func (s *Service) GenerateGoogleLink(redirectUrl string) string {
 func (s *Service) ConnectGoogle(ctx context.Context, userId uuid.UUID, code string, state, redirectUrl string) error {
 	googleInfo, err := s.providers.Google.GetUserInfoByCode(ctx, code, state, redirectUrl)
 	if err != nil {
-		log.AutoWarnf("invalid google oauth for user %s: %s", code, err)
+		authlog.Default.OAuthCodeRejected(ctx, authlog.OAuthData{
+			Provider: "google",
+			UserID:   userId.String(),
+		}, err)
 		return authFail.GrpcInvalidCode
 	}
 
@@ -70,7 +74,10 @@ func (s *Service) GenerateVkLink(display, responseType, redirectUri string) (str
 func (s *Service) ConnectVk(ctx context.Context, userId uuid.UUID, code, state string, redirectUri string) error {
 	vkResponse, err := s.providers.Vk.GetAccessToken(ctx, code, state, redirectUri)
 	if err != nil {
-		log.AutoWarnf("invalid vk oauth for user %s: %s", code, err)
+		authlog.Default.OAuthCodeRejected(ctx, authlog.OAuthData{
+			Provider: "vk",
+			UserID:   userId.String(),
+		}, err)
 		return authFail.GrpcInvalidCode
 	}
 

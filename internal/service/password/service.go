@@ -2,16 +2,17 @@ package password
 
 import (
 	"context"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/mail"
 	"github.com/mephistolie/chefbook-backend-common/hash"
-	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"time"
 )
 
 type Service struct {
@@ -35,8 +36,8 @@ func NewService(
 	}
 }
 
-func (s *Service) RequestReset(ctx context.Context, email, nickname *string, resetLinkPattern string) error {
-	authInfo, err := s.repo.GetAuthInfoByIdentifiers(ctx, entity.UserIdentifiers{Email: email, Nickname: nickname})
+func (s *Service) RequestReset(ctx context.Context, email, username *string, resetLinkPattern string) error {
+	authInfo, err := s.repo.GetAuthInfoByIdentifiers(ctx, entity.UserIdentifiers{Email: email, Username: username})
 	if err != nil || !authInfo.IsActivated {
 		return nil
 	}
@@ -46,7 +47,7 @@ func (s *Service) RequestReset(ctx context.Context, email, nickname *string, res
 		return err
 	}
 
-	go s.mail.SendResetPasswordMail(authInfo.Id, authInfo.Email, resetCode.String(), resetLinkPattern)
+	go s.mail.SendResetPasswordMail(context.WithoutCancel(ctx), authInfo.Id, authInfo.Email, resetCode.String(), resetLinkPattern)
 
 	return nil
 }
@@ -54,7 +55,7 @@ func (s *Service) RequestReset(ctx context.Context, email, nickname *string, res
 func (s *Service) Reset(ctx context.Context, userId uuid.UUID, resetCode, newPassword string) error {
 	passwordHash, err := s.hashManager.Hash(newPassword)
 	if err != nil {
-		log.AutoErrorf("unable to hash password: %s", err)
+		authlog.Default.PasswordHashFailed(ctx, err)
 		return fail.GrpcUnknown
 	}
 	return s.repo.ResetPassword(ctx, userId, resetCode, passwordHash)
@@ -68,21 +69,21 @@ func (s *Service) Change(ctx context.Context, userId uuid.UUID, oldPassword, new
 
 	if len(authInfo.PasswordHash) > 0 {
 		if err = s.hashManager.Validate(oldPassword, authInfo.PasswordHash); err != nil {
-			log.AutoInfof("invalid password for user %s: %s", userId, err)
+			authlog.Default.PasswordInvalid(ctx, userId.String())
 			return authFail.GrpcInvalidPassword
 		}
 	}
 
 	passwordHash, err := s.hashManager.Hash(newPassword)
 	if err != nil {
-		log.AutoErrorf("unable to hash password: %s", err)
+		authlog.Default.PasswordHashFailed(ctx, err)
 		return fail.GrpcUnknown
 	}
 	if err = s.repo.SetPassword(ctx, userId, passwordHash); err != nil {
 		return err
 	}
 
-	go s.mail.SendPasswordChangedMail(authInfo.Email)
+	go s.mail.SendPasswordChangedMail(context.WithoutCancel(ctx), userId, authInfo.Email)
 
 	return nil
 }

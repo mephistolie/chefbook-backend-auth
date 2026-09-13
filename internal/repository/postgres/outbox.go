@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
@@ -17,7 +18,11 @@ func (r *Repository) createOutboxMsg(ctx context.Context, msg *entity.MessageDat
 	`, outboxTable)
 
 	if _, err := tx.ExecContext(ctx, query, msg.Id, msg.Exchange, msg.Type, msg.Body); err != nil {
-		log.AutoError("unable to add message to outbox: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "CreateOutboxMessage",
+			MessageID: msg.Id.String(),
+			Entity:    "outbox_message",
+		}, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -41,7 +46,10 @@ func (r *Repository) GetPendingMessages(ctx context.Context) ([]*entity.MessageD
 		var msg entity.MessageData
 		err := rows.Scan(&msg.Id, &msg.Exchange, &msg.Type, &msg.Body)
 		if err != nil {
-			log.AutoWarn("unable to get scan message row: ", err)
+			authlog.Default.PostgresOperationWarned(ctx, authlog.PostgresOperationData{
+				Operation: "GetPendingMessages",
+				Entity:    "outbox_message",
+			}, err)
 			continue
 		}
 		msgs = append(msgs, &msg)
@@ -58,7 +66,11 @@ func (r *Repository) MarkMessageSent(ctx context.Context, messageId uuid.UUID) e
 
 	_, err := r.db.ExecContext(ctx, query, messageId)
 	if err != nil {
-		log.AutoWarnf("unable to update status for message %s: %s", messageId, err)
+		authlog.Default.PostgresOperationWarned(ctx, authlog.PostgresOperationData{
+			Operation: "MarkMessageSent",
+			MessageID: messageId.String(),
+			Entity:    "outbox_message",
+		}, err)
 	}
 	return err
 }

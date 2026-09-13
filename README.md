@@ -9,7 +9,7 @@ The auth service owns identity, credentials, sessions, OAuth bindings, JWT issui
 - Refresh session storage and session termination.
 - Google and VK OAuth connection and sign-in.
 - Password reset and password change flows.
-- Nickname availability and assignment.
+- Username availability and assignment.
 - Profile deletion request state.
 - Auth information lookup for other services.
 - Public key exposure for gateway JWT validation.
@@ -22,7 +22,7 @@ The auth service owns identity, credentials, sessions, OAuth bindings, JWT issui
 - `GetSessions`, `EndSessions`
 - `RequestPasswordReset`, `ResetPassword`, `ChangePassword`
 - `GetProfileDeletionStatus`, `DeleteProfile`, `CancelProfileDeletion`
-- `GetAccessTokenPublicKey`, `GetAuthInfo`, `GetVisibleNames`, `CheckNicknameAvailability`, `SetNickname`
+- `GetAccessTokenPublicKey`, `GetAuthInfo`, `GetVisibleNames`, `CheckUsernameAvailability`, `SetUsername`
 
 ## Dependencies
 
@@ -34,7 +34,7 @@ The auth service owns identity, credentials, sessions, OAuth bindings, JWT issui
 
 Owns:
 
-- `users` - credentials, activation state, role, nickname, deletion timestamp.
+- `users` - credentials, activation state, role, username, deletion timestamp.
 - `activation_codes` - one active activation code per user.
 - `sessions` - refresh token sessions.
 - `password_resets` - password reset codes.
@@ -48,7 +48,7 @@ erDiagram
     AUTH_USERS {
         uuid user_id PK
         varchar email UK
-        varchar nickname UK
+        varchar username UK
         varchar password
         role role
         boolean activated
@@ -111,6 +111,6 @@ erDiagram
 
 Important constraints:
 
-- `users.email` and `users.nickname` are unique.
+- `users.email` and `users.username` are unique.
 - `activation_codes`, `oauth`, `firebase`, and `delete_profile_requests` are one-to-one with `users`.
 - `password_resets.reset_code` and `sessions.refresh_token` are globally unique.

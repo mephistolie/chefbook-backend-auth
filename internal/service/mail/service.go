@@ -1,16 +1,28 @@
 package mail
 
 import (
+	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/assets"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/ip"
-	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/mail"
 	"github.com/mssola/useragent"
-	"time"
+)
+
+const (
+	mailKindProfileActivation      = "profile_activation"
+	mailKindNewLogin               = "new_login"
+	mailKindPasswordReset          = "password_reset"
+	mailKindPasswordChanged        = "password_changed"
+	mailKindUsernameChanged        = "username_changed"
+	mailKindProfileDeletionRequest = "profile_deletion_request"
+	mailKindProfileDeleted         = "profile_deleted"
 )
 
 type profileActivationMailValues struct {
@@ -29,8 +41,8 @@ type passwordResetValues struct {
 	ResetLink string
 }
 
-type nicknameChangedValue struct {
-	Nickname string
+type usernameChangedValue struct {
+	Username string
 }
 
 type profileDeletionRequestValues struct {
@@ -69,8 +81,9 @@ func NewService(ipInfoProvider ip.InfoProvider, cfg *config.Config) (*Service, e
 	}, nil
 }
 
-func (s *Service) SendProfileActivationMail(userId uuid.UUID, email, code, linkPattern string) {
-	log.AutoInfo("sending profile activation mail to ", email)
+func (s *Service) SendProfileActivationMail(ctx context.Context, userId uuid.UUID, email, code, linkPattern string) {
+	eventData := authlog.MailData{Kind: mailKindProfileActivation, UserID: userId.String()}
+	authlog.Default.MailDeliveryStarted(ctx, eventData)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Activation",
@@ -80,13 +93,14 @@ func (s *Service) SendProfileActivationMail(userId uuid.UUID, email, code, linkP
 		ActivationLink: fmt.Sprintf(linkPattern, userId, code),
 	}
 	if err := payload.SetHtmlBody(assets.ProfileActivationMailTmplFilePath, mailValues); err != nil {
-		log.AutoError("failed to set HTML Body for mail: ", err)
+		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
 	}
-	s.sendMessage(payload)
+	s.sendMessage(ctx, payload, eventData)
 }
 
-func (s *Service) SendNewLoginMail(email string, client entity.ClientData, timestamp time.Time) {
-	log.AutoInfo("sending new login mail to ", email)
+func (s *Service) SendNewLoginMail(ctx context.Context, userId uuid.UUID, email string, client entity.ClientData, timestamp time.Time) {
+	eventData := authlog.MailData{Kind: mailKindNewLogin, UserID: userId.String()}
+	authlog.Default.MailDeliveryStarted(ctx, eventData)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook New Profile Login",
@@ -106,13 +120,14 @@ func (s *Service) SendNewLoginMail(email string, client entity.ClientData, times
 		Timestamp: timestamp.Format(time.RFC1123),
 	}
 	if err := payload.SetHtmlBody(assets.NewLoginFilePath, mailValues); err != nil {
-		log.AutoError("failed to set HTML Body for mail: ", err)
+		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
 	}
-	s.sendMessage(payload)
+	s.sendMessage(ctx, payload, eventData)
 }
 
-func (s *Service) SendResetPasswordMail(userId uuid.UUID, email string, code string, linkPattern string) {
-	log.AutoInfo("sending password reset mail to ", email)
+func (s *Service) SendResetPasswordMail(ctx context.Context, userId uuid.UUID, email string, code string, linkPattern string) {
+	eventData := authlog.MailData{Kind: mailKindPasswordReset, UserID: userId.String()}
+	authlog.Default.MailDeliveryStarted(ctx, eventData)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Password Reset",
@@ -121,40 +136,47 @@ func (s *Service) SendResetPasswordMail(userId uuid.UUID, email string, code str
 		ResetLink: fmt.Sprintf(linkPattern, userId, code),
 	}
 	if err := payload.SetHtmlBody(assets.PasswordResetMailTmplFilePath, mailValues); err != nil {
-		log.AutoError("failed to set HTML Body for mail: ", err)
+		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
 	}
-	s.sendMessage(payload)
+	s.sendMessage(ctx, payload, eventData)
 }
 
-func (s *Service) SendPasswordChangedMail(email string) {
-	log.AutoInfo("sending password changed mail to ", email)
+func (s *Service) SendPasswordChangedMail(ctx context.Context, userId uuid.UUID, email string) {
+	eventData := authlog.MailData{Kind: mailKindPasswordChanged, UserID: userId.String()}
+	authlog.Default.MailDeliveryStarted(ctx, eventData)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Password Update",
 	}
 	if err := payload.SetHtmlBody(assets.PasswordChangedMailTmplFilePath, nil); err != nil {
-		log.AutoError("failed to set HTML Body for mail: ", err)
+		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
 	}
-	s.sendMessage(payload)
+	s.sendMessage(ctx, payload, eventData)
 }
 
-func (s *Service) SendNicknameChangedMail(email, nickname string) {
-	log.AutoInfo("sending nickname changed mail to ", email)
+func (s *Service) SendUsernameChangedMail(ctx context.Context, userId uuid.UUID, email, username string) {
+	eventData := authlog.MailData{Kind: mailKindUsernameChanged, UserID: userId.String()}
+	authlog.Default.MailDeliveryStarted(ctx, eventData)
 	payload := mail.Payload{
 		To:      email,
-		Subject: "ChefBook Profile Nickname Update",
+		Subject: "ChefBook Profile Username Update",
 	}
-	mailValues := nicknameChangedValue{
-		Nickname: nickname,
+	mailValues := usernameChangedValue{
+		Username: username,
 	}
-	if err := payload.SetHtmlBody(assets.NicknameChangedMailTmplFilePath, mailValues); err != nil {
-		log.AutoError("failed to set HTML Body for mail: ", err)
+	if err := payload.SetHtmlBody(assets.UsernameChangedMailTmplFilePath, mailValues); err != nil {
+		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
 	}
-	s.sendMessage(payload)
+	s.sendMessage(ctx, payload, eventData)
 }
 
-func (s *Service) SendProfileDeletionRequestMail(email string, timestamp time.Time, withSharedData bool) {
-	log.AutoInfo("sending profile deletion request mail to ", email)
+func (s *Service) SendProfileDeletionRequestMail(ctx context.Context, userId uuid.UUID, email string, timestamp time.Time, withSharedData bool) {
+	eventData := authlog.MailData{
+		Kind:           mailKindProfileDeletionRequest,
+		UserID:         userId.String(),
+		WithSharedData: &withSharedData,
+	}
+	authlog.Default.MailDeliveryStarted(ctx, eventData)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Deletion Request",
@@ -168,26 +190,29 @@ func (s *Service) SendProfileDeletionRequestMail(email string, timestamp time.Ti
 	}
 
 	if err := payload.SetHtmlBody(assets.ProfileDeletionRequestMailTmplFilePath, mailValues); err != nil {
-		log.AutoError("failed to set HTML Body for mail: ", err)
+		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
 	}
-	s.sendMessage(payload)
+	s.sendMessage(ctx, payload, eventData)
 }
 
-func (s *Service) SendProfileDeletedMail(email string) {
-	log.AutoInfo("sending profile deleted mail to ", email)
+func (s *Service) SendProfileDeletedMail(ctx context.Context, userId uuid.UUID, email string) {
+	eventData := authlog.MailData{Kind: mailKindProfileDeleted, UserID: userId.String()}
+	authlog.Default.MailDeliveryStarted(ctx, eventData)
 	payload := mail.Payload{
 		To:      email,
 		Subject: "ChefBook Profile Deleted",
 	}
 	if err := payload.SetHtmlBody(assets.ProfileDeletedMailTmplFilePath, nil); err != nil {
-		log.AutoError("failed to set HTML Body for mail: ", err)
+		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
 	}
-	s.sendMessage(payload)
+	s.sendMessage(ctx, payload, eventData)
 }
 
-func (s *Service) sendMessage(payload mail.Payload) {
+func (s *Service) sendMessage(ctx context.Context, payload mail.Payload, eventData authlog.MailData) {
 	if s.IsDevEnv {
 		payload.Body = "DEV\n" + payload.Body
 	}
-	_ = s.sender.Send(payload, s.sendAttempts)
+	if err := s.sender.Send(payload, s.sendAttempts); err != nil {
+		authlog.Default.MailDeliveryFailed(ctx, eventData, err)
+	}
 }

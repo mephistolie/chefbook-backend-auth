@@ -1,4 +1,4 @@
-package nickname
+package username
 
 import (
 	"context"
@@ -20,20 +20,20 @@ func NewService(repo repository.Data, mailService mail.Service) *Service {
 }
 
 func (s *Service) Get(ctx context.Context, userIds []uuid.UUID) (map[uuid.UUID]string, error) {
-	return s.repo.GetNicknames(ctx, userIds)
+	return s.repo.GetUsernames(ctx, userIds)
 }
 
-func (s *Service) CheckAvailability(ctx context.Context, nickname string) (bool, error) {
-	if _, err := s.repo.GetAuthInfoByNickname(ctx, nickname); err == nil {
+func (s *Service) CheckAvailability(ctx context.Context, username string) (bool, error) {
+	if _, err := s.repo.GetAuthInfoByUsername(ctx, username); err == nil {
 		return false, nil
 	}
 	return true, nil
 }
 
-func (s *Service) Set(ctx context.Context, userId uuid.UUID, nickname string) error {
-	email, err := s.repo.SetNickname(ctx, userId, nickname)
+func (s *Service) Set(ctx context.Context, userId uuid.UUID, username string) error {
+	email, err := s.repo.SetUsername(ctx, userId, username)
 	if err == nil {
-		go s.mail.SendNicknameChangedMail(email, nickname)
+		go s.mail.SendUsernameChangedMail(context.WithoutCancel(ctx), userId, email, username)
 	}
 	return err
 }

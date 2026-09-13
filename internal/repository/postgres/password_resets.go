@@ -3,11 +3,12 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"time"
 )
 
 func (r *Repository) CreatePasswordResetRequest(ctx context.Context, userId uuid.UUID, expiration time.Time) (uuid.UUID, error) {
@@ -21,7 +22,7 @@ func (r *Repository) CreatePasswordResetRequest(ctx context.Context, userId uuid
 		WHERE user_id=$1 AND used=false
 	`, passwordResetsTable)
 	if err := r.db.GetContext(ctx, &resetCode, getExistingResetCodeQuery, userId); err == nil {
-		log.AutoInfof("found existing password reset code for user %s", userId)
+		authlog.Default.PasswordResetReused(ctx, userId.String())
 		return resetCode, nil
 	}
 
@@ -31,7 +32,11 @@ func (r *Repository) CreatePasswordResetRequest(ctx context.Context, userId uuid
 		VALUES ($1, $2, $3)
 	`, passwordResetsTable)
 	if _, err := r.db.ExecContext(ctx, createResetCodeQuery, userId, resetCode.String(), expiration); err != nil {
-		log.AutoErrorf("error while creating reset code for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "CreatePasswordResetRequest",
+			UserID:    userId.String(),
+			Entity:    "password_reset",
+		}, err)
 		return uuid.UUID{}, fail.GrpcUnknown
 	}
 
@@ -45,7 +50,11 @@ func (r *Repository) removeOutdatedPasswordResetRequests(ctx context.Context, us
 	`, passwordResetsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, userId, time.Now()); err != nil {
-		log.AutoErrorf("error while delete outdated reset codes for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "RemoveOutdatedPasswordResetRequests",
+			UserID:    userId.String(),
+			Entity:    "password_reset",
+		}, err)
 	}
 }
 
@@ -53,7 +62,11 @@ func (r *Repository) ResetPassword(ctx context.Context, userId uuid.UUID, resetC
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.AutoError("unable to begin transaction: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "BeginResetPasswordTransaction",
+			UserID:    userId.String(),
+			Entity:    "password_reset",
+		}, err)
 		return fail.GrpcUnknown
 	}
 
@@ -65,11 +78,24 @@ func (r *Repository) ResetPassword(ctx context.Context, userId uuid.UUID, resetC
 
 	res, err := tx.ExecContext(ctx, userResetCodeQuery, userId, resetCode, time.Now())
 	if err != nil {
-		log.AutoErrorf("invalid reset code %s for user %s: %s", resetCode, userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "ValidatePasswordResetCode",
+			UserID:    userId.String(),
+			Entity:    "password_reset",
+		}, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
 	}
-	if rows, err := res.RowsAffected(); err != nil || rows == 0 {
-		log.AutoInfof("invalid or expired reset code %s for user %s: %s", resetCode, userId, err)
+	rows, err := res.RowsAffected()
+	if err != nil {
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "ReadValidatedPasswordResetCount",
+			UserID:    userId.String(),
+			Entity:    "password_reset",
+		}, err)
+		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
+	}
+	if rows == 0 {
+		authlog.Default.PasswordResetCodeRejected(ctx, userId.String())
 		return errorWithTransactionRollback(tx, authFail.GrpcInvalidResetPasswordCode)
 	}
 
@@ -80,11 +106,15 @@ func (r *Repository) ResetPassword(ctx context.Context, userId uuid.UUID, resetC
 	`, usersTable)
 
 	if _, err := tx.ExecContext(ctx, changePasswordQuery, passwordHash, userId); err != nil {
-		log.AutoErrorf("error while updating password for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "ResetPassword",
+			UserID:    userId.String(),
+			Entity:    "user",
+		}, err)
 		return errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
-	return commitTransaction(tx)
+	return commitTransaction(ctx, tx)
 }
 
 func (r *Repository) SetPassword(ctx context.Context, userId uuid.UUID, passwordHash string) error {
@@ -98,8 +128,20 @@ func (r *Repository) SetPassword(ctx context.Context, userId uuid.UUID, password
 	`, usersTable)
 
 	row := r.db.QueryRowContext(ctx, changePasswordQuery, passwordHash, userId)
-	if err := row.Scan(&id); err != nil || id == "" {
-		log.AutoErrorf("error while updating password for user %s: %s", userId, err)
+	if err := row.Scan(&id); err != nil {
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "SetPassword",
+			UserID:    userId.String(),
+			Entity:    "user",
+		}, err)
+		return fail.GrpcUnknown
+	}
+	if id == "" {
+		authlog.Default.PostgresLookupMissed(ctx, authlog.PostgresOperationData{
+			Operation: "SetPassword",
+			UserID:    userId.String(),
+			Entity:    "user",
+		})
 		return fail.GrpcUnknown
 	}
 

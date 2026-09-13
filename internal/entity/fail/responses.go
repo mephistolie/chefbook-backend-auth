@@ -8,7 +8,7 @@ const (
 	typeInvalidActivationCode = "invalid_activation_code"
 	typeProfileExists         = "profile_exists"
 	typeProfileBlocked        = "profile_blocked"
-	typeNicknameOccupied      = "nickname_occupied"
+	typeUsernameOccupied      = "username_occupied"
 	typeAccountOccupied       = "account_occupied"
 	typeFewSignInMethods      = "few_sign_in_methods"
 )
@@ -44,13 +44,13 @@ var (
 
 	GrpcInvalidResetPasswordCode = fail.CreateGrpcClient(fail.TypeInvalidBody, "invalid password reset code")
 
-	GrpcNicknameTooShort         = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must contain at least 5 symbols")
-	GrpcNicknameTooLong          = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must contain maximum 64 symbols")
-	GrpcNicknameId               = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must not be UUID")
-	GrpcNicknameStartLetter      = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must starts with latin letter")
-	GrpcNicknameEndLetter        = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must ends with latin letter or number")
-	GrpcNicknameForbiddenSymbols = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must contain only latin letters, numbers and '_'")
-	GrpcNicknameForbiddenWord    = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname contains forbidden word")
-	GrpcNicknameDoubleUnderscore = fail.CreateGrpcClient(fail.TypeInvalidBody, "nickname must contain no more than 1 underscore in a row")
-	GrpcNicknameOccupied         = fail.CreateGrpcClient(typeNicknameOccupied, "this nickname already occupied")
+	GrpcUsernameTooShort         = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must contain at least 5 symbols")
+	GrpcUsernameTooLong          = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must contain maximum 64 symbols")
+	GrpcUsernameId               = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must not be UUID")
+	GrpcUsernameStartLetter      = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must starts with latin letter")
+	GrpcUsernameEndLetter        = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must ends with latin letter or number")
+	GrpcUsernameForbiddenSymbols = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must contain only latin letters, numbers and '_'")
+	GrpcUsernameForbiddenWord    = fail.CreateGrpcClient(fail.TypeInvalidBody, "username contains forbidden word")
+	GrpcUsernameDoubleUnderscore = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must contain no more than 1 underscore in a row")
+	GrpcUsernameOccupied         = fail.CreateGrpcClient(typeUsernameOccupied, "this username already occupied")
 )

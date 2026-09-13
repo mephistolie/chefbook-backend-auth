@@ -6,6 +6,7 @@ import (
 	authpb "github.com/mephistolie/chefbook-backend-auth/api/proto/implementation/v1"
 	"github.com/mephistolie/chefbook-backend-auth/internal/app/daemon"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
+	"github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/amqp"
 	grpcRepo "github.com/mephistolie/chefbook-backend-auth/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres"
@@ -20,6 +21,8 @@ import (
 	"time"
 )
 
+var events logging.Events
+
 func Run(cfg *config.Config) {
 	log.InitWithService("auth", *cfg.LogsPath, *cfg.Environment == config.EnvDev)
 	cfg.Print()
@@ -28,11 +31,7 @@ func Run(cfg *config.Config) {
 
 	db, err := postgres.Connect(cfg.Database)
 	if err != nil {
-		log.LogFatal(ctx, log.Event{
-			Event:     "app.startup.failed",
-			Message:   "service startup failed",
-			Component: "app",
-		}, err)
+		events.StartupFailed(ctx, "connect_postgres", err)
 		return
 	}
 
@@ -40,11 +39,7 @@ func Run(cfg *config.Config) {
 
 	grpcRepository, err := grpcRepo.NewRepository(cfg)
 	if err != nil {
-		log.LogFatal(ctx, log.Event{
-			Event:     "app.startup.failed",
-			Message:   "service startup failed",
-			Component: "app",
-		}, err)
+		events.StartupFailed(ctx, "initialize_grpc_repository", err)
 		return
 	}
 
@@ -52,45 +47,25 @@ func Run(cfg *config.Config) {
 	if len(*cfg.Amqp.Host) > 0 {
 		mq, err = amqp.NewRepository(cfg.Amqp, repository)
 		if err != nil {
-			log.LogFatal(ctx, log.Event{
-				Event:     "app.startup.failed",
-				Message:   "service startup failed",
-				Component: "app",
-			}, err)
+			events.StartupFailed(ctx, "initialize_mq_server", err)
 			return
 		}
 		if err = mq.Start(); err != nil {
-			log.LogFatal(ctx, log.Event{
-				Event:     "app.startup.failed",
-				Message:   "service startup failed",
-				Component: "app",
-			}, err)
+			events.StartupFailed(ctx, "start_mq_server", err)
 			return
 		}
-		log.Log(ctx, log.Event{
-			Event:     "mq.server.initialized",
-			Message:   "mq server initialized",
-			Component: log.ComponentAMQP,
-		})
+		events.MQServerInitialized(ctx)
 	}
 
 	authService, err := service.New(ctx, cfg, repository, grpcRepository, mq)
 	if err != nil {
-		log.LogFatal(ctx, log.Event{
-			Event:     "app.startup.failed",
-			Message:   "service startup failed",
-			Component: "app",
-		}, err)
+		events.StartupFailed(ctx, "initialize_service", err)
 		return
 	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *cfg.Port))
 	if err != nil {
-		log.LogFatal(ctx, log.Event{
-			Event:     "app.startup.failed",
-			Message:   "service startup failed",
-			Component: "app",
-		}, err)
+		events.StartupFailed(ctx, "listen_grpc", err)
 		return
 	}
 
@@ -108,19 +83,10 @@ func Run(cfg *config.Config) {
 	authpb.RegisterAuthServiceServer(grpcServer, authServer)
 	healthpb.RegisterHealthServer(grpcServer, healthServer)
 
+	events.GRPCServerStarted(ctx)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
-			log.LogError(ctx, log.Event{
-				Event:     "grpc.server.failed",
-				Message:   "error occurred while running grpc server",
-				Component: log.ComponentGRPC,
-			}, err)
-		} else {
-			log.Log(ctx, log.Event{
-				Event:     "grpc.server.started",
-				Message:   "grpc server started",
-				Component: log.ComponentGRPC,
-			})
+			events.GRPCServerFailed(ctx, err)
 		}
 	}()
 

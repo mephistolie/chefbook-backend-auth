@@ -2,11 +2,12 @@ package session
 
 import (
 	"context"
+
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/google"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/vk"
-	"github.com/mephistolie/chefbook-backend-common/log"
 )
 
 func (s *Service) SignInGoogle(ctx context.Context, credentials entity.OAuthCredentials, client entity.ClientData, redirectUrl string) (entity.Tokens, error) {
@@ -52,7 +53,7 @@ func (s *Service) signInGoogleWithExistingProfile(
 			return entity.Tokens{}, err
 		}
 	}
-	if err := s.checkProfileAvailability(authInfo); err != nil {
+	if err := s.checkProfileAvailability(ctx, authInfo); err != nil {
 		return entity.Tokens{}, err
 	}
 	return s.createSession(ctx, authInfo, client)
@@ -73,7 +74,7 @@ func (s *Service) signInGoogleWithProfileCreation(
 	if err != nil {
 		return entity.Tokens{}, err
 	}
-	go s.mq.PublishProfilesMessage(msg)
+	go s.mq.PublishProfilesMessage(context.WithoutCancel(ctx), msg)
 
 	authInfo, err = s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
@@ -82,8 +83,8 @@ func (s *Service) signInGoogleWithProfileCreation(
 
 	go func() {
 		ctx := context.WithoutCancel(ctx)
-		if err = s.connectFirebaseProfile(ctx, authInfo.Id, authInfo.Email); err != nil {
-			log.AutoInfof("firebase profile for user %s connected", authInfo.Id)
+		if connectErr := s.connectFirebaseProfile(ctx, authInfo.Id, authInfo.Email); connectErr != nil {
+			authlog.Default.FirebaseProfileConnectFailed(ctx, authInfo.Id.String(), connectErr)
 		}
 	}()
 
@@ -120,7 +121,7 @@ func (s *Service) signInVkWithExistingProfile(
 			return entity.Tokens{}, err
 		}
 	}
-	if err := s.checkProfileAvailability(authInfo); err != nil {
+	if err := s.checkProfileAvailability(ctx, authInfo); err != nil {
 		return entity.Tokens{}, err
 	}
 	return s.createSession(ctx, authInfo, client)
@@ -141,7 +142,7 @@ func (s *Service) signInVkWithProfileCreation(
 	if err != nil {
 		return entity.Tokens{}, err
 	}
-	go s.mq.PublishProfilesMessage(msg)
+	go s.mq.PublishProfilesMessage(context.WithoutCancel(ctx), msg)
 
 	authInfo, err = s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
@@ -150,8 +151,8 @@ func (s *Service) signInVkWithProfileCreation(
 
 	go func() {
 		ctx := context.WithoutCancel(ctx)
-		if err = s.connectFirebaseProfile(ctx, authInfo.Id, authInfo.Email); err != nil {
-			log.AutoInfof("firebase profile for user %s connected", authInfo.Id)
+		if connectErr := s.connectFirebaseProfile(ctx, authInfo.Id, authInfo.Email); connectErr != nil {
+			authlog.Default.FirebaseProfileConnectFailed(ctx, authInfo.Id.String(), connectErr)
 		}
 	}()
 

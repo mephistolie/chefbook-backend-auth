@@ -23,7 +23,7 @@ func NewGetAuthInfoResponse(info entity.AuthInfo) *api.GetAuthInfoResponse {
 	return &api.GetAuthInfoResponse{
 		Id:                    info.Id.String(),
 		Email:                 info.Email,
-		Nickname:              info.Nickname,
+		Username:              info.Username,
 		Role:                  info.Role,
 		RegistrationTimestamp: timestamppb.New(info.RegistrationTimestamp),
 		IsActivated:           info.IsActivated,

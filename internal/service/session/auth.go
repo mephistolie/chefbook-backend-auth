@@ -3,13 +3,14 @@ package session
 import (
 	"context"
 	"crypto/x509"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/random"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"time"
 )
 
 func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error) {
@@ -21,7 +22,7 @@ func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentia
 		return authInfo.Id, true, nil
 	}
 
-	credentialsHash, activationCode, err := s.createNewUserData(credentials)
+	credentialsHash, activationCode, err := s.createNewUserData(ctx, credentials)
 	if err != nil {
 		return uuid.UUID{}, false, err
 	}
@@ -30,10 +31,10 @@ func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentia
 	if err != nil {
 		return uuid.UUID{}, activationCode == nil, err
 	}
-	go s.mq.PublishProfilesMessage(msg)
+	go s.mq.PublishProfilesMessage(context.WithoutCancel(ctx), msg)
 
 	if activationCode != nil {
-		go s.mail.SendProfileActivationMail(userId, credentials.Email, *activationCode, activationLinkPattern)
+		go s.mail.SendProfileActivationMail(context.WithoutCancel(ctx), userId, credentials.Email, *activationCode, activationLinkPattern)
 	}
 
 	return userId, activationCode == nil, nil
@@ -43,7 +44,7 @@ func (s *Service) ActivateProfile(ctx context.Context, userId uuid.UUID, code st
 	return s.repo.ActivateProfile(ctx, userId, code)
 }
 func (s *Service) SignIn(ctx context.Context, credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error) {
-	authInfo, err := s.repo.GetAuthInfoByIdentifiers(ctx, entity.UserIdentifiers{Email: credentials.Email, Nickname: credentials.Nickname})
+	authInfo, err := s.repo.GetAuthInfoByIdentifiers(ctx, entity.UserIdentifiers{Email: credentials.Email, Username: credentials.Username})
 	if err != nil {
 		if credentials.Email == nil || s.firebase == nil {
 			return entity.Tokens{}, err
@@ -53,11 +54,11 @@ func (s *Service) SignIn(ctx context.Context, credentials entity.SignInCredentia
 		}
 	}
 
-	if err := s.checkProfileAvailability(authInfo); err != nil {
+	if err := s.checkProfileAvailability(ctx, authInfo); err != nil {
 		return entity.Tokens{}, err
 	}
 	if err = s.hashManager.Validate(credentials.Password, authInfo.PasswordHash); err != nil {
-		log.AutoInfof("invalid password for user %s: %s", authInfo.Id, err)
+		authlog.Default.PasswordInvalid(ctx, authInfo.Id.String())
 		return entity.Tokens{}, authFail.GrpcInvalidCredentials
 	}
 
@@ -77,10 +78,10 @@ func (s *Service) GetAuthInfo(ctx context.Context, identifiers entity.UserIdenti
 	return s.repo.GetAuthInfoByIdentifiers(ctx, identifiers)
 }
 
-func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entity.CredentialsHash, *string, error) {
+func (s *Service) createNewUserData(ctx context.Context, credentials entity.SignUpCredentials) (entity.CredentialsHash, *string, error) {
 	passwordHash, err := s.hashManager.Hash(credentials.Password)
 	if err != nil {
-		log.AutoError("unable to hash password: ", err)
+		authlog.Default.PasswordHashFailed(ctx, err)
 		return entity.CredentialsHash{}, nil, fail.GrpcUnknown
 	}
 	var activationCode *string = nil
@@ -97,14 +98,14 @@ func (s *Service) createNewUserData(credentials entity.SignUpCredentials) (entit
 
 func (s *Service) resendActivationMail(ctx context.Context, authInfo entity.AuthInfo, password, linkPattern string) (uuid.UUID, bool, error) {
 	if authInfo.IsActivated {
-		log.AutoWarnf("user with email %s already exists", authInfo.Email)
+		authlog.Default.ProfileAlreadyExists(ctx, authInfo.Id.String())
 		return uuid.UUID{}, false, authFail.GrpcUserAlreadyExists
 	}
 
 	if err := s.hashManager.Validate(password, authInfo.PasswordHash); err != nil {
 		passwordHash, err := s.hashManager.Hash(password)
 		if err != nil {
-			log.AutoErrorf("unable to hash password: %s", err)
+			authlog.Default.PasswordHashFailed(ctx, err)
 			return uuid.UUID{}, false, fail.GrpcUnknown
 		}
 		err = s.repo.SetPassword(ctx, authInfo.Id, passwordHash)
@@ -118,13 +119,13 @@ func (s *Service) resendActivationMail(ctx context.Context, authInfo entity.Auth
 		return uuid.UUID{}, false, fail.GrpcUnknown
 	}
 
-	go s.mail.SendProfileActivationMail(authInfo.Id, authInfo.Email, activationCode, linkPattern)
+	go s.mail.SendProfileActivationMail(context.WithoutCancel(ctx), authInfo.Id, authInfo.Email, activationCode, linkPattern)
 
 	return authInfo.Id, false, nil
 }
 
 func (s *Service) createSession(ctx context.Context, authInfo entity.AuthInfo, client entity.ClientData) (entity.Tokens, error) {
-	log.AutoInfof("creating session for user %s with IP %s...", authInfo.Id, client.Ip)
+	authlog.Default.SessionCreationStarted(ctx, authInfo.Id.String())
 	tokenPair, session, err := s.createSessionEntity(ctx, authInfo, client.Ip, client.UserAgent)
 	if err != nil {
 		return entity.Tokens{}, err
@@ -135,18 +136,18 @@ func (s *Service) createSession(ctx context.Context, authInfo entity.AuthInfo, c
 	}
 
 	go s.repo.DeleteOutdatedSessions(context.WithoutCancel(ctx), authInfo.Id, maxSessionsCount)
-	go s.mail.SendNewLoginMail(authInfo.Email, client, time.Now())
+	go s.mail.SendNewLoginMail(context.WithoutCancel(ctx), authInfo.Id, authInfo.Email, client, time.Now())
 
 	return tokenPair, nil
 }
 
-func (s *Service) checkProfileAvailability(authInfo entity.AuthInfo) error {
+func (s *Service) checkProfileAvailability(ctx context.Context, authInfo entity.AuthInfo) error {
 	if authInfo.IsActivated == false {
-		log.AutoInfof("try to login not activated profile %s", authInfo.Id)
+		authlog.Default.ProfileNotActivated(ctx, authInfo.Id.String())
 		return authFail.GrpcProfileNotActivated
 	}
 	if authInfo.IsBlocked == true {
-		log.AutoWarnf("try to login blocked profile %s", authInfo.Id)
+		authlog.Default.ProfileBlocked(ctx, authInfo.Id.String())
 		return authFail.GrpcProfileIsBlocked
 	}
 	return nil

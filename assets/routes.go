@@ -8,10 +8,10 @@ const (
 	NewLoginFilePath                       = MailTemplatesDirPath + "/new_login.html"
 	PasswordResetMailTmplFilePath          = MailTemplatesDirPath + "/password_reset.html"
 	PasswordChangedMailTmplFilePath        = MailTemplatesDirPath + "/password_changed.html"
-	NicknameChangedMailTmplFilePath        = MailTemplatesDirPath + "/nickname_changed.html"
+	UsernameChangedMailTmplFilePath        = MailTemplatesDirPath + "/username_changed.html"
 	ProfileDeletionRequestMailTmplFilePath = MailTemplatesDirPath + "/profile_deletion_request.html"
 	ProfileDeletedMailTmplFilePath         = MailTemplatesDirPath + "/profile_deleted.html"
 
-	NicknamesDirPath           = RootDirPath + "/nicknames"
-	ForbiddenNicknamesFilePath = NicknamesDirPath + "/forbidden_nicknames.txt"
+	UsernamesDirPath           = RootDirPath + "/usernames"
+	ForbiddenUsernamesFilePath = UsernamesDirPath + "/forbidden_usernames.txt"
 )

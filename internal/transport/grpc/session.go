@@ -46,7 +46,7 @@ func (s *AuthServer) ActivateProfile(ctx context.Context, req *api.ActivateProfi
 }
 
 func (s *AuthServer) SignIn(ctx context.Context, req *api.SignInRequest) (*api.SessionResponse, error) {
-	if len(req.Email) == 0 && len(req.Nickname) == 0 {
+	if len(req.Email) == 0 && len(req.Username) == 0 {
 		return nil, fail.GrpcInvalidBody
 	}
 	credentials := entity.SignInCredentials{
@@ -55,8 +55,8 @@ func (s *AuthServer) SignIn(ctx context.Context, req *api.SignInRequest) (*api.S
 	if len(req.Email) > 0 {
 		credentials.Email = &req.Email
 	}
-	if len(req.Nickname) > 0 {
-		credentials.Nickname = &req.Nickname
+	if len(req.Username) > 0 {
+		credentials.Username = &req.Username
 	}
 
 	tokens, err := s.service.Session.SignIn(ctx, credentials, entity.ClientData{Ip: req.Ip, UserAgent: req.UserAgent})
@@ -88,7 +88,7 @@ func (s *AuthServer) SignOut(ctx context.Context, req *api.SignOutRequest) (*api
 }
 
 func (s *AuthServer) GetAuthInfo(ctx context.Context, req *api.GetAuthInfoRequest) (*api.GetAuthInfoResponse, error) {
-	if len(req.Id) == 0 && len(req.Email) == 0 && len(req.Nickname) == 0 {
+	if len(req.Id) == 0 && len(req.Email) == 0 && len(req.Username) == 0 {
 		return nil, fail.GrpcInvalidBody
 	}
 
@@ -100,8 +100,8 @@ func (s *AuthServer) GetAuthInfo(ctx context.Context, req *api.GetAuthInfoReques
 	if len(req.Email) > 0 {
 		identifiers.Email = &req.Email
 	}
-	if len(req.Nickname) > 0 {
-		identifiers.Nickname = &req.Nickname
+	if len(req.Username) > 0 {
+		identifiers.Username = &req.Username
 	}
 
 	authInfo, err := s.service.Session.GetAuthInfo(ctx, identifiers)

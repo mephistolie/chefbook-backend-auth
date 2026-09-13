@@ -9,20 +9,20 @@ import (
 )
 
 func (s *AuthServer) RequestPasswordReset(ctx context.Context, req *api.RequestPasswordResetRequest) (*api.RequestPasswordResetResponse, error) {
-	if len(req.Email) == 0 && len(req.Nickname) == 0 {
+	if len(req.Email) == 0 && len(req.Username) == 0 {
 		return nil, fail.GrpcInvalidBody
 	}
 
 	var email *string = nil
-	var nickname *string = nil
+	var username *string = nil
 	if len(req.Email) > 0 {
 		email = &req.Email
 	}
-	if len(req.Nickname) > 0 {
-		nickname = &req.Nickname
+	if len(req.Username) > 0 {
+		username = &req.Username
 	}
 
-	if err := s.service.Password.RequestReset(ctx, email, nickname, req.ResetPasswordLinkPattern); err != nil {
+	if err := s.service.Password.RequestReset(ctx, email, username, req.ResetPasswordLinkPattern); err != nil {
 		return nil, err
 	}
 	return &api.RequestPasswordResetResponse{Message: "if the profile exists, reset link has been sent"}, nil

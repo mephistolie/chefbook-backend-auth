@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	api "github.com/mephistolie/chefbook-backend-auth/api/mq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"time"
 )
 
 func (r *Repository) GetProfilesToDelete(ctx context.Context) []entity.DeleteProfileRequest {
@@ -24,7 +25,10 @@ func (r *Repository) GetProfilesToDelete(ctx context.Context) []entity.DeletePro
 
 	rows, err := r.db.QueryContext(ctx, query, time.Now())
 	if err != nil {
-		log.AutoError("unable to get delete profile requests: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "GetProfilesToDelete",
+			Entity:    "profile_deletion_request",
+		}, err)
 		return []entity.DeleteProfileRequest{}
 	}
 
@@ -32,7 +36,10 @@ func (r *Repository) GetProfilesToDelete(ctx context.Context) []entity.DeletePro
 		var request entity.DeleteProfileRequest
 		err = rows.Scan(&request.UserId, &request.WithSharedData, &request.Timestamp)
 		if err != nil {
-			log.AutoErrorf("unable to parse delete profile request: %s", err)
+			authlog.Default.PostgresRowScanFailed(ctx, authlog.PostgresOperationData{
+				Operation: "GetProfilesToDelete",
+				Entity:    "profile_deletion_request",
+			}, err)
 			continue
 		}
 		requests = append(requests, request)
@@ -52,7 +59,11 @@ func (r *Repository) GetDeleteProfileRequest(ctx context.Context, userId uuid.UU
 
 	row := r.db.QueryRowContext(ctx, query, userId)
 	if err := row.Scan(&request.UserId, &request.WithSharedData, &request.Timestamp); err != nil {
-		log.AutoWarnf("delete profile request for user %s not found: %s", userId, err)
+		authlog.Default.PostgresLookupWarned(ctx, authlog.PostgresOperationData{
+			Operation: "GetDeleteProfileRequest",
+			UserID:    userId.String(),
+			Entity:    "profile_deletion_request",
+		})
 		return entity.DeleteProfileRequest{}, fail.GrpcNotFound
 	}
 
@@ -75,7 +86,11 @@ func (r *Repository) RequestDeleteProfile(ctx context.Context, userId uuid.UUID,
 			}
 			return request.Timestamp, nil
 		} else {
-			log.AutoErrorf("unable to add profile deletion request for user %s: %s", userId, err)
+			authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+				Operation: "RequestDeleteProfile",
+				UserID:    userId.String(),
+				Entity:    "profile_deletion_request",
+			}, err)
 			return time.Time{}, fail.GrpcUnknown
 		}
 	}
@@ -90,7 +105,11 @@ func (r *Repository) CancelProfileDeletion(ctx context.Context, userId uuid.UUID
 	`, deleteProfileRequestsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.AutoInfof("unable to cancel delete profile %s request: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "CancelProfileDeletion",
+			UserID:    userId.String(),
+			Entity:    "profile_deletion_request",
+		}, err)
 		return fail.GrpcUnknown
 	}
 
@@ -100,7 +119,11 @@ func (r *Repository) CancelProfileDeletion(ctx context.Context, userId uuid.UUID
 func (r *Repository) DeleteUser(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.AutoError("unable to begin transaction: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "BeginDeleteUserTransaction",
+			UserID:    userId.String(),
+			Entity:    "user",
+		}, err)
 		return nil, fail.GrpcUnknown
 	}
 
@@ -110,7 +133,11 @@ func (r *Repository) DeleteUser(ctx context.Context, userId uuid.UUID, deleteSha
 	`, usersTable)
 
 	if _, err := tx.ExecContext(ctx, query, userId); err != nil {
-		log.AutoInfof("unable to delete user %s: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "DeleteUser",
+			UserID:    userId.String(),
+			Entity:    "user",
+		}, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -119,7 +146,7 @@ func (r *Repository) DeleteUser(ctx context.Context, userId uuid.UUID, deleteSha
 		return nil, err
 	}
 
-	return msg, commitTransaction(tx)
+	return msg, commitTransaction(ctx, tx)
 }
 
 func (r *Repository) addOutboxProfileDeletedMsg(ctx context.Context, id uuid.UUID, deleteSharedData bool, tx *sql.Tx) (*entity.MessageData, error) {
@@ -129,7 +156,11 @@ func (r *Repository) addOutboxProfileDeletedMsg(ctx context.Context, id uuid.UUI
 	}
 	var msgBodyBson, err = json.Marshal(msgBody)
 	if err != nil {
-		log.AutoError("unable to marshal profile deleted message body: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "MarshalProfileDeletedOutboxMessage",
+			UserID:    id.String(),
+			Entity:    "outbox_message",
+		}, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msg := entity.MessageData{

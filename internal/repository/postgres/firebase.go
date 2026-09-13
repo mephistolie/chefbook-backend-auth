@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	api "github.com/mephistolie/chefbook-backend-auth/api/mq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"time"
 )
 
 func (r *Repository) IsFirebaseProfileConnected(ctx context.Context, firebaseId string) bool {
@@ -31,7 +32,11 @@ func (r *Repository) IsFirebaseProfileConnected(ctx context.Context, firebaseId 
 func (r *Repository) ConnectFirebase(ctx context.Context, userId uuid.UUID, firebaseId string, creationTimestamp time.Time) (*entity.MessageData, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.AutoError("unable to begin transaction: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "BeginConnectFirebaseTransaction",
+			UserID:    userId.String(),
+			Entity:    "firebase_connection",
+		}, err)
 		return nil, fail.GrpcUnknown
 	}
 
@@ -42,7 +47,11 @@ func (r *Repository) ConnectFirebase(ctx context.Context, userId uuid.UUID, fire
 	`, usersTable)
 
 	if _, err := tx.ExecContext(ctx, clarifyRegistrationTimestampQuery, creationTimestamp, userId); err != nil {
-		log.AutoErrorf("failed to set profile creation timestamp for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "SetFirebaseProfileCreationTimestamp",
+			UserID:    userId.String(),
+			Entity:    "user",
+		}, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -52,7 +61,11 @@ func (r *Repository) ConnectFirebase(ctx context.Context, userId uuid.UUID, fire
 	`, firebaseTable)
 
 	if _, err := tx.ExecContext(ctx, addFirebaseConnectionQuery, userId, firebaseId); err != nil {
-		log.AutoErrorf("failed to add Firebase connection fo user %s with firebase id %s: %s", userId, firebaseId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "ConnectFirebase",
+			UserID:    userId.String(),
+			Entity:    "firebase_connection",
+		}, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 
@@ -61,7 +74,7 @@ func (r *Repository) ConnectFirebase(ctx context.Context, userId uuid.UUID, fire
 		return nil, err
 	}
 
-	return msg, commitTransaction(tx)
+	return msg, commitTransaction(ctx, tx)
 }
 
 func (r *Repository) addOutboxProfileFirebaseImportMsg(ctx context.Context, id uuid.UUID, firebaseId string, tx *sql.Tx) (*entity.MessageData, error) {
@@ -71,7 +84,11 @@ func (r *Repository) addOutboxProfileFirebaseImportMsg(ctx context.Context, id u
 	}
 	var msgBodyBson, err = json.Marshal(msgBody)
 	if err != nil {
-		log.AutoError("unable to marshal firebase import message body: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "MarshalFirebaseImportOutboxMessage",
+			UserID:    id.String(),
+			Entity:    "outbox_message",
+		}, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msgInfo := entity.MessageData{

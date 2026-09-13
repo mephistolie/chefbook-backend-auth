@@ -15,7 +15,7 @@ func (s *AuthServer) GetVisibleNames(ctx context.Context, req *api.GetVisibleNam
 		}
 	}
 
-	response, err := s.service.Nickname.Get(ctx, userIds)
+	response, err := s.service.Username.Get(ctx, userIds)
 
 	visibleNames := make(map[string]string)
 	for id, name := range response {
@@ -25,26 +25,26 @@ func (s *AuthServer) GetVisibleNames(ctx context.Context, req *api.GetVisibleNam
 	return &api.GetVisibleNamesResponse{UserVisibleNames: visibleNames}, err
 }
 
-func (s *AuthServer) CheckNicknameAvailability(ctx context.Context, req *api.CheckNicknameAvailabilityRequest) (*api.CheckNicknameAvailabilityResponse, error) {
-	if err := s.nicknameValidator.Validate(req.Nickname); err != nil {
+func (s *AuthServer) CheckUsernameAvailability(ctx context.Context, req *api.CheckUsernameAvailabilityRequest) (*api.CheckUsernameAvailabilityResponse, error) {
+	if err := s.usernameValidator.Validate(req.Username); err != nil {
 		return nil, err
 	}
 
-	available, err := s.service.Nickname.CheckAvailability(ctx, req.Nickname)
-	return &api.CheckNicknameAvailabilityResponse{Available: available}, err
+	available, err := s.service.Username.CheckAvailability(ctx, req.Username)
+	return &api.CheckUsernameAvailabilityResponse{Available: available}, err
 }
 
-func (s *AuthServer) SetNickname(ctx context.Context, req *api.SetNicknameRequest) (*api.SetNicknameResponse, error) {
+func (s *AuthServer) SetUsername(ctx context.Context, req *api.SetUsernameRequest) (*api.SetUsernameResponse, error) {
 	userId, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, fail.GrpcInvalidBody
 	}
-	if err = s.nicknameValidator.Validate(req.Nickname); err != nil {
+	if err = s.usernameValidator.Validate(req.Username); err != nil {
 		return nil, err
 	}
 
-	if err = s.service.Nickname.Set(ctx, userId, req.Nickname); err != nil {
+	if err = s.service.Username.Set(ctx, userId, req.Username); err != nil {
 		return nil, err
 	}
-	return &api.SetNicknameResponse{Message: "nickname set"}, nil
+	return &api.SetUsernameResponse{Message: "username set"}, nil
 }

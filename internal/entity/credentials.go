@@ -16,7 +16,7 @@ type CredentialsHash struct {
 
 type SignInCredentials struct {
 	Email    *string
-	Nickname *string
+	Username *string
 	Password string
 }
 
@@ -28,5 +28,5 @@ type OAuthCredentials struct {
 type UserIdentifiers struct {
 	UserId   *uuid.UUID
 	Email    *string
-	Nickname *string
+	Username *string
 }

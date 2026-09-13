@@ -3,9 +3,10 @@ package postgres
 import (
 	"context"
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 )
 
 func (r *Repository) GetProfileActivationCode(ctx context.Context, userId uuid.UUID) (string, error) {
@@ -18,7 +19,11 @@ func (r *Repository) GetProfileActivationCode(ctx context.Context, userId uuid.U
 	`, activationCodesTable)
 
 	if err := r.db.GetContext(ctx, &code, query, userId); err != nil {
-		log.AutoErrorf("activation code for user %s not found: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "GetProfileActivationCode",
+			UserID:    userId.String(),
+			Entity:    "activation_code",
+		}, err)
 		return "", fail.GrpcActivationLinkNotFound
 	}
 
@@ -38,9 +43,26 @@ func (r *Repository) ActivateProfile(ctx context.Context, userId uuid.UUID, code
 		)
 	`, usersTable, activationCodesTable)
 
-	res, queryErr := r.db.ExecContext(ctx, activateProfileQuery, userId, code)
-	if rows, err := res.RowsAffected(); queryErr != nil || err != nil || rows == 0 {
-		log.AutoInfof("invalid activation code %s for user %s: %s", code, userId, err)
+	res, err := r.db.ExecContext(ctx, activateProfileQuery, userId, code)
+	if err != nil {
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "ActivateProfile",
+			UserID:    userId.String(),
+			Entity:    "activation_code",
+		}, err)
+		return fail.GrpcInvalidActivationCode
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "ReadActivatedProfileCount",
+			UserID:    userId.String(),
+			Entity:    "activation_code",
+		}, err)
+		return fail.GrpcInvalidActivationCode
+	}
+	if rows == 0 {
+		authlog.Default.ActivationCodeRejected(ctx, userId.String())
 		return fail.GrpcInvalidActivationCode
 	}
 

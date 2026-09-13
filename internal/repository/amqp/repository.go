@@ -52,7 +52,7 @@ func (r *Repository) observeOutbox() {
 		fails := 0
 		if msgs, err := r.outbox.GetPendingMessages(context.Background()); err == nil {
 			for _, msg := range msgs {
-				if err = r.PublishProfilesMessage(msg); err != nil {
+				if err = r.PublishProfilesMessage(context.Background(), msg); err != nil {
 					fails += 1
 					if fails >= 5 {
 						break

@@ -12,7 +12,7 @@ type Data interface {
 	GetAuthInfoById(ctx context.Context, userId uuid.UUID) (entity.AuthInfo, error)
 	GetAuthInfoByEmail(ctx context.Context, email string) (entity.AuthInfo, error)
 	GetAuthInfoByIdentifiers(ctx context.Context, identifiers entity.UserIdentifiers) (entity.AuthInfo, error)
-	GetAuthInfoByNickname(ctx context.Context, nickname string) (entity.AuthInfo, error)
+	GetAuthInfoByUsername(ctx context.Context, username string) (entity.AuthInfo, error)
 	GetAuthInfoByRefreshToken(ctx context.Context, refreshToken string) (entity.AuthInfo, error)
 	GetAuthInfoByFirebaseId(ctx context.Context, firebaseId string) (entity.AuthInfo, error)
 	GetAuthInfoByGoogleId(ctx context.Context, googleId string) (entity.AuthInfo, error)
@@ -42,13 +42,13 @@ type Data interface {
 	CancelProfileDeletion(ctx context.Context, userId uuid.UUID) error
 	DeleteUser(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error)
 
-	GetNicknames(ctx context.Context, userIds []uuid.UUID) (map[uuid.UUID]string, error)
-	SetNickname(ctx context.Context, userId uuid.UUID, nickname string) (string, error)
+	GetUsernames(ctx context.Context, userIds []uuid.UUID) (map[uuid.UUID]string, error)
+	SetUsername(ctx context.Context, userId uuid.UUID, username string) (string, error)
 
 	CreatePasswordResetRequest(ctx context.Context, userId uuid.UUID, expiration time.Time) (uuid.UUID, error)
 	ResetPassword(ctx context.Context, userId uuid.UUID, resetCode, passwordHash string) error
 }
 
 type MessageQueue interface {
-	PublishProfilesMessage(msg *entity.MessageData) error
+	PublishProfilesMessage(ctx context.Context, msg *entity.MessageData) error
 }

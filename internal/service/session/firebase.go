@@ -2,10 +2,11 @@ package session
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
@@ -14,22 +15,22 @@ func (s *Service) importFirebaseProfile(ctx context.Context, email, password str
 	if err != nil {
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
 	}
-	log.AutoInfof("found Firebase profile %s for email %s; importing...", firebaseProfile.LocalId, email)
+	authlog.Default.FirebaseImportStarted(ctx)
 
 	if s.repo.IsFirebaseProfileConnected(ctx, firebaseProfile.LocalId) {
-		log.AutoWarnf("Firebase profile %s already connected to other user", firebaseProfile.LocalId)
+		authlog.Default.FirebaseIdentityOccupied(ctx)
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
 	}
 
 	passwordHash, err := s.hashManager.Hash(password)
 	if err != nil {
-		log.AutoError("unable to hash password: ", err)
+		authlog.Default.PasswordHashFailed(ctx, err)
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
 	profile, err := s.firebase.GetProfile(ctx, firebaseProfile.LocalId)
 	if err != nil {
-		log.AutoErrorf("unable to get firebase profile %s data: %s", firebaseProfile.LocalId, err)
+		authlog.Default.FirebaseProfileFetchFailed(ctx, err)
 		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
@@ -40,13 +41,16 @@ func (s *Service) importFirebaseProfile(ctx context.Context, email, password str
 	if err != nil {
 		return entity.AuthInfo{}, err
 	}
-	go s.mq.PublishProfilesMessage(msg)
+	go s.mq.PublishProfilesMessage(context.WithoutCancel(ctx), msg)
 
 	go func() {
 		ctx := context.WithoutCancel(ctx)
 		msg, err := s.repo.ConnectFirebase(ctx, userId, firebaseProfile.LocalId, profile.CreationTimestamp)
 		if err == nil {
-			_ = s.mq.PublishProfilesMessage(msg)
+			_ = s.mq.PublishProfilesMessage(ctx, msg)
+			authlog.Default.FirebaseProfileConnected(ctx, userId.String())
+		} else {
+			authlog.Default.FirebaseProfileConnectFailed(ctx, userId.String(), err)
 		}
 	}()
 
@@ -60,8 +64,9 @@ func (s *Service) connectFirebaseProfile(ctx context.Context, userId uuid.UUID, 
 	}
 	msg, err := s.repo.ConnectFirebase(ctx, userId, profile.Id, profile.CreationTimestamp)
 	if err != nil {
-		return nil
+		return err
 	}
-	_ = s.mq.PublishProfilesMessage(msg)
+	_ = s.mq.PublishProfilesMessage(ctx, msg)
+	authlog.Default.FirebaseProfileConnected(ctx, userId.String())
 	return nil
 }

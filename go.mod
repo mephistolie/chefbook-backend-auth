@@ -7,18 +7,18 @@ require (
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/mephistolie/chefbook-backend-auth/api v1.8.2
-	github.com/mephistolie/chefbook-backend-common/firebase v0.9.0
-	github.com/mephistolie/chefbook-backend-common/hash v0.6.0
-	github.com/mephistolie/chefbook-backend-common/log v0.9.0
-	github.com/mephistolie/chefbook-backend-common/mail v0.6.0
-	github.com/mephistolie/chefbook-backend-common/migrate/sql v0.7.0
-	github.com/mephistolie/chefbook-backend-common/random v0.7.0
-	github.com/mephistolie/chefbook-backend-common/responses v0.9.0
-	github.com/mephistolie/chefbook-backend-common/shutdown v0.6.0
-	github.com/mephistolie/chefbook-backend-common/subscription v0.12.0
-	github.com/mephistolie/chefbook-backend-common/tokens v0.10.0
-	github.com/mephistolie/chefbook-backend-subscription/api v1.0.0
+	github.com/mephistolie/chefbook-backend-auth/api v1.9.0-rc.1
+	github.com/mephistolie/chefbook-backend-common/firebase v0.10.0
+	github.com/mephistolie/chefbook-backend-common/hash v0.7.0
+	github.com/mephistolie/chefbook-backend-common/log v0.10.0
+	github.com/mephistolie/chefbook-backend-common/mail v0.7.0
+	github.com/mephistolie/chefbook-backend-common/migrate/sql v0.8.0
+	github.com/mephistolie/chefbook-backend-common/random v0.8.0
+	github.com/mephistolie/chefbook-backend-common/responses v0.10.0
+	github.com/mephistolie/chefbook-backend-common/shutdown v0.7.0
+	github.com/mephistolie/chefbook-backend-common/subscription v0.13.0
+	github.com/mephistolie/chefbook-backend-common/tokens v0.11.0
+	github.com/mephistolie/chefbook-backend-subscription/api v1.1.0-rc.1
 	github.com/mssola/useragent v1.0.0
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/wagslane/go-rabbitmq v0.15.0
@@ -59,7 +59,6 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.15 // indirect
 	github.com/googleapis/gax-go/v2 v2.22.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -73,7 +72,6 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/rabbitmq/amqp091-go v1.11.0 // indirect
 	github.com/rs/zerolog v1.35.1 // indirect
-	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.43.0 // indirect

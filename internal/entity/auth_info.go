@@ -8,7 +8,7 @@ import (
 type AuthInfo struct {
 	Id                    uuid.UUID
 	Email                 string
-	Nickname              *string
+	Username              *string
 	PasswordHash          string
 	Role                  string
 	RegistrationTimestamp time.Time

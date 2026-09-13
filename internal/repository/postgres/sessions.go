@@ -3,12 +3,13 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"time"
 )
 
 func (r *Repository) CreateSession(ctx context.Context, session entity.SessionInput) error {
@@ -19,7 +20,11 @@ func (r *Repository) CreateSession(ctx context.Context, session entity.SessionIn
 
 	if _, err := r.db.ExecContext(ctx, query, session.UserId, session.RefreshToken, session.Ip, session.UserAgent,
 		session.ExpiresAt); err != nil {
-		log.AutoError("error while creating session: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "CreateSession",
+			UserID:    session.UserId.String(),
+			Entity:    "session",
+		}, err)
 		return fail.GrpcUnknown
 	}
 	return nil
@@ -36,7 +41,11 @@ func (r *Repository) GetSessions(ctx context.Context, userId uuid.UUID) []entity
 
 	rows, err := r.db.QueryContext(ctx, query, userId)
 	if err != nil {
-		log.AutoErrorf("unable to get user %s sessions: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "GetSessions",
+			UserID:    userId.String(),
+			Entity:    "session",
+		}, err)
 		return []entity.SessionRawInfo{}
 	}
 
@@ -44,7 +53,11 @@ func (r *Repository) GetSessions(ctx context.Context, userId uuid.UUID) []entity
 		var session entity.SessionRawInfo
 		err = rows.Scan(&session.SessionId, &session.UserId, &session.Ip, &session.UserAgent, &session.AccessTime)
 		if err != nil {
-			log.AutoErrorf("unable to parse user %s session: %s", userId, err)
+			authlog.Default.PostgresRowScanFailed(ctx, authlog.PostgresOperationData{
+				Operation: "GetSessions",
+				UserID:    userId.String(),
+				Entity:    "session",
+			}, err)
 			continue
 		}
 		sessions = append(sessions, session)
@@ -62,7 +75,11 @@ func (r *Repository) UpdateSession(ctx context.Context, session entity.SessionIn
 
 	if _, err := r.db.ExecContext(ctx, query, session.RefreshToken, session.Ip, session.UserAgent, time.Now(), session.ExpiresAt,
 		oldRefreshToken); err != nil {
-		log.AutoDebugf("unable to update session for user %s: %s", session.UserId, err)
+		authlog.Default.PostgresOperationWarned(ctx, authlog.PostgresOperationData{
+			Operation: "UpdateSession",
+			UserID:    session.UserId.String(),
+			Entity:    "session",
+		}, err)
 		return fail.GrpcUnknown
 	}
 
@@ -80,7 +97,10 @@ func (r *Repository) DeleteSession(ctx context.Context, refreshToken string) err
 
 	row := r.db.QueryRowContext(ctx, deleteSessionQuery, refreshToken)
 	if err := row.Scan(&id); err != nil || id == "" {
-		log.AutoWarn("unable to delete session: ", err)
+		authlog.Default.PostgresLookupWarned(ctx, authlog.PostgresOperationData{
+			Operation: "DeleteSession",
+			Entity:    "session",
+		})
 		return authFail.GrpcSessionNotFound
 	}
 
@@ -94,7 +114,12 @@ func (r *Repository) DeleteSessions(ctx context.Context, userId uuid.UUID, sessi
 	`, sessionsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, userId, sessionIds); err != nil {
-		log.AutoWarnf("unable to delete sessions for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationWarned(ctx, authlog.PostgresOperationData{
+			Operation: "DeleteSessions",
+			UserID:    userId.String(),
+			Entity:    "session",
+			Count:     len(sessionIds),
+		}, err)
 	}
 }
 
@@ -105,7 +130,11 @@ func (r *Repository) DeleteAllSessions(ctx context.Context, userId uuid.UUID) {
 	`, sessionsTable)
 
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.AutoWarnf("unable to delete sessions for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationWarned(ctx, authlog.PostgresOperationData{
+			Operation: "DeleteAllSessions",
+			UserID:    userId.String(),
+			Entity:    "session",
+		}, err)
 	}
 }
 
@@ -123,6 +152,11 @@ func (r *Repository) DeleteOutdatedSessions(ctx context.Context, userId uuid.UUI
 	`, sessionsTable, sessionsThreshold)
 
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.AutoWarnf("unable to delete sessions for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationWarned(ctx, authlog.PostgresOperationData{
+			Operation: "DeleteOutdatedSessions",
+			UserID:    userId.String(),
+			Entity:    "session",
+			Count:     sessionsThreshold,
+		}, err)
 	}
 }

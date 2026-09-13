@@ -3,17 +3,18 @@ package session
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 	"github.com/mephistolie/chefbook-backend-common/subscription"
 	"github.com/mephistolie/chefbook-backend-common/tokens/access"
 	subscriptionApi "github.com/mephistolie/chefbook-backend-subscription/api/proto/implementation/v1"
 	"github.com/mssola/useragent"
-	"sync"
-	"time"
 )
 
 func (s *Service) Refresh(ctx context.Context, refreshToken, ip, userAgent string) (entity.Tokens, error) {
@@ -23,7 +24,7 @@ func (s *Service) Refresh(ctx context.Context, refreshToken, ip, userAgent strin
 	}
 
 	if authInfo.IsBlocked {
-		log.AutoWarnf("try to login blocked profile %s", authInfo.Id)
+		authlog.Default.ProfileBlocked(ctx, authInfo.Id.String())
 		_ = s.repo.DeleteSession(ctx, refreshToken)
 		return entity.Tokens{}, authFail.GrpcProfileIsBlocked
 	}
@@ -77,13 +78,13 @@ func (s *Service) createSessionEntity(
 	res.AccessToken, err = s.tokenManager.CreateAccess(access.Payload{
 		UserId:           authInfo.Id,
 		Email:            authInfo.Email,
-		Nickname:         authInfo.Nickname,
+		Username:         authInfo.Username,
 		Role:             authInfo.Role,
 		SubscriptionPlan: plan,
 		Deleted:          authInfo.DeletionTimestamp != nil,
 	}, s.accessTokenTtl)
 	if err != nil {
-		log.AutoError("unable to create access token: ", err)
+		authlog.Default.AccessTokenCreationFailed(ctx, authInfo.Id.String(), err)
 		return entity.Tokens{}, entity.SessionInput{}, fail.GrpcUnknown
 	}
 

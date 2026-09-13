@@ -3,10 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
@@ -25,7 +26,10 @@ func (r *Repository) ConnectGoogle(ctx context.Context, userId uuid.UUID, google
 		WHERE user_id=$2
 	`, oauthTable)
 	if _, err := r.db.ExecContext(ctx, query, googleId, userId); err != nil {
-		log.AutoWarnf("Google profile %s is occupied: %s", googleId, err)
+		authlog.Default.OAuthIdentityOccupied(ctx, authlog.OAuthData{
+			Provider: "google",
+			UserID:   userId.String(),
+		})
 		return authFail.GrpcAccountOccupied
 	}
 
@@ -39,7 +43,11 @@ func (r *Repository) DeleteGoogleConnection(ctx context.Context, userId uuid.UUI
 		WHERE user_id=$1
 	`, oauthTable)
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.AutoErrorf("unable to delete Google profile connection for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "DeleteGoogleConnection",
+			UserID:    userId.String(),
+			Entity:    "oauth_connection",
+		}, err)
 		return fail.GrpcUnknown
 	}
 
@@ -53,7 +61,10 @@ func (r *Repository) ConnectVk(ctx context.Context, userId uuid.UUID, vkId int64
 		WHERE user_id=$2
 	`, oauthTable)
 	if _, err := r.db.ExecContext(ctx, query, vkId, userId); err != nil {
-		log.AutoWarnf("VK profile %d is occupied: %s", vkId, err)
+		authlog.Default.OAuthIdentityOccupied(ctx, authlog.OAuthData{
+			Provider: "vk",
+			UserID:   userId.String(),
+		})
 		return authFail.GrpcAccountOccupied
 	}
 
@@ -67,7 +78,11 @@ func (r *Repository) DeleteVkConnection(ctx context.Context, userId uuid.UUID) e
 		WHERE user_id=$1
 	`, oauthTable)
 	if _, err := r.db.ExecContext(ctx, query, userId); err != nil {
-		log.AutoErrorf("unable to delete VK profile connection for user %s: %s", userId, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "DeleteVkConnection",
+			UserID:    userId.String(),
+			Entity:    "oauth_connection",
+		}, err)
 		return fail.GrpcUnknown
 	}
 

@@ -2,14 +2,20 @@ package amqp
 
 import (
 	"context"
+
 	api "github.com/mephistolie/chefbook-backend-auth/api/mq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
-	"github.com/mephistolie/chefbook-backend-common/log"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	amqp "github.com/wagslane/go-rabbitmq"
 )
 
-func (r *Repository) PublishProfilesMessage(msg *entity.MessageData) error {
-	log.AutoInfof("publishing message %s with type %s to exchange %s...", msg.Id, msg.Type, api.ExchangeProfiles)
+func (r *Repository) PublishProfilesMessage(ctx context.Context, msg *entity.MessageData) error {
+	eventData := authlog.MessageData{
+		MessageID: msg.Id.String(),
+		Type:      msg.Type,
+		Exchange:  api.ExchangeProfiles,
+	}
+	authlog.Default.MessagePublishStarted(ctx, eventData)
 	err := r.publisherProfiles.Publish(
 		msg.Body,
 		[]string{""},
@@ -21,13 +27,13 @@ func (r *Repository) PublishProfilesMessage(msg *entity.MessageData) error {
 		amqp.WithPublishOptionsAppID(api.AppId),
 	)
 	if err == nil {
-		log.AutoInfof("message %s with type %s sent successfully", msg.Id, msg.Type)
+		authlog.Default.MessagePublished(ctx, eventData)
 	} else {
-		log.AutoWarnf("unable to send message %s with type %s: %s", msg.Id, msg.Type, err)
+		authlog.Default.MessagePublishFailed(ctx, eventData, err)
 	}
 
 	if err == nil {
-		_ = r.outbox.MarkMessageSent(context.Background(), msg.Id)
+		_ = r.outbox.MarkMessageSent(ctx, msg.Id)
 	}
 
 	return err

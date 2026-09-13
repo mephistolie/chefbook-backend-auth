@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	api "github.com/mephistolie/chefbook-backend-auth/api/mq"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	authFail "github.com/mephistolie/chefbook-backend-auth/internal/entity/fail"
+	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/postgres/dto"
-	"github.com/mephistolie/chefbook-backend-common/log"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
-	"time"
 )
 
 func (r *Repository) CreateUser(
@@ -21,17 +22,21 @@ func (r *Repository) CreateUser(
 	activationCode *string,
 	oauth entity.OAuth,
 ) (uuid.UUID, *entity.MessageData, error) {
-	log.AutoInfof("creating user for email %s...", credentials.Email)
 	var id uuid.UUID
 	if credentials.Id != nil {
 		id = *credentials.Id
 	} else {
 		id = uuid.New()
 	}
+	authlog.Default.UserCreationStarted(ctx, id.String())
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.AutoError("unable to begin transaction: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "BeginCreateUserTransaction",
+			UserID:    id.String(),
+			Entity:    "user",
+		}, err)
 		return uuid.UUID{}, nil, fail.GrpcUnknown
 	}
 
@@ -50,7 +55,7 @@ func (r *Repository) CreateUser(
 		return uuid.UUID{}, nil, err
 	}
 
-	return id, msg, commitTransaction(tx)
+	return id, msg, commitTransaction(ctx, tx)
 }
 
 func (r *Repository) addUsersRow(ctx context.Context, id uuid.UUID, credentials entity.CredentialsHash, activated bool, tx *sql.Tx) error {
@@ -60,7 +65,11 @@ func (r *Repository) addUsersRow(ctx context.Context, id uuid.UUID, credentials 
 	`, usersTable)
 
 	if _, err := tx.ExecContext(ctx, query, id, credentials.Email, credentials.PasswordHash, activated); err != nil {
-		log.AutoErrorf("unable to create user %s: %s", id, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "CreateUser",
+			UserID:    id.String(),
+			Entity:    "user",
+		}, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcUnableCreateProfile)
 	}
 
@@ -74,7 +83,11 @@ func (r *Repository) addOauthRow(ctx context.Context, id uuid.UUID, oauth entity
 	`, oauthTable)
 
 	if _, err := tx.ExecContext(ctx, query, id, oauth.GoogleId, oauth.VkId); err != nil {
-		log.AutoErrorf("unable to create user %s oauth data: %s", id, err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "CreateOAuthConnection",
+			UserID:    id.String(),
+			Entity:    "oauth_connection",
+		}, err)
 		return errorWithTransactionRollback(tx, authFail.GrpcUnableCreateProfile)
 	}
 
@@ -89,7 +102,11 @@ func (r *Repository) addActivationCodeRow(ctx context.Context, id uuid.UUID, act
 		`, activationCodesTable)
 
 		if _, err := tx.ExecContext(ctx, query, *activationCode, id); err != nil {
-			log.AutoErrorf("unable to create user %s activation code: %s", id, err)
+			authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+				Operation: "CreateActivationCode",
+				UserID:    id.String(),
+				Entity:    "activation_code",
+			}, err)
 			return errorWithTransactionRollback(tx, authFail.GrpcUnableCreateProfile)
 		}
 	}
@@ -103,7 +120,11 @@ func (r *Repository) addOutboxProfileCreatedMsg(ctx context.Context, id uuid.UUI
 	}
 	var msgBodyBson, err = json.Marshal(msgBody)
 	if err != nil {
-		log.AutoError("unable to marshal profile created message body: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "MarshalProfileCreatedOutboxMessage",
+			UserID:    id.String(),
+			Entity:    "outbox_message",
+		}, err)
 		return nil, errorWithTransactionRollback(tx, fail.GrpcUnknown)
 	}
 	msg := entity.MessageData{
@@ -119,7 +140,11 @@ func (r *Repository) addOutboxProfileCreatedMsg(ctx context.Context, id uuid.UUI
 func (r *Repository) GetAuthInfoById(ctx context.Context, userId uuid.UUID) (entity.AuthInfo, error) {
 	info, err := r.getAuthInfoByCondition(ctx, fmt.Sprintf("%s.user_id=$1", usersTable), userId)
 	if err != nil {
-		log.AutoInfof("user %s not found: %s", userId, err)
+		authlog.Default.PostgresLookupMissed(ctx, authlog.PostgresOperationData{
+			Operation: "GetAuthInfoById",
+			UserID:    userId.String(),
+			Entity:    "user",
+		})
 		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
 	return info, nil
@@ -128,16 +153,22 @@ func (r *Repository) GetAuthInfoById(ctx context.Context, userId uuid.UUID) (ent
 func (r *Repository) GetAuthInfoByEmail(ctx context.Context, email string) (entity.AuthInfo, error) {
 	info, err := r.getAuthInfoByCondition(ctx, fmt.Sprintf("%s.email=$1", usersTable), email)
 	if err != nil {
-		log.AutoInfof("user with email %s not found: %s", email, err)
+		authlog.Default.PostgresLookupMissed(ctx, authlog.PostgresOperationData{
+			Operation: "GetAuthInfoByEmail",
+			Entity:    "user",
+		})
 		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
 	return info, nil
 }
 
-func (r *Repository) GetAuthInfoByNickname(ctx context.Context, nickname string) (entity.AuthInfo, error) {
-	info, err := r.getAuthInfoByCondition(ctx, fmt.Sprintf("%s.nickname=$1", usersTable), nickname)
+func (r *Repository) GetAuthInfoByUsername(ctx context.Context, username string) (entity.AuthInfo, error) {
+	info, err := r.getAuthInfoByCondition(ctx, fmt.Sprintf("%s.username=$1", usersTable), username)
 	if err != nil {
-		log.AutoInfof("user with nickname %s not found: %s", nickname, err)
+		authlog.Default.PostgresLookupMissed(ctx, authlog.PostgresOperationData{
+			Operation: "GetAuthInfoByUsername",
+			Entity:    "user",
+		})
 		return entity.AuthInfo{}, authFail.GrpcUserNotFound
 	}
 	return info, nil
@@ -153,8 +184,8 @@ func (r *Repository) GetAuthInfoByIdentifiers(ctx context.Context, identifiers e
 	if err != nil && identifiers.Email != nil {
 		authInfo, err = r.GetAuthInfoByEmail(ctx, *identifiers.Email)
 	}
-	if err != nil && identifiers.Nickname != nil {
-		authInfo, err = r.GetAuthInfoByNickname(ctx, *identifiers.Nickname)
+	if err != nil && identifiers.Username != nil {
+		authInfo, err = r.GetAuthInfoByUsername(ctx, *identifiers.Username)
 	}
 
 	return authInfo, err
@@ -172,7 +203,10 @@ func (r *Repository) GetAuthInfoByRefreshToken(ctx context.Context, refreshToken
 
 	row := r.db.QueryRowContext(ctx, getUserIdQuery, refreshToken)
 	if err := row.Scan(&userId, &session.ExpiresAt); err != nil {
-		log.AutoWarnf("session for refresh token %s not found: %s", refreshToken, err)
+		authlog.Default.PostgresLookupWarned(ctx, authlog.PostgresOperationData{
+			Operation: "GetAuthInfoByRefreshToken",
+			Entity:    "session",
+		})
 		return entity.AuthInfo{}, authFail.GrpcSessionNotFound
 	}
 
@@ -204,7 +238,7 @@ func (r *Repository) getAuthInfoByCondition(ctx context.Context, condition strin
 	var info dto.AuthInfo
 	query := fmt.Sprintf(`
 		SELECT
-			%[1]v.user_id, %[1]v.email, %[1]v.nickname, %[1]v.password, %[1]v.role, %[1]v.registered,
+			%[1]v.user_id, %[1]v.email, %[1]v.username, %[1]v.password, %[1]v.role, %[1]v.registered,
 			%[1]v.activated, %[1]v.blocked, %[2]v.google_id, %[2]v.vk_id, %[3]v.deletion_timestamp
 		FROM
 			%[1]v
@@ -220,51 +254,62 @@ func (r *Repository) getAuthInfoByCondition(ctx context.Context, condition strin
 	return info.Entity(), nil
 }
 
-func (r *Repository) GetNicknames(ctx context.Context, userIds []uuid.UUID) (map[uuid.UUID]string, error) {
-	nicknames := make(map[uuid.UUID]string)
+func (r *Repository) GetUsernames(ctx context.Context, userIds []uuid.UUID) (map[uuid.UUID]string, error) {
+	usernames := make(map[uuid.UUID]string)
 
 	query := fmt.Sprintf(`
-		SELECT user_id, nickname
+		SELECT user_id, username
 		FROM %s
 		WHERE user_id=ANY($1)
 	`, usersTable)
 
 	rows, err := r.db.QueryContext(ctx, query, userIds)
 	if err != nil {
-		log.AutoError("unable to get nicknames for users: ", err)
+		authlog.Default.PostgresOperationFailed(ctx, authlog.PostgresOperationData{
+			Operation: "GetUsernames",
+			Entity:    "user",
+			Count:     len(userIds),
+		}, err)
 		return nil, fail.GrpcNotFound
 	}
 
 	for rows.Next() {
 		var userId uuid.UUID
-		var nickname *string
+		var username *string
 
-		if err = rows.Scan(&userId, &nickname); err != nil {
-			log.AutoError("unable to parse nickname and email for user: ", err)
+		if err = rows.Scan(&userId, &username); err != nil {
+			authlog.Default.PostgresRowScanFailed(ctx, authlog.PostgresOperationData{
+				Operation: "GetUsernames",
+				Entity:    "user",
+			}, err)
 			continue
 		}
 
-		if nickname != nil {
-			nicknames[userId] = *nickname
+		if username != nil {
+			usernames[userId] = *username
 		}
 	}
 
-	return nicknames, nil
+	return usernames, nil
 }
 
-func (r *Repository) SetNickname(ctx context.Context, userId uuid.UUID, nickname string) (string, error) {
+func (r *Repository) SetUsername(ctx context.Context, userId uuid.UUID, username string) (string, error) {
 	var email string
 
 	query := fmt.Sprintf(`
 		UPDATE %s
-		SET nickname=$1
+		SET username=$1
 		WHERE user_id=$2
 		RETURNING email
 	`, usersTable)
 
-	if err := r.db.GetContext(ctx, &email, query, nickname, userId); err != nil {
-		log.AutoInfof("nickname %s is occupied: %s", nickname, err)
-		return "", authFail.GrpcNicknameOccupied
+	if err := r.db.GetContext(ctx, &email, query, username, userId); err != nil {
+		authlog.Default.PostgresLookupMissed(ctx, authlog.PostgresOperationData{
+			Operation: "SetUsername",
+			UserID:    userId.String(),
+			Entity:    "username",
+		})
+		return "", authFail.GrpcUsernameOccupied
 	}
 
 	return email, nil
