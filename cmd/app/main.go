@@ -69,6 +69,7 @@ func main() {
 		},
 
 		Smtp: config.Smtp{
+			Username:     fs.String("smtp-username", "", "SMTP login; defaults to sender email"),
 			Host:         fs.String("smtp-host", "", "SMTP host; leave empty to disable"),
 			Port:         fs.Int("smtp-port", 465, "SMTP port"),
 			Email:        fs.String("smtp-email", "", "SMTP sender email"),

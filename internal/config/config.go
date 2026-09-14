@@ -88,6 +88,7 @@ type Amqp struct {
 }
 
 type Smtp struct {
+	Username     *string
 	Host         *string
 	Port         *int
 	Email        *string

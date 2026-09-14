@@ -68,6 +68,7 @@ func NewService(ipInfoProvider ip.InfoProvider, cfg *config.Config) (*Service, e
 			*cfg.Smtp.Host,
 			*cfg.Smtp.Port,
 			30*time.Second,
+			*cfg.Smtp.Username,
 		); err != nil {
 			return nil, err
 		}

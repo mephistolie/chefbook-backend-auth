@@ -149,6 +149,8 @@ github.com/mephistolie/chefbook-backend-common/log v0.10.0 h1:+rHwSj/DniIMSMBIXt
 github.com/mephistolie/chefbook-backend-common/log v0.10.0/go.mod h1:WZbnq7CiAcaF+XxE1hvyMuMSSxfDTcE134jg1C6SYTE=
 github.com/mephistolie/chefbook-backend-common/mail v0.7.0 h1:jSzbymLHzBgX+Kap0cY2OjJZzh4QPHKvV0J50vWun7I=
 github.com/mephistolie/chefbook-backend-common/mail v0.7.0/go.mod h1:3vpmu6lr2Xobhjt2+uXRk8sx1HB3bUeow3ei4hpS5HQ=
+github.com/mephistolie/chefbook-backend-common/mail v0.7.1 h1:NaWkMUDQhxlDKlfo/Umn/O4KTUnC/mELmSID8kIbUsI=
+github.com/mephistolie/chefbook-backend-common/mail v0.7.1/go.mod h1:3vpmu6lr2Xobhjt2+uXRk8sx1HB3bUeow3ei4hpS5HQ=
 github.com/mephistolie/chefbook-backend-common/migrate/sql v0.8.1 h1:yDZjtGHU6CnhC8oJD50b1m9G9SjjkRwWnfx3W/A4ESo=
 github.com/mephistolie/chefbook-backend-common/migrate/sql v0.8.1/go.mod h1:Ydus9l7ydp/ZQWwt3dAOb7jX9F4S9GZPVJhrgs+CiwU=
 github.com/mephistolie/chefbook-backend-common/random v0.8.0 h1:8a2vjxYHcL+DqfRgxhrtj+pG3EQbH0E8Kcv+5MbgsbU=
