@@ -11,7 +11,7 @@ require (
 	github.com/mephistolie/chefbook-backend-common/firebase v0.10.0
 	github.com/mephistolie/chefbook-backend-common/hash v0.7.0
 	github.com/mephistolie/chefbook-backend-common/log v0.10.0
-	github.com/mephistolie/chefbook-backend-common/mail v0.7.1
+	github.com/mephistolie/chefbook-backend-common/mail v0.7.2
 	github.com/mephistolie/chefbook-backend-common/migrate/sql v0.8.1
 	github.com/mephistolie/chefbook-backend-common/random v0.8.0
 	github.com/mephistolie/chefbook-backend-common/responses v0.10.0
