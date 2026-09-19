@@ -26,18 +26,23 @@ var (
 	GrpcPasswordNoNumber         = fail.CreateGrpcClient(fail.TypeInvalidBody, "password must contain at least 1 number")
 
 	GrpcUserAlreadyExists     = fail.CreateGrpcClient(typeProfileExists, "user with such email already exists")
-	GrpcProfileNotActivated   = fail.CreateGrpcClient(typeProfileNotActivated, "profile not activated. check your email")
+	GrpcProfileNotActivated   = fail.CreateGrpcAccessDenied(typeProfileNotActivated, "profile not activated. check your email")
 	GrpcInvalidActivationCode = fail.CreateGrpcClient(typeInvalidActivationCode, "invalid activation code")
 	GrpcInvalidCredentials    = fail.CreateGrpcClient(typeInvalidCredentials, "invalid credentials")
 
-	GrpcFewSignInMethods = fail.CreateGrpcClient(typeFewSignInMethods, "if you disable this sign in method, you'll not be able to sign in your profile")
+	GrpcFewSignInMethods = fail.CreateGrpcConflict(typeFewSignInMethods, "if you disable this sign in method, you'll not be able to sign in your profile")
 	GrpcInvalidCode      = fail.CreateGrpcClient(fail.TypeInvalidBody, "code is invalid")
-	GrpcAccountOccupied  = fail.CreateGrpcClient(typeAccountOccupied, "this OAuth profile already connected to different ChefBook Profile")
+	GrpcAccountOccupied  = fail.CreateGrpcConflict(typeAccountOccupied, "this OAuth profile already connected to different ChefBook Profile")
 	GrpcEmailRequired    = fail.CreateGrpcClient(fail.TypeInvalidBody, "email access is required to complete registration")
 
-	GrpcProfileIsBlocked = fail.CreateGrpcAccessDenied(typeProfileBlocked, "profile is blocked")
-	GrpcSessionExpired   = fail.CreateGrpcClient(fail.TypeInvalidBody, "session expired")
-	GrpcSessionNotFound  = fail.CreateGrpcNotFound(fail.TypeNotFound, "session not found")
+	GrpcProfileIsBlocked    = fail.CreateGrpcAccessDenied(typeProfileBlocked, "profile is blocked")
+	GrpcSessionExpired      = fail.CreateGrpcClient("invalid_refresh_token", "invalid refresh token")
+	GrpcInvalidRefreshToken = GrpcSessionExpired
+	GrpcReauthentication    = fail.CreateGrpcAccessDenied("invalid_credentials", "reauthentication failed")
+	GrpcAccountDeleting     = fail.CreateGrpcConflict("account_deleting", "account pending deletion")
+	GrpcDeletionExpired     = fail.CreateGrpcConflict("account_deletion_expired", "account deletion deadline passed")
+	GrpcDeletionNotFound    = fail.CreateGrpcNotFound("account_deletion_not_found", "account deletion request not found")
+	GrpcSessionNotFound     = fail.CreateGrpcNotFound(fail.TypeNotFound, "session not found")
 
 	GrpcUserNotFound           = fail.CreateGrpcNotFound(fail.TypeNotFound, "user not found")
 	GrpcActivationLinkNotFound = fail.CreateGrpcNotFound(fail.TypeNotFound, "activation link not found")
@@ -52,5 +57,5 @@ var (
 	GrpcUsernameForbiddenSymbols = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must contain only latin letters, numbers and '_'")
 	GrpcUsernameForbiddenWord    = fail.CreateGrpcClient(fail.TypeInvalidBody, "username contains forbidden word")
 	GrpcUsernameDoubleUnderscore = fail.CreateGrpcClient(fail.TypeInvalidBody, "username must contain no more than 1 underscore in a row")
-	GrpcUsernameOccupied         = fail.CreateGrpcClient(typeUsernameOccupied, "this username already occupied")
+	GrpcUsernameOccupied         = fail.CreateGrpcConflict(typeUsernameOccupied, "this username already occupied")
 )

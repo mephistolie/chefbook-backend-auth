@@ -23,6 +23,7 @@ const (
 
 type SignInGoogleRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	FlowBinding   string                 `protobuf:"bytes,20,opt,name=flowBinding,proto3" json:"flowBinding,omitempty"`
 	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
 	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
 	RedirectUrl   string                 `protobuf:"bytes,3,opt,name=redirectUrl,proto3" json:"redirectUrl,omitempty"`
@@ -60,6 +61,13 @@ func (x *SignInGoogleRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SignInGoogleRequest.ProtoReflect.Descriptor instead.
 func (*SignInGoogleRequest) Descriptor() ([]byte, []int) {
 	return file_v1_sign_in_google_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SignInGoogleRequest) GetFlowBinding() string {
+	if x != nil {
+		return x.FlowBinding
+	}
+	return ""
 }
 
 func (x *SignInGoogleRequest) GetCode() string {
@@ -101,8 +109,9 @@ var File_v1_sign_in_google_proto protoreflect.FileDescriptor
 
 const file_v1_sign_in_google_proto_rawDesc = "" +
 	"\n" +
-	"\x17v1/sign-in-google.proto\x12\x02v1\"\x8f\x01\n" +
-	"\x13SignInGoogleRequest\x12\x12\n" +
+	"\x17v1/sign-in-google.proto\x12\x02v1\"\xb1\x01\n" +
+	"\x13SignInGoogleRequest\x12 \n" +
+	"\vflowBinding\x18\x14 \x01(\tR\vflowBinding\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
 	"\x05state\x18\x02 \x01(\tR\x05state\x12 \n" +
 	"\vredirectUrl\x18\x03 \x01(\tR\vredirectUrl\x12\x0e\n" +

@@ -23,6 +23,7 @@ const (
 
 type SignInVkRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	FlowBinding   string                 `protobuf:"bytes,20,opt,name=flowBinding,proto3" json:"flowBinding,omitempty"`
 	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
 	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
 	RedirectUri   string                 `protobuf:"bytes,3,opt,name=redirectUri,proto3" json:"redirectUri,omitempty"`
@@ -60,6 +61,13 @@ func (x *SignInVkRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SignInVkRequest.ProtoReflect.Descriptor instead.
 func (*SignInVkRequest) Descriptor() ([]byte, []int) {
 	return file_v1_sign_in_vk_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SignInVkRequest) GetFlowBinding() string {
+	if x != nil {
+		return x.FlowBinding
+	}
+	return ""
 }
 
 func (x *SignInVkRequest) GetCode() string {
@@ -101,8 +109,9 @@ var File_v1_sign_in_vk_proto protoreflect.FileDescriptor
 
 const file_v1_sign_in_vk_proto_rawDesc = "" +
 	"\n" +
-	"\x13v1/sign-in-vk.proto\x12\x02v1\"\x8b\x01\n" +
-	"\x0fSignInVkRequest\x12\x12\n" +
+	"\x13v1/sign-in-vk.proto\x12\x02v1\"\xad\x01\n" +
+	"\x0fSignInVkRequest\x12 \n" +
+	"\vflowBinding\x18\x14 \x01(\tR\vflowBinding\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
 	"\x05state\x18\x02 \x01(\tR\x05state\x12 \n" +
 	"\vredirectUri\x18\x03 \x01(\tR\vredirectUri\x12\x0e\n" +

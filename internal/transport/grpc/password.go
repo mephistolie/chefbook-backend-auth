@@ -33,11 +33,17 @@ func (s *AuthServer) ResetPassword(ctx context.Context, req *api.ResetPasswordRe
 		return nil, err
 	}
 
-	userId, err := uuid.Parse(req.Id)
-	if err != nil {
-		return nil, fail.GrpcInvalidBody
+	userId := uuid.Nil
+	token := req.Token
+	if token == "" {
+		var err error
+		userId, err = uuid.Parse(req.Id)
+		if err != nil {
+			return nil, fail.GrpcInvalidBody
+		}
+		token = req.ResetCode
 	}
-	if err = s.service.Password.Reset(ctx, userId, req.ResetCode, req.NewPassword); err != nil {
+	if err := s.service.Password.Reset(ctx, userId, token, req.NewPassword); err != nil {
 		return nil, err
 	}
 	return &api.ResetPasswordResponse{Message: "password reset"}, nil

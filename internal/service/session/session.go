@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -34,11 +35,15 @@ func (s *Service) Refresh(ctx context.Context, refreshToken, ip, userAgent strin
 		return entity.Tokens{}, err
 	}
 
-	return tokenPair, s.repo.UpdateSession(ctx, session, refreshToken)
+	tokenPair.SessionId, err = s.repo.UpdateSession(ctx, session, refreshToken)
+	return tokenPair, err
 }
 
-func (s *Service) GetAll(ctx context.Context, userId uuid.UUID) []entity.SessionInfo {
-	rawInfos := s.repo.GetSessions(ctx, userId)
+func (s *Service) GetAll(ctx context.Context, userId uuid.UUID) ([]entity.SessionInfo, error) {
+	rawInfos, err := s.repo.GetSessions(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
 	sessionsCount := len(rawInfos)
 
 	locationMap := s.getIpLocationMap(rawInfos)
@@ -48,11 +53,15 @@ func (s *Service) GetAll(ctx context.Context, userId uuid.UUID) []entity.Session
 		infos[i] = s.humanizeSessionInfo(rawInfo, locationMap[rawInfo.Ip])
 	}
 
-	return infos
+	return infos, nil
 }
 
-func (s *Service) DeleteMultiple(ctx context.Context, userId uuid.UUID, sessionIds []int64) {
-	s.repo.DeleteSessions(ctx, userId, sessionIds)
+func (s *Service) DeleteMultiple(ctx context.Context, userId uuid.UUID, sessionIds []int64) error {
+	if len(sessionIds) == 0 {
+		return s.repo.DeleteAllSessions(ctx, userId)
+	} else {
+		return s.repo.DeleteSessions(ctx, userId, sessionIds)
+	}
 }
 
 func (s *Service) createSessionEntity(
@@ -91,6 +100,7 @@ func (s *Service) createSessionEntity(
 	res.RefreshToken = s.tokenManager.CreateRefresh()
 	res.ExpirationTimestamp = time.Now().Add(s.refreshTokenTtl)
 	res.DeletionTimestamp = authInfo.DeletionTimestamp
+	res.DeleteSharedData = authInfo.DeleteSharedData
 
 	return res, entity.SessionInput{
 		UserId:       authInfo.Id,
@@ -107,6 +117,7 @@ func (s *Service) getIpLocationMap(infos []entity.SessionRawInfo) map[string]str
 		uniqueIps[info.Ip] = true
 	}
 
+	var mu sync.Mutex
 	var wg sync.WaitGroup
 	wg.Add(len(uniqueIps))
 
@@ -115,7 +126,10 @@ func (s *Service) getIpLocationMap(infos []entity.SessionRawInfo) map[string]str
 		ip := ip
 		go func() {
 			defer wg.Done()
-			locationMap[ip] = s.ipInfoProvider.GetLocation(ip)
+			location := s.ipInfoProvider.GetLocation(ip)
+			mu.Lock()
+			locationMap[ip] = location
+			mu.Unlock()
 		}()
 	}
 
@@ -134,6 +148,7 @@ func (s *Service) humanizeSessionInfo(rawInfo entity.SessionRawInfo, location st
 	}
 	return entity.SessionInfo{
 		SessionId:   rawInfo.SessionId,
+		Client:      parseClient(rawInfo.UserAgent),
 		UserId:      rawInfo.UserId,
 		Ip:          rawInfo.Ip,
 		AccessPoint: accessPoint,
@@ -141,4 +156,31 @@ func (s *Service) humanizeSessionInfo(rawInfo entity.SessionRawInfo, location st
 		AccessTime:  rawInfo.AccessTime,
 		Location:    location,
 	}
+}
+
+func parseClient(raw string) entity.SessionClient {
+	client := entity.SessionClient{Platform: "unknown", Type: "unknown"}
+	ua := useragent.New(raw)
+	value := strings.ToLower(raw)
+	switch {
+	case strings.Contains(value, "android"):
+		client.Platform = "android"
+	case strings.Contains(value, "iphone") || strings.Contains(value, "ipad") || strings.Contains(value, "ios"):
+		client.Platform = "ios"
+	case strings.Contains(value, "windows"):
+		client.Platform = "windows"
+	case strings.Contains(value, "macintosh") || strings.Contains(value, "mac os"):
+		client.Platform = "macos"
+	case strings.Contains(value, "linux"):
+		client.Platform = "linux"
+	}
+	browser, _ := ua.Browser()
+	if strings.Contains(value, "chefbook") {
+		client.Type = "app"
+		client.Name = "ChefBook"
+	} else if browser != "" && (strings.Contains(value, "mozilla/") || strings.Contains(value, "opera/")) {
+		client.Type = "browser"
+		client.Name = browser
+	}
+	return client
 }

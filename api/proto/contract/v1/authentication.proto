@@ -1,0 +1,98 @@
+syntax = "proto3";
+package v1;
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/implementation/v1";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// Gateway validates bearer cryptographically; auth rechecks live original session.
+message AuthPrincipal { string account_id=1; int64 session_id=2; }
+message FlowContext { string authentication_id=1; string flow_token=2; AuthPrincipal principal=3; }
+message CreateAuthenticationRequest { string purpose=1; reserved 2; AuthPrincipal principal=3; }
+message AuthenticationState { string id=1; string purpose=2; string status=3; google.protobuf.Timestamp expiration_timestamp=4; repeated string options=5; string flow_token=6; string confirmation_token=7; google.protobuf.Timestamp confirmation_expiration_timestamp=8; repeated AuthenticationStep steps=9; }
+message StartAuthenticationStepRequest { FlowContext flow=1; string type=2; string redirect_uri=3; string credential_type=4; }
+message AuthenticationStepContext { FlowContext flow=1; string step_id=2; }
+message AuthenticationStep { string id=1; string type=2; string status=3; google.protobuf.Timestamp expiration_timestamp=4; string url=5; string nonce=6; int32 code_length=7; bytes public_key_options=8; }
+message PasswordChallengeProof { string password=1; string login=2; }
+message CodeChallengeProof { string code=1; }
+message OAuthChallengeProof { string code=1; string state=2; string id_token=3; }
+// WebAuthn JSON is a protocol-defined public-key credential, not arbitrary context.
+message PasskeyChallengeProof { bytes credential=1; }
+message RegistrationStepData { string email=1; }
+message PasswordSetupStepData { string password=1; }
+message CompleteAuthenticationStepRequest { reserved 11; reserved "passkey_registration"; AuthenticationStepContext step=1; oneof proof { PasswordChallengeProof password=2; CodeChallengeProof email=3; CodeChallengeProof totp=4; CodeChallengeProof backup_code=5; OAuthChallengeProof google=6; OAuthChallengeProof vk=7; PasskeyChallengeProof passkey=8; RegistrationStepData registration=9; PasswordSetupStepData password_setup=10; } }
+message CompleteAuthenticationStepResponse { AuthenticationStep step=1; AuthenticationState authentication=2; }
+message CreateAuthenticatedSessionRequest { string authentication_token=1; string ip=2; string user_agent=3; }
+message RotateSessionRequest { int64 session_id=1; string refresh_token=2; string ip=3; string user_agent=4; }
+message AuthRestriction { string type=1; google.protobuf.Timestamp deletion_timestamp=2; bool delete_shared_data=3; }
+message AuthTokens { string user_id=1; int64 session_id=2; string access_token=3; string refresh_token=4; google.protobuf.Timestamp expiration_timestamp=5; repeated AuthRestriction restrictions=6; }
+message AuthSession { int64 id=1; string ip=2; string user_agent=3; google.protobuf.Timestamp last_refresh_timestamp=4; }
+message AuthSessions { repeated AuthSession sessions=1; }
+message RevokeAuthSessionRequest { AuthPrincipal principal=1; optional int64 session_id=2; string refresh_token=3; }
+message SensitiveAction { AuthPrincipal principal=1; string confirmation_token=2; }
+message SetAccountPasswordRequest { SensitiveAction action=1; string new_password=2; }
+message StartPasswordResetRequest { string email=1; }
+message ConfirmPasswordResetRequest { string token=1; string new_password=2; }
+message SetAccountUsernameRequest { AuthPrincipal principal=1; string username=2; }
+message AuthUsernameRequest { string username=1; }
+message AuthUsernameAvailability { bool available=1; }
+message ChangeAccountEmailRequest { SensitiveAction action=1; string email=2; }
+message ConfirmAccountEmailRequest { string token=1; }
+message ConfirmAccountEmailResponse { string status=1; }
+message RequestAccountDeletionRequest { SensitiveAction action=1; bool delete_shared_data=2; }
+message PatchAccountDeletionRequest { AuthPrincipal principal=1; bool delete_shared_data=2; }
+message AccountDeletion { google.protobuf.Timestamp deletion_timestamp=1; bool delete_shared_data=2; }
+message AuthIdentity { string provider=1; string subject=2; }
+message AuthIdentities { repeated AuthIdentity identities=1; }
+message LinkIdentityRequest { SensitiveAction action=1; string provider=2; string code=3; string state=4; }
+message LinkIdentityResponse { bool created=1; }
+message UnlinkIdentityRequest { SensitiveAction action=1; string provider=2; }
+message PrepareIdentityOAuthRequest { AuthPrincipal principal=1; string provider=2; string redirect_uri=3; }
+message PreparedIdentityOAuth { string url=1; google.protobuf.Timestamp expiration_timestamp=2; }
+message TotpState { bool enabled=1; google.protobuf.Timestamp activation_timestamp=2; }
+message TotpActivation { string secret=1; string otpauth_uri=2; google.protobuf.Timestamp expiration_timestamp=3; }
+message ConfirmTotpRequest { AuthPrincipal principal=1; string code=2; }
+message BackupCodes { repeated string codes=1; google.protobuf.Timestamp generation_timestamp=2; }
+message BackupCodesState { int32 remaining_count=1; google.protobuf.Timestamp generation_timestamp=2; }
+message AuthPasskey { string id=1; string name=2; google.protobuf.Timestamp creation_timestamp=3; google.protobuf.Timestamp last_use_timestamp=4; repeated string transports=5; bool backup_eligible=6; bool backup_state=7; }
+message AuthPasskeys { repeated AuthPasskey passkeys=1; }
+message PasskeyRegistrationOptions { string request_id=1; bytes public_key_options=2; google.protobuf.Timestamp expiration_timestamp=3; }
+message RegisterAuthPasskeyRequest { AuthPrincipal principal=1; string request_id=2; bytes credential=3; string name=4; }
+message RenameAuthPasskeyRequest { AuthPrincipal principal=1; string id=2; string name=3; }
+message DeleteAuthPasskeyRequest { SensitiveAction action=1; string id=2; }
+service AuthenticationService {
+ rpc ValidateSession(AuthPrincipal) returns(google.protobuf.Empty);
+ rpc CreateAuthentication(CreateAuthenticationRequest) returns(AuthenticationState);
+ rpc GetAuthentication(FlowContext) returns(AuthenticationState);
+ rpc StartAuthenticationStep(StartAuthenticationStepRequest) returns(AuthenticationStep);
+ rpc GetAuthenticationStep(AuthenticationStepContext) returns(AuthenticationStep);
+ rpc CompleteAuthenticationStep(CompleteAuthenticationStepRequest) returns(CompleteAuthenticationStepResponse);
+ rpc CreateSession(CreateAuthenticatedSessionRequest) returns(AuthTokens);
+ rpc RefreshSession(RotateSessionRequest) returns(AuthTokens);
+ rpc GetSessions(AuthPrincipal) returns(AuthSessions);
+ rpc RevokeSessions(RevokeAuthSessionRequest) returns(google.protobuf.Empty);
+ rpc SetPassword(SetAccountPasswordRequest) returns(google.protobuf.Empty);
+ rpc StartPasswordReset(StartPasswordResetRequest) returns(google.protobuf.Empty);
+ rpc ConfirmPasswordReset(ConfirmPasswordResetRequest) returns(google.protobuf.Empty);
+ rpc SetUsername(SetAccountUsernameRequest) returns(google.protobuf.Empty);
+ rpc UsernameAvailability(AuthUsernameRequest) returns(AuthUsernameAvailability);
+ rpc ChangeEmail(ChangeAccountEmailRequest) returns(google.protobuf.Empty);
+ rpc ConfirmEmail(ConfirmAccountEmailRequest) returns(ConfirmAccountEmailResponse);
+ rpc RequestDeletion(RequestAccountDeletionRequest) returns(AccountDeletion);
+ rpc PatchDeletion(PatchAccountDeletionRequest) returns(AccountDeletion);
+ rpc CancelDeletion(AuthPrincipal) returns(google.protobuf.Empty);
+ rpc GetIdentities(AuthPrincipal) returns(AuthIdentities);
+ rpc LinkIdentity(LinkIdentityRequest) returns(LinkIdentityResponse);
+ rpc UnlinkIdentity(UnlinkIdentityRequest) returns(google.protobuf.Empty);
+ rpc PrepareIdentityOAuth(PrepareIdentityOAuthRequest) returns(PreparedIdentityOAuth);
+ rpc GetTotp(AuthPrincipal) returns(TotpState);
+ rpc StartTotp(SensitiveAction) returns(TotpActivation);
+ rpc ConfirmTotp(ConfirmTotpRequest) returns(BackupCodes);
+ rpc DeleteTotp(SensitiveAction) returns(google.protobuf.Empty);
+ rpc GetPasskeys(AuthPrincipal) returns(AuthPasskeys);
+ rpc StartPasskeyRegistration(SensitiveAction) returns(PasskeyRegistrationOptions);
+ rpc RegisterPasskey(RegisterAuthPasskeyRequest) returns(AuthPasskey);
+ rpc RenamePasskey(RenameAuthPasskeyRequest) returns(AuthPasskey);
+ rpc DeletePasskey(DeleteAuthPasskeyRequest) returns(google.protobuf.Empty);
+ rpc GetBackupCodes(AuthPrincipal) returns(BackupCodesState);
+ rpc RotateBackupCodes(SensitiveAction) returns(BackupCodes);
+}

@@ -1,3 +1,7 @@
+# Explicit one-time bootstrap of an EMPTY database; never enabled on upgrades.
+initialization:
+  enabled: false
+
 nameOverride: ""
 fullnameOverride: ""
 
@@ -19,7 +23,17 @@ config:
     refreshTokenTtl: 720h
     resetPasswordCodeTtl: 24h
 
+  passkeys:
+    rpId: ""
+    origins: []
+    opaqueOrigins: []
+
+  mail:
+    passwordResetUrl: ""
+    emailChangeUrl: ""
+
   oauth:
+    redirects: []
     googleClientId: ""
     vkClientId: ""
 
@@ -28,6 +42,7 @@ config:
     checkInterval: 30m
 
   postgres:
+    sslmode: require
     host: ""
     port: 5432
     dbName: chefbook-auth
@@ -38,26 +53,14 @@ config:
     port: 5672
     vhost: ""
 
-  smtp:
-    host: smtp.gmail.com
-    port: 465
-    email: ""
-    sendAttempts: 3
-
-services:
-  subscription:
-    name: chefbook-backend-subscription-service
-    namespace: ""
-    port: 8080
-
 secrets:
   accessToken:
     name: access-token-secrets
     signingKeyRef: signingKey
-  firebase:
-    name: firebase-secrets
-    credentialsRef: credentials
-    googleApiKeyRef: googleApiKey
+  auth:
+    name: auth-secrets
+    hmacKeyRef: hmacKey
+    encryptionKeyRef: encryptionKey
   oauth:
     name: oauth-secrets
     googleClientSecretRef: googleClientSecret
@@ -70,9 +73,7 @@ secrets:
     name: rabbitmq-secrets
     userRef: user
     passwordRef: password
-  smtp:
-    name: smtp-secrets
-    passwordRef: password
+
 
 service:
   type: ClusterIP

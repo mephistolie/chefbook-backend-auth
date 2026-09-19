@@ -32,7 +32,12 @@ import "v1/get-visible-names.proto";
 import "v1/check-username-availability.proto";
 import "v1/set-username.proto";
 
+import "v1/account-workflows.proto";
+
 service AuthService {
+  rpc UpdateProfileDeletion(UpdateProfileDeletionRequest) returns (UpdateProfileDeletionResponse);
+  rpc StartEmailBinding(StartEmailBindingRequest) returns (StartEmailBindingResponse);
+  rpc ConfirmEmailBinding(ConfirmEmailBindingRequest) returns (ConfirmEmailBindingResponse);
   rpc SignUp(SignUpRequest) returns (SignUpResponse);
   rpc ActivateProfile(ActivateProfileRequest) returns (ActivateProfileResponse);
   rpc SignIn(SignInRequest) returns (SessionResponse);

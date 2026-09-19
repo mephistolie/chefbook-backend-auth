@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -68,6 +70,30 @@ func (r *Repository) ResetPassword(ctx context.Context, userId uuid.UUID, resetC
 			Entity:    "password_reset",
 		}, err)
 		return fail.GrpcUnknown
+	}
+
+	defer tx.Rollback()
+	var blocked bool
+	if err = tx.QueryRowContext(ctx, `SELECT blocked FROM users WHERE user_id=$1 FOR UPDATE`, userId).Scan(&blocked); err != nil {
+		return fail.GrpcUnknown
+	}
+	// Check the proof before exposing blocked/deleting state.
+	var valid bool
+	if err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM password_resets WHERE user_id=$1 AND reset_code=$2 AND used=false AND expires_at>NOW())`, userId, resetCode).Scan(&valid); err != nil {
+		return fail.GrpcUnknown
+	}
+	if !valid {
+		return authFail.GrpcInvalidResetPasswordCode
+	}
+	if blocked {
+		return authFail.GrpcProfileIsBlocked
+	}
+	var deleting bool
+	if err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM delete_profile_requests WHERE user_id=$1)`, userId).Scan(&deleting); err != nil {
+		return fail.GrpcUnknown
+	}
+	if deleting {
+		return authFail.GrpcAccountDeleting
 	}
 
 	userResetCodeQuery := fmt.Sprintf(`
@@ -146,4 +172,16 @@ func (r *Repository) SetPassword(ctx context.Context, userId uuid.UUID, password
 	}
 
 	return nil
+}
+
+func (r *Repository) GetPasswordResetUser(ctx context.Context, token string) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM password_resets WHERE reset_code=$1 AND used=false AND expires_at>NOW()`, token).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return uuid.Nil, authFail.GrpcInvalidResetPasswordCode
+	}
+	if err != nil {
+		return uuid.Nil, fail.GrpcUnknown
+	}
+	return id, nil
 }

@@ -145,7 +145,7 @@ func (r *Repository) GetAuthInfoById(ctx context.Context, userId uuid.UUID) (ent
 			UserID:    userId.String(),
 			Entity:    "user",
 		})
-		return entity.AuthInfo{}, authFail.GrpcUserNotFound
+		return entity.AuthInfo{}, err
 	}
 	return info, nil
 }
@@ -157,7 +157,7 @@ func (r *Repository) GetAuthInfoByEmail(ctx context.Context, email string) (enti
 			Operation: "GetAuthInfoByEmail",
 			Entity:    "user",
 		})
-		return entity.AuthInfo{}, authFail.GrpcUserNotFound
+		return entity.AuthInfo{}, err
 	}
 	return info, nil
 }
@@ -169,7 +169,7 @@ func (r *Repository) GetAuthInfoByUsername(ctx context.Context, username string)
 			Operation: "GetAuthInfoByUsername",
 			Entity:    "user",
 		})
-		return entity.AuthInfo{}, authFail.GrpcUserNotFound
+		return entity.AuthInfo{}, err
 	}
 	return info, nil
 }
@@ -207,7 +207,10 @@ func (r *Repository) GetAuthInfoByRefreshToken(ctx context.Context, refreshToken
 			Operation: "GetAuthInfoByRefreshToken",
 			Entity:    "session",
 		})
-		return entity.AuthInfo{}, authFail.GrpcSessionNotFound
+		if err == sql.ErrNoRows {
+			return entity.AuthInfo{}, authFail.GrpcInvalidRefreshToken
+		}
+		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 
 	if session.ExpiresAt.Before(time.Now()) {
@@ -215,7 +218,11 @@ func (r *Repository) GetAuthInfoByRefreshToken(ctx context.Context, refreshToken
 		return entity.AuthInfo{}, authFail.GrpcSessionExpired
 	}
 
-	return r.GetAuthInfoById(ctx, userId)
+	info, err := r.GetAuthInfoById(ctx, userId)
+	if err == authFail.GrpcUserNotFound {
+		return entity.AuthInfo{}, authFail.GrpcInvalidRefreshToken
+	}
+	return info, err
 }
 
 func (r *Repository) GetAuthInfoByFirebaseId(ctx context.Context, firebaseId string) (entity.AuthInfo, error) {
@@ -239,7 +246,7 @@ func (r *Repository) getAuthInfoByCondition(ctx context.Context, condition strin
 	query := fmt.Sprintf(`
 		SELECT
 			%[1]v.user_id, %[1]v.email, %[1]v.username, %[1]v.password, %[1]v.role, %[1]v.registered,
-			%[1]v.activated, %[1]v.blocked, %[2]v.google_id, %[2]v.vk_id, %[3]v.deletion_timestamp
+			%[1]v.activated, %[1]v.blocked, %[2]v.google_id, %[2]v.vk_id, %[3]v.deletion_timestamp, COALESCE(%[3]v.with_shared_data,false) AS delete_shared_data
 		FROM
 			%[1]v
 		LEFT JOIN
@@ -249,7 +256,10 @@ func (r *Repository) getAuthInfoByCondition(ctx context.Context, condition strin
 		WHERE %[4]v
 	`, usersTable, oauthTable, deleteProfileRequestsTable, condition)
 	if err := r.db.GetContext(ctx, &info, query, args...); err != nil {
-		return entity.AuthInfo{}, err
+		if err == sql.ErrNoRows {
+			return entity.AuthInfo{}, authFail.GrpcUserNotFound
+		}
+		return entity.AuthInfo{}, fail.GrpcUnknown
 	}
 	return info.Entity(), nil
 }
@@ -309,7 +319,10 @@ func (r *Repository) SetUsername(ctx context.Context, userId uuid.UUID, username
 			UserID:    userId.String(),
 			Entity:    "username",
 		})
-		return "", authFail.GrpcUsernameOccupied
+		if isUniqueViolationError(err) {
+			return "", authFail.GrpcUsernameOccupied
+		}
+		return "", fail.GrpcUnknown
 	}
 
 	return email, nil

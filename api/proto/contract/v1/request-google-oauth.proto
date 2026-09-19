@@ -1,12 +1,15 @@
 syntax = "proto3";
 package v1;
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
 message RequestGoogleOAuthRequest {
+  string flowBinding = 20;
   string redirectUrl = 1;
 }
 
 message RequestGoogleOAuthResponse {
   string link = 1;
+  google.protobuf.Timestamp expirationTimestamp = 2;
 }

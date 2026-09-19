@@ -3,6 +3,8 @@ package session
 import (
 	"context"
 	"crypto/x509"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,31 +15,31 @@ import (
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
 )
 
-func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentials, activationLinkPattern string) (uuid.UUID, bool, error) {
-	if authInfo, err := s.repo.GetAuthInfoByEmail(ctx, credentials.Email); err == nil {
-		return s.resendActivationMail(ctx, authInfo, credentials.Password, activationLinkPattern)
+func (s *Service) SignUp(ctx context.Context, credentials entity.SignUpCredentials, pattern string) (uuid.UUID, bool, error) {
+	info, err := s.repo.GetAuthInfoByEmail(ctx, credentials.Email)
+	if err == nil {
+		if info.IsActivated || info.IsBlocked {
+			return info.Id, info.IsActivated, nil
+		}
+		hash, err := s.hashManager.Hash(credentials.Password)
+		if err != nil {
+			return uuid.Nil, false, fail.GrpcUnknown
+		}
+		return info.Id, false, s.email.Verify(ctx, credentials.Email, pattern, &hash)
 	}
-
-	if authInfo, err := s.importFirebaseProfile(ctx, credentials.Email, credentials.Password); err == nil {
-		return authInfo.Id, true, nil
+	if status.Code(err) != codes.NotFound {
+		return uuid.Nil, false, err
 	}
-
-	credentialsHash, activationCode, err := s.createNewUserData(ctx, credentials)
+	hash, marker, err := s.createNewUserData(ctx, credentials)
 	if err != nil {
-		return uuid.UUID{}, false, err
+		return uuid.Nil, false, err
 	}
-
-	userId, msg, err := s.repo.CreateUser(ctx, credentialsHash, activationCode, entity.OAuth{})
+	id, msg, err := s.repo.CreateUser(ctx, hash, marker, entity.OAuth{})
 	if err != nil {
-		return uuid.UUID{}, activationCode == nil, err
+		return uuid.Nil, false, err
 	}
 	go s.mq.PublishProfilesMessage(context.WithoutCancel(ctx), msg)
-
-	if activationCode != nil {
-		go s.mail.SendProfileActivationMail(context.WithoutCancel(ctx), userId, credentials.Email, *activationCode, activationLinkPattern)
-	}
-
-	return userId, activationCode == nil, nil
+	return id, false, s.email.Verify(ctx, credentials.Email, pattern, hash.PasswordHash)
 }
 
 func (s *Service) ActivateProfile(ctx context.Context, userId uuid.UUID, code string) error {
@@ -46,22 +48,25 @@ func (s *Service) ActivateProfile(ctx context.Context, userId uuid.UUID, code st
 func (s *Service) SignIn(ctx context.Context, credentials entity.SignInCredentials, client entity.ClientData) (entity.Tokens, error) {
 	authInfo, err := s.repo.GetAuthInfoByIdentifiers(ctx, entity.UserIdentifiers{Email: credentials.Email, Username: credentials.Username})
 	if err != nil {
-		if credentials.Email == nil || s.firebase == nil {
+		if status.Code(err) != codes.NotFound {
 			return entity.Tokens{}, err
+		}
+		if credentials.Email == nil || s.firebase == nil {
+			return entity.Tokens{}, authFail.GrpcInvalidCredentials
 		}
 		if authInfo, err = s.importFirebaseProfile(ctx, *credentials.Email, credentials.Password); err != nil {
 			return entity.Tokens{}, err
 		}
 	}
 
-	if err := s.checkProfileAvailability(ctx, authInfo); err != nil {
-		return entity.Tokens{}, err
-	}
 	if err = s.hashManager.Validate(credentials.Password, authInfo.PasswordHash); err != nil {
 		authlog.Default.PasswordInvalid(ctx, authInfo.Id.String())
 		return entity.Tokens{}, authFail.GrpcInvalidCredentials
 	}
 
+	if err := s.checkProfileAvailability(ctx, authInfo); err != nil {
+		return entity.Tokens{}, err
+	}
 	return s.createSession(ctx, authInfo, client)
 }
 
@@ -84,44 +89,13 @@ func (s *Service) createNewUserData(ctx context.Context, credentials entity.Sign
 		authlog.Default.PasswordHashFailed(ctx, err)
 		return entity.CredentialsHash{}, nil, fail.GrpcUnknown
 	}
-	var activationCode *string = nil
-	if !s.mail.IsStub {
-		activationCodeStr := random.DigitString(activationCodeLength)
-		activationCode = &activationCodeStr
-	}
+	activationCodeStr := random.DigitString(activationCodeLength)
+	activationCode := &activationCodeStr
 	return entity.CredentialsHash{
 		Id:           credentials.Id,
 		Email:        credentials.Email,
 		PasswordHash: &passwordHash,
 	}, activationCode, nil
-}
-
-func (s *Service) resendActivationMail(ctx context.Context, authInfo entity.AuthInfo, password, linkPattern string) (uuid.UUID, bool, error) {
-	if authInfo.IsActivated {
-		authlog.Default.ProfileAlreadyExists(ctx, authInfo.Id.String())
-		return uuid.UUID{}, false, authFail.GrpcUserAlreadyExists
-	}
-
-	if err := s.hashManager.Validate(password, authInfo.PasswordHash); err != nil {
-		passwordHash, err := s.hashManager.Hash(password)
-		if err != nil {
-			authlog.Default.PasswordHashFailed(ctx, err)
-			return uuid.UUID{}, false, fail.GrpcUnknown
-		}
-		err = s.repo.SetPassword(ctx, authInfo.Id, passwordHash)
-		if err != nil {
-			return uuid.UUID{}, false, fail.GrpcUnknown
-		}
-	}
-
-	activationCode, err := s.repo.GetProfileActivationCode(ctx, authInfo.Id)
-	if err != nil {
-		return uuid.UUID{}, false, fail.GrpcUnknown
-	}
-
-	go s.mail.SendProfileActivationMail(context.WithoutCancel(ctx), authInfo.Id, authInfo.Email, activationCode, linkPattern)
-
-	return authInfo.Id, false, nil
 }
 
 func (s *Service) createSession(ctx context.Context, authInfo entity.AuthInfo, client entity.ClientData) (entity.Tokens, error) {
@@ -131,7 +105,7 @@ func (s *Service) createSession(ctx context.Context, authInfo entity.AuthInfo, c
 		return entity.Tokens{}, err
 	}
 
-	if err = s.repo.CreateSession(ctx, session); err != nil {
+	if tokenPair.SessionId, err = s.repo.CreateSession(ctx, session); err != nil {
 		return entity.Tokens{}, err
 	}
 

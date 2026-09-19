@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
@@ -69,9 +68,9 @@ func commitTransaction(ctx context.Context, tx *sql.Tx) error {
 }
 
 func isUniqueViolationError(err error) bool {
-	var pgErr *pgconn.PgError
+	var pgErr interface{ SQLState() string }
 	if errors.As(err, &pgErr) {
-		return pgErr.Code == errUniqueViolation
+		return pgErr.SQLState() == errUniqueViolation
 	}
 	return false
 }

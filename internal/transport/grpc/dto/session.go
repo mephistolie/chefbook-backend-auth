@@ -12,6 +12,7 @@ func NewGetSessionsResponse(infos []entity.SessionInfo) *api.GetSessionsResponse
 	for i, info := range infos {
 		session := api.Session{
 			Id:          info.SessionId,
+			Client:      &api.SessionClient{Name: info.Client.Name, Platform: info.Client.Platform, Type: info.Client.Type},
 			Ip:          info.Ip,
 			AccessPoint: info.AccessPoint,
 			Mobile:      info.Mobile,
@@ -34,6 +35,8 @@ func NewSessionResponse(tokens entity.Tokens) *api.SessionResponse {
 
 	return &api.SessionResponse{
 		ProfileId:                tokens.ProfileId.String(),
+		SessionId:                tokens.SessionId,
+		DeleteSharedData:         tokens.DeleteSharedData,
 		AccessToken:              tokens.AccessToken,
 		RefreshToken:             tokens.RefreshToken,
 		ExpirationTimestamp:      timestamppb.New(tokens.ExpirationTimestamp),

@@ -6,6 +6,8 @@ import (
 )
 
 type Tokens struct {
+	SessionId           int64
+	DeleteSharedData    bool
 	ProfileId           uuid.UUID
 	AccessToken         string
 	RefreshToken        string

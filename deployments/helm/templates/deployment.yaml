@@ -59,35 +59,51 @@ spec:
             - name: PASSWORD_RESET_CODE_TTL
               value: {{ .Values.config.auth.resetPasswordCodeTtl }}
 
-            - name: FIREBASE_CREDENTIALS
+            - name: AUTH_HMAC_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.firebase.name }}
-                  key: {{ .Values.secrets.firebase.credentialsRef }}
-            - name: FIREBASE_API_KEY
+                  name: {{ .Values.secrets.auth.name }}
+                  key: {{ .Values.secrets.auth.hmacKeyRef }}
+            - name: AUTH_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.firebase.name }}
-                  key: {{ .Values.secrets.firebase.googleApiKeyRef }}
+                  name: {{ .Values.secrets.auth.name }}
+                  key: {{ .Values.secrets.auth.encryptionKeyRef }}
+            - name: PASSKEY_RP_ID
+              value: {{ .Values.config.passkeys.rpId | quote }}
+            - name: PASSKEY_ORIGINS
+              value: {{ join "," .Values.config.passkeys.origins | quote }}
+            - name: PASSKEY_OPAQUE_ORIGINS
+              value: {{ join "," .Values.config.passkeys.opaqueOrigins | quote }}
+            - name: OAUTH_REDIRECTS
+              value: {{ join "," .Values.config.oauth.redirects | quote }}
+            - name: PASSWORD_RESET_URL
+              value: {{ .Values.config.mail.passwordResetUrl | quote }}
+            - name: EMAIL_CHANGE_URL
+              value: {{ .Values.config.mail.emailChangeUrl | quote }}
 
             # OAuth
 
             - name: GOOGLE_CLIENT_ID
               value: {{ .Values.config.oauth.googleClientId }}
+            {{- if .Values.config.oauth.googleClientId }}
             - name: GOOGLE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.secrets.oauth.name }}
                   key: {{ .Values.secrets.oauth.googleClientSecretRef }}
 
+            {{- end }}
             - name: VK_CLIENT_ID
               value: {{ .Values.config.oauth.vkClientId | quote }}
+            {{- if .Values.config.oauth.vkClientId }}
             - name: VK_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.secrets.oauth.name }}
                   key: {{ .Values.secrets.oauth.vkClientSecretRef }}
 
+            {{- end }}
             # Profile deletion
 
             - name: DELETE_PROFILE_OFFSET
@@ -95,13 +111,10 @@ spec:
             - name: DELETE_PROFILE_CHECK_INTERVAL
               value: {{ .Values.config.profileDelete.checkInterval }}
 
-            # Subscription Microservice
-
-            - name: SUBSCRIPTION_ADDR
-              value: "{{ .Values.services.subscription.name }}.{{ .Values.services.subscription.namespace | default .Release.Namespace }}.svc.cluster.local:{{ .Values.services.subscription.port }}"
-
             # PostgreSQL
 
+            - name: DB_SSLMODE
+              value: {{ .Values.config.postgres.sslmode | quote }}
             - name: DB_HOST
               value: {{ .Values.config.postgres.host }}
             - name: DB_PORT
@@ -137,22 +150,6 @@ spec:
                   key: {{ .Values.secrets.rabbitmq.passwordRef }}
             - name: AMQP_VHOST
               value: {{ .Values.config.rabbitmq.vhost }}
-
-            # SMTP
-
-            - name: SMTP_HOST
-              value: {{ .Values.config.smtp.host }}
-            - name: SMTP_PORT
-              value: {{ .Values.config.smtp.port | quote }}
-            - name: SMTP_EMAIL
-              value: {{ .Values.config.smtp.email }}
-            - name: SMTP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.smtp.name }}
-                  key: {{ .Values.secrets.smtp.passwordRef }}
-            - name: SMTP_ATTEMPTS
-              value: {{ .Values.config.smtp.sendAttempts | quote }}
 
           ports:
             - name: http

@@ -16,6 +16,7 @@ type AuthInfo struct {
 	IsActivated           bool       `db:"activated"`
 	IsBlocked             bool       `db:"blocked"`
 	DeletionTimestamp     *time.Time `db:"deletion_timestamp"`
+	DeleteSharedData      bool       `db:"delete_shared_data"`
 	GoogleId              *string    `db:"google_id"`
 	VkId                  *int64     `db:"vk_id"`
 }
@@ -35,6 +36,7 @@ func (p *AuthInfo) Entity() entity.AuthInfo {
 		IsActivated:           p.IsActivated,
 		IsBlocked:             p.IsBlocked,
 		DeletionTimestamp:     p.DeletionTimestamp,
+		DeleteSharedData:      p.DeleteSharedData,
 		OAuth: entity.OAuth{
 			GoogleId: p.GoogleId,
 			VkId:     p.VkId,

@@ -20,4 +20,11 @@ message Session {
   bool   mobile = 4;
   google.protobuf.Timestamp accessTime = 5;
   string location = 6;
+  SessionClient client = 7;
+}
+
+message SessionClient {
+  string name = 1;
+  string platform = 2;
+  string type = 3;
 }

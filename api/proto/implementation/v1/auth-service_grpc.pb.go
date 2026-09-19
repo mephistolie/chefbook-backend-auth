@@ -19,6 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	AuthService_UpdateProfileDeletion_FullMethodName     = "/v1.AuthService/UpdateProfileDeletion"
+	AuthService_StartEmailBinding_FullMethodName         = "/v1.AuthService/StartEmailBinding"
+	AuthService_ConfirmEmailBinding_FullMethodName       = "/v1.AuthService/ConfirmEmailBinding"
 	AuthService_SignUp_FullMethodName                    = "/v1.AuthService/SignUp"
 	AuthService_ActivateProfile_FullMethodName           = "/v1.AuthService/ActivateProfile"
 	AuthService_SignIn_FullMethodName                    = "/v1.AuthService/SignIn"
@@ -52,6 +55,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthServiceClient interface {
+	UpdateProfileDeletion(ctx context.Context, in *UpdateProfileDeletionRequest, opts ...grpc.CallOption) (*UpdateProfileDeletionResponse, error)
+	StartEmailBinding(ctx context.Context, in *StartEmailBindingRequest, opts ...grpc.CallOption) (*StartEmailBindingResponse, error)
+	ConfirmEmailBinding(ctx context.Context, in *ConfirmEmailBindingRequest, opts ...grpc.CallOption) (*ConfirmEmailBindingResponse, error)
 	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error)
 	ActivateProfile(ctx context.Context, in *ActivateProfileRequest, opts ...grpc.CallOption) (*ActivateProfileResponse, error)
 	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SessionResponse, error)
@@ -87,6 +93,36 @@ type authServiceClient struct {
 
 func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 	return &authServiceClient{cc}
+}
+
+func (c *authServiceClient) UpdateProfileDeletion(ctx context.Context, in *UpdateProfileDeletionRequest, opts ...grpc.CallOption) (*UpdateProfileDeletionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateProfileDeletionResponse)
+	err := c.cc.Invoke(ctx, AuthService_UpdateProfileDeletion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) StartEmailBinding(ctx context.Context, in *StartEmailBindingRequest, opts ...grpc.CallOption) (*StartEmailBindingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StartEmailBindingResponse)
+	err := c.cc.Invoke(ctx, AuthService_StartEmailBinding_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ConfirmEmailBinding(ctx context.Context, in *ConfirmEmailBindingRequest, opts ...grpc.CallOption) (*ConfirmEmailBindingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConfirmEmailBindingResponse)
+	err := c.cc.Invoke(ctx, AuthService_ConfirmEmailBinding_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *authServiceClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error) {
@@ -363,6 +399,9 @@ func (c *authServiceClient) SetUsername(ctx context.Context, in *SetUsernameRequ
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
+	UpdateProfileDeletion(context.Context, *UpdateProfileDeletionRequest) (*UpdateProfileDeletionResponse, error)
+	StartEmailBinding(context.Context, *StartEmailBindingRequest) (*StartEmailBindingResponse, error)
+	ConfirmEmailBinding(context.Context, *ConfirmEmailBindingRequest) (*ConfirmEmailBindingResponse, error)
 	SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error)
 	ActivateProfile(context.Context, *ActivateProfileRequest) (*ActivateProfileResponse, error)
 	SignIn(context.Context, *SignInRequest) (*SessionResponse, error)
@@ -400,6 +439,15 @@ type AuthServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServiceServer struct{}
 
+func (UnimplementedAuthServiceServer) UpdateProfileDeletion(context.Context, *UpdateProfileDeletionRequest) (*UpdateProfileDeletionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfileDeletion not implemented")
+}
+func (UnimplementedAuthServiceServer) StartEmailBinding(context.Context, *StartEmailBindingRequest) (*StartEmailBindingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartEmailBinding not implemented")
+}
+func (UnimplementedAuthServiceServer) ConfirmEmailBinding(context.Context, *ConfirmEmailBindingRequest) (*ConfirmEmailBindingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmEmailBinding not implemented")
+}
 func (UnimplementedAuthServiceServer) SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignUp not implemented")
 }
@@ -500,6 +548,60 @@ func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&AuthService_ServiceDesc, srv)
+}
+
+func _AuthService_UpdateProfileDeletion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProfileDeletionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).UpdateProfileDeletion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_UpdateProfileDeletion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).UpdateProfileDeletion(ctx, req.(*UpdateProfileDeletionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_StartEmailBinding_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartEmailBindingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).StartEmailBinding(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_StartEmailBinding_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).StartEmailBinding(ctx, req.(*StartEmailBindingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ConfirmEmailBinding_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmEmailBindingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ConfirmEmailBinding(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ConfirmEmailBinding_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ConfirmEmailBinding(ctx, req.(*ConfirmEmailBindingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _AuthService_SignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -995,6 +1097,18 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "v1.AuthService",
 	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UpdateProfileDeletion",
+			Handler:    _AuthService_UpdateProfileDeletion_Handler,
+		},
+		{
+			MethodName: "StartEmailBinding",
+			Handler:    _AuthService_StartEmailBinding_Handler,
+		},
+		{
+			MethodName: "ConfirmEmailBinding",
+			Handler:    _AuthService_ConfirmEmailBinding_Handler,
+		},
 		{
 			MethodName: "SignUp",
 			Handler:    _AuthService_SignUp_Handler,

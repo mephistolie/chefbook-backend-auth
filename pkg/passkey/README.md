@@ -1,0 +1,11 @@
+# Passkey verifier
+
+Uses [`go-webauthn/webauthn` v0.18.1](https://github.com/go-webauthn/webauthn) for protocol parsing and cryptographic verification, with fixed ES256/RS256 credential parameters, required user presence and verification, discoverable credentials and no attestation preference. Configuration explicitly supplies RP ID, web origins and optional native opaque origins (for example, approved Android signing-certificate origins). No origin/RP ID is read from an incoming request as trusted configuration.
+
+`BeginRegistration` and `BeginAuthentication` return raw random challenge bytes for typed SQL storage and JSON public-key options for the client. Store the expiration separately. `VerifyRegistration` and `VerifyAuthentication` reconstruct library session data from these trusted fields; there is no JSON session payload in SQL. Pending ceremonies must expire before changing RP/algorithm policy. UUID account IDs are used as the immutable binary 16-byte user handle.
+
+`AssertionIdentity` only parses **untrusted lookup hints**. Load account/credential ownership using these hints, check account status, and call `VerifyAuthentication`. A parsed identity never authenticates a request. Successful verification validates origin, RP hash, challenge, UP/UV, signature, user handle and credential ownership through the library. Persist the returned credential counter and backup state. Device-bound counter clone warnings are rejected; backup-eligible credentials expose `CounterWarning` without rejecting solely because of synchronized/non-monotonic counters.
+
+The owning service must atomically consume the challenge and update credentials, enforce expiration and process/session binding, and enforce global credential ID uniqueness. This package is deliberately stateless and does not prevent replay without that transaction. Fetch credentials under appropriate locking to avoid concurrent counter updates. It makes no claim about passkey hardware attestation or device trust. Non-attested credentials do not require storing AAGUID or attestation blobs under this policy.
+
+`go test ./pkg/passkey` constructs test authenticator assertions using fresh P-256 keys and verifies both valid ceremonies and negative security cases. No external authenticator or network is required.

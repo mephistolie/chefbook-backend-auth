@@ -1,0 +1,27 @@
+syntax = "proto3";
+package v1;
+option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
+import "google/protobuf/timestamp.proto";
+message Reauthentication {
+ string method = 1;
+ string password = 2;
+ string idToken = 3;
+ string code = 4;
+ string state = 5;
+}
+message UpdateProfileDeletionRequest {
+  string flowBinding = 20; string userId = 1; bool deleteSharedData = 2; }
+message UpdateProfileDeletionResponse { google.protobuf.Timestamp deletionTimestamp = 1; bool deleteSharedData = 2; }
+message StartEmailBindingRequest {
+  string flowBinding = 20;
+ string userId = 1;
+ string email = 2;
+ string purpose = 3;
+ Reauthentication credentials = 4;
+ string confirmationLinkPattern = 5;
+ string redirectUri = 6;
+}
+message StartEmailBindingResponse {}
+message ConfirmEmailBindingRequest {
+  string flowBinding = 20; string token = 1; string confirmationLinkPattern = 2; }
+message ConfirmEmailBindingResponse { string purpose = 1; string status = 2; }

@@ -24,8 +24,11 @@ var File_v1_auth_service_proto protoreflect.FileDescriptor
 
 const file_v1_auth_service_proto_rawDesc = "" +
 	"\n" +
-	"\x15v1/auth-service.proto\x12\x02v1\x1a\x10v1/sign-up.proto\x1a\x19v1/activate-profile.proto\x1a\x10v1/session.proto\x1a\x10v1/sign-in.proto\x1a$v1/get-access-token-public-key.proto\x1a\x18v1/refresh-session.proto\x1a\x11v1/sign-out.proto\x1a\x16v1/get-auth-info.proto\x1a$v1/get-profile-deletion-status.proto\x1a\x17v1/delete-profile.proto\x1a\x1ev1/cancel-delete-profile.proto\x1a\x1dv1/request-google-oauth.proto\x1a\x17v1/sign-in-google.proto\x1a\x1dv1/sign-in-google-token.proto\x1a\x17v1/connect-google.proto\x1a!v1/delete-google-connection.proto\x1a\x19v1/request-vk-oauth.proto\x1a\x13v1/sign-in-vk.proto\x1a\x13v1/connect-vk.proto\x1a\x1dv1/delete-vk-connection.proto\x1a\x15v1/get-sessions.proto\x1a\x15v1/end-sessions.proto\x1a\x1fv1/request-password-reset.proto\x1a\x17v1/reset-password.proto\x1a\x18v1/change-password.proto\x1a\x1av1/get-visible-names.proto\x1a$v1/check-username-availability.proto\x1a\x15v1/set-username.proto2\xd1\x0f\n" +
-	"\vAuthService\x12/\n" +
+	"\x15v1/auth-service.proto\x12\x02v1\x1a\x10v1/sign-up.proto\x1a\x19v1/activate-profile.proto\x1a\x10v1/session.proto\x1a\x10v1/sign-in.proto\x1a$v1/get-access-token-public-key.proto\x1a\x18v1/refresh-session.proto\x1a\x11v1/sign-out.proto\x1a\x16v1/get-auth-info.proto\x1a$v1/get-profile-deletion-status.proto\x1a\x17v1/delete-profile.proto\x1a\x1ev1/cancel-delete-profile.proto\x1a\x1dv1/request-google-oauth.proto\x1a\x17v1/sign-in-google.proto\x1a\x1dv1/sign-in-google-token.proto\x1a\x17v1/connect-google.proto\x1a!v1/delete-google-connection.proto\x1a\x19v1/request-vk-oauth.proto\x1a\x13v1/sign-in-vk.proto\x1a\x13v1/connect-vk.proto\x1a\x1dv1/delete-vk-connection.proto\x1a\x15v1/get-sessions.proto\x1a\x15v1/end-sessions.proto\x1a\x1fv1/request-password-reset.proto\x1a\x17v1/reset-password.proto\x1a\x18v1/change-password.proto\x1a\x1av1/get-visible-names.proto\x1a$v1/check-username-availability.proto\x1a\x15v1/set-username.proto\x1a\x1av1/account-workflows.proto2\xd9\x11\n" +
+	"\vAuthService\x12\\\n" +
+	"\x15UpdateProfileDeletion\x12 .v1.UpdateProfileDeletionRequest\x1a!.v1.UpdateProfileDeletionResponse\x12P\n" +
+	"\x11StartEmailBinding\x12\x1c.v1.StartEmailBindingRequest\x1a\x1d.v1.StartEmailBindingResponse\x12V\n" +
+	"\x13ConfirmEmailBinding\x12\x1e.v1.ConfirmEmailBindingRequest\x1a\x1f.v1.ConfirmEmailBindingResponse\x12/\n" +
 	"\x06SignUp\x12\x11.v1.SignUpRequest\x1a\x12.v1.SignUpResponse\x12J\n" +
 	"\x0fActivateProfile\x12\x1a.v1.ActivateProfileRequest\x1a\x1b.v1.ActivateProfileResponse\x120\n" +
 	"\x06SignIn\x12\x11.v1.SignInRequest\x1a\x13.v1.SessionResponse\x12b\n" +
@@ -55,114 +58,126 @@ const file_v1_auth_service_proto_rawDesc = "" +
 	"\vSetUsername\x12\x16.v1.SetUsernameRequest\x1a\x17.v1.SetUsernameResponseB;Z9github.com/mephistolie/chefbook-backend-auth/api/proto/v1b\x06proto3"
 
 var file_v1_auth_service_proto_goTypes = []any{
-	(*SignUpRequest)(nil),                     // 0: v1.SignUpRequest
-	(*ActivateProfileRequest)(nil),            // 1: v1.ActivateProfileRequest
-	(*SignInRequest)(nil),                     // 2: v1.SignInRequest
-	(*GetAccessTokenPublicKeyRequest)(nil),    // 3: v1.GetAccessTokenPublicKeyRequest
-	(*RefreshSessionRequest)(nil),             // 4: v1.RefreshSessionRequest
-	(*SignOutRequest)(nil),                    // 5: v1.SignOutRequest
-	(*GetAuthInfoRequest)(nil),                // 6: v1.GetAuthInfoRequest
-	(*GetProfileDeletionStatusRequest)(nil),   // 7: v1.GetProfileDeletionStatusRequest
-	(*DeleteProfileRequest)(nil),              // 8: v1.DeleteProfileRequest
-	(*CancelProfileDeletionRequest)(nil),      // 9: v1.CancelProfileDeletionRequest
-	(*RequestGoogleOAuthRequest)(nil),         // 10: v1.RequestGoogleOAuthRequest
-	(*SignInGoogleRequest)(nil),               // 11: v1.SignInGoogleRequest
-	(*SignInGoogleTokenRequest)(nil),          // 12: v1.SignInGoogleTokenRequest
-	(*ConnectGoogleRequest)(nil),              // 13: v1.ConnectGoogleRequest
-	(*DeleteGoogleConnectionRequest)(nil),     // 14: v1.DeleteGoogleConnectionRequest
-	(*RequestVkOAuthRequest)(nil),             // 15: v1.RequestVkOAuthRequest
-	(*SignInVkRequest)(nil),                   // 16: v1.SignInVkRequest
-	(*ConnectVkRequest)(nil),                  // 17: v1.ConnectVkRequest
-	(*DeleteVkConnectionRequest)(nil),         // 18: v1.DeleteVkConnectionRequest
-	(*GetSessionsRequest)(nil),                // 19: v1.GetSessionsRequest
-	(*EndSessionsRequest)(nil),                // 20: v1.EndSessionsRequest
-	(*RequestPasswordResetRequest)(nil),       // 21: v1.RequestPasswordResetRequest
-	(*ResetPasswordRequest)(nil),              // 22: v1.ResetPasswordRequest
-	(*ChangePasswordRequest)(nil),             // 23: v1.ChangePasswordRequest
-	(*GetVisibleNamesRequest)(nil),            // 24: v1.GetVisibleNamesRequest
-	(*CheckUsernameAvailabilityRequest)(nil),  // 25: v1.CheckUsernameAvailabilityRequest
-	(*SetUsernameRequest)(nil),                // 26: v1.SetUsernameRequest
-	(*SignUpResponse)(nil),                    // 27: v1.SignUpResponse
-	(*ActivateProfileResponse)(nil),           // 28: v1.ActivateProfileResponse
-	(*SessionResponse)(nil),                   // 29: v1.SessionResponse
-	(*GetAccessTokenPublicKeyResponse)(nil),   // 30: v1.GetAccessTokenPublicKeyResponse
-	(*SignOutResponse)(nil),                   // 31: v1.SignOutResponse
-	(*GetAuthInfoResponse)(nil),               // 32: v1.GetAuthInfoResponse
-	(*GetProfileDeletionStatusResponse)(nil),  // 33: v1.GetProfileDeletionStatusResponse
-	(*DeleteProfileResponse)(nil),             // 34: v1.DeleteProfileResponse
-	(*CancelProfileDeletionResponse)(nil),     // 35: v1.CancelProfileDeletionResponse
-	(*RequestGoogleOAuthResponse)(nil),        // 36: v1.RequestGoogleOAuthResponse
-	(*ConnectGoogleResponse)(nil),             // 37: v1.ConnectGoogleResponse
-	(*DeleteGoogleConnectionResponse)(nil),    // 38: v1.DeleteGoogleConnectionResponse
-	(*RequestVkOAuthResponse)(nil),            // 39: v1.RequestVkOAuthResponse
-	(*ConnectVkResponse)(nil),                 // 40: v1.ConnectVkResponse
-	(*DeleteVkConnectionResponse)(nil),        // 41: v1.DeleteVkConnectionResponse
-	(*GetSessionsResponse)(nil),               // 42: v1.GetSessionsResponse
-	(*EndSessionsResponse)(nil),               // 43: v1.EndSessionsResponse
-	(*RequestPasswordResetResponse)(nil),      // 44: v1.RequestPasswordResetResponse
-	(*ResetPasswordResponse)(nil),             // 45: v1.ResetPasswordResponse
-	(*ChangePasswordResponse)(nil),            // 46: v1.ChangePasswordResponse
-	(*GetVisibleNamesResponse)(nil),           // 47: v1.GetVisibleNamesResponse
-	(*CheckUsernameAvailabilityResponse)(nil), // 48: v1.CheckUsernameAvailabilityResponse
-	(*SetUsernameResponse)(nil),               // 49: v1.SetUsernameResponse
+	(*UpdateProfileDeletionRequest)(nil),      // 0: v1.UpdateProfileDeletionRequest
+	(*StartEmailBindingRequest)(nil),          // 1: v1.StartEmailBindingRequest
+	(*ConfirmEmailBindingRequest)(nil),        // 2: v1.ConfirmEmailBindingRequest
+	(*SignUpRequest)(nil),                     // 3: v1.SignUpRequest
+	(*ActivateProfileRequest)(nil),            // 4: v1.ActivateProfileRequest
+	(*SignInRequest)(nil),                     // 5: v1.SignInRequest
+	(*GetAccessTokenPublicKeyRequest)(nil),    // 6: v1.GetAccessTokenPublicKeyRequest
+	(*RefreshSessionRequest)(nil),             // 7: v1.RefreshSessionRequest
+	(*SignOutRequest)(nil),                    // 8: v1.SignOutRequest
+	(*GetAuthInfoRequest)(nil),                // 9: v1.GetAuthInfoRequest
+	(*GetProfileDeletionStatusRequest)(nil),   // 10: v1.GetProfileDeletionStatusRequest
+	(*DeleteProfileRequest)(nil),              // 11: v1.DeleteProfileRequest
+	(*CancelProfileDeletionRequest)(nil),      // 12: v1.CancelProfileDeletionRequest
+	(*RequestGoogleOAuthRequest)(nil),         // 13: v1.RequestGoogleOAuthRequest
+	(*SignInGoogleRequest)(nil),               // 14: v1.SignInGoogleRequest
+	(*SignInGoogleTokenRequest)(nil),          // 15: v1.SignInGoogleTokenRequest
+	(*ConnectGoogleRequest)(nil),              // 16: v1.ConnectGoogleRequest
+	(*DeleteGoogleConnectionRequest)(nil),     // 17: v1.DeleteGoogleConnectionRequest
+	(*RequestVkOAuthRequest)(nil),             // 18: v1.RequestVkOAuthRequest
+	(*SignInVkRequest)(nil),                   // 19: v1.SignInVkRequest
+	(*ConnectVkRequest)(nil),                  // 20: v1.ConnectVkRequest
+	(*DeleteVkConnectionRequest)(nil),         // 21: v1.DeleteVkConnectionRequest
+	(*GetSessionsRequest)(nil),                // 22: v1.GetSessionsRequest
+	(*EndSessionsRequest)(nil),                // 23: v1.EndSessionsRequest
+	(*RequestPasswordResetRequest)(nil),       // 24: v1.RequestPasswordResetRequest
+	(*ResetPasswordRequest)(nil),              // 25: v1.ResetPasswordRequest
+	(*ChangePasswordRequest)(nil),             // 26: v1.ChangePasswordRequest
+	(*GetVisibleNamesRequest)(nil),            // 27: v1.GetVisibleNamesRequest
+	(*CheckUsernameAvailabilityRequest)(nil),  // 28: v1.CheckUsernameAvailabilityRequest
+	(*SetUsernameRequest)(nil),                // 29: v1.SetUsernameRequest
+	(*UpdateProfileDeletionResponse)(nil),     // 30: v1.UpdateProfileDeletionResponse
+	(*StartEmailBindingResponse)(nil),         // 31: v1.StartEmailBindingResponse
+	(*ConfirmEmailBindingResponse)(nil),       // 32: v1.ConfirmEmailBindingResponse
+	(*SignUpResponse)(nil),                    // 33: v1.SignUpResponse
+	(*ActivateProfileResponse)(nil),           // 34: v1.ActivateProfileResponse
+	(*SessionResponse)(nil),                   // 35: v1.SessionResponse
+	(*GetAccessTokenPublicKeyResponse)(nil),   // 36: v1.GetAccessTokenPublicKeyResponse
+	(*SignOutResponse)(nil),                   // 37: v1.SignOutResponse
+	(*GetAuthInfoResponse)(nil),               // 38: v1.GetAuthInfoResponse
+	(*GetProfileDeletionStatusResponse)(nil),  // 39: v1.GetProfileDeletionStatusResponse
+	(*DeleteProfileResponse)(nil),             // 40: v1.DeleteProfileResponse
+	(*CancelProfileDeletionResponse)(nil),     // 41: v1.CancelProfileDeletionResponse
+	(*RequestGoogleOAuthResponse)(nil),        // 42: v1.RequestGoogleOAuthResponse
+	(*ConnectGoogleResponse)(nil),             // 43: v1.ConnectGoogleResponse
+	(*DeleteGoogleConnectionResponse)(nil),    // 44: v1.DeleteGoogleConnectionResponse
+	(*RequestVkOAuthResponse)(nil),            // 45: v1.RequestVkOAuthResponse
+	(*ConnectVkResponse)(nil),                 // 46: v1.ConnectVkResponse
+	(*DeleteVkConnectionResponse)(nil),        // 47: v1.DeleteVkConnectionResponse
+	(*GetSessionsResponse)(nil),               // 48: v1.GetSessionsResponse
+	(*EndSessionsResponse)(nil),               // 49: v1.EndSessionsResponse
+	(*RequestPasswordResetResponse)(nil),      // 50: v1.RequestPasswordResetResponse
+	(*ResetPasswordResponse)(nil),             // 51: v1.ResetPasswordResponse
+	(*ChangePasswordResponse)(nil),            // 52: v1.ChangePasswordResponse
+	(*GetVisibleNamesResponse)(nil),           // 53: v1.GetVisibleNamesResponse
+	(*CheckUsernameAvailabilityResponse)(nil), // 54: v1.CheckUsernameAvailabilityResponse
+	(*SetUsernameResponse)(nil),               // 55: v1.SetUsernameResponse
 }
 var file_v1_auth_service_proto_depIdxs = []int32{
-	0,  // 0: v1.AuthService.SignUp:input_type -> v1.SignUpRequest
-	1,  // 1: v1.AuthService.ActivateProfile:input_type -> v1.ActivateProfileRequest
-	2,  // 2: v1.AuthService.SignIn:input_type -> v1.SignInRequest
-	3,  // 3: v1.AuthService.GetAccessTokenPublicKey:input_type -> v1.GetAccessTokenPublicKeyRequest
-	4,  // 4: v1.AuthService.RefreshSession:input_type -> v1.RefreshSessionRequest
-	5,  // 5: v1.AuthService.SignOut:input_type -> v1.SignOutRequest
-	6,  // 6: v1.AuthService.GetAuthInfo:input_type -> v1.GetAuthInfoRequest
-	7,  // 7: v1.AuthService.GetProfileDeletionStatus:input_type -> v1.GetProfileDeletionStatusRequest
-	8,  // 8: v1.AuthService.DeleteProfile:input_type -> v1.DeleteProfileRequest
-	9,  // 9: v1.AuthService.CancelProfileDeletion:input_type -> v1.CancelProfileDeletionRequest
-	10, // 10: v1.AuthService.RequestGoogleOAuth:input_type -> v1.RequestGoogleOAuthRequest
-	11, // 11: v1.AuthService.SignInGoogle:input_type -> v1.SignInGoogleRequest
-	12, // 12: v1.AuthService.SignInGoogleToken:input_type -> v1.SignInGoogleTokenRequest
-	13, // 13: v1.AuthService.ConnectGoogle:input_type -> v1.ConnectGoogleRequest
-	14, // 14: v1.AuthService.DeleteGoogleConnection:input_type -> v1.DeleteGoogleConnectionRequest
-	15, // 15: v1.AuthService.RequestVkOAuth:input_type -> v1.RequestVkOAuthRequest
-	16, // 16: v1.AuthService.SignInVk:input_type -> v1.SignInVkRequest
-	17, // 17: v1.AuthService.ConnectVk:input_type -> v1.ConnectVkRequest
-	18, // 18: v1.AuthService.DeleteVkConnection:input_type -> v1.DeleteVkConnectionRequest
-	19, // 19: v1.AuthService.GetSessions:input_type -> v1.GetSessionsRequest
-	20, // 20: v1.AuthService.EndSessions:input_type -> v1.EndSessionsRequest
-	21, // 21: v1.AuthService.RequestPasswordReset:input_type -> v1.RequestPasswordResetRequest
-	22, // 22: v1.AuthService.ResetPassword:input_type -> v1.ResetPasswordRequest
-	23, // 23: v1.AuthService.ChangePassword:input_type -> v1.ChangePasswordRequest
-	24, // 24: v1.AuthService.GetVisibleNames:input_type -> v1.GetVisibleNamesRequest
-	25, // 25: v1.AuthService.CheckUsernameAvailability:input_type -> v1.CheckUsernameAvailabilityRequest
-	26, // 26: v1.AuthService.SetUsername:input_type -> v1.SetUsernameRequest
-	27, // 27: v1.AuthService.SignUp:output_type -> v1.SignUpResponse
-	28, // 28: v1.AuthService.ActivateProfile:output_type -> v1.ActivateProfileResponse
-	29, // 29: v1.AuthService.SignIn:output_type -> v1.SessionResponse
-	30, // 30: v1.AuthService.GetAccessTokenPublicKey:output_type -> v1.GetAccessTokenPublicKeyResponse
-	29, // 31: v1.AuthService.RefreshSession:output_type -> v1.SessionResponse
-	31, // 32: v1.AuthService.SignOut:output_type -> v1.SignOutResponse
-	32, // 33: v1.AuthService.GetAuthInfo:output_type -> v1.GetAuthInfoResponse
-	33, // 34: v1.AuthService.GetProfileDeletionStatus:output_type -> v1.GetProfileDeletionStatusResponse
-	34, // 35: v1.AuthService.DeleteProfile:output_type -> v1.DeleteProfileResponse
-	35, // 36: v1.AuthService.CancelProfileDeletion:output_type -> v1.CancelProfileDeletionResponse
-	36, // 37: v1.AuthService.RequestGoogleOAuth:output_type -> v1.RequestGoogleOAuthResponse
-	29, // 38: v1.AuthService.SignInGoogle:output_type -> v1.SessionResponse
-	29, // 39: v1.AuthService.SignInGoogleToken:output_type -> v1.SessionResponse
-	37, // 40: v1.AuthService.ConnectGoogle:output_type -> v1.ConnectGoogleResponse
-	38, // 41: v1.AuthService.DeleteGoogleConnection:output_type -> v1.DeleteGoogleConnectionResponse
-	39, // 42: v1.AuthService.RequestVkOAuth:output_type -> v1.RequestVkOAuthResponse
-	29, // 43: v1.AuthService.SignInVk:output_type -> v1.SessionResponse
-	40, // 44: v1.AuthService.ConnectVk:output_type -> v1.ConnectVkResponse
-	41, // 45: v1.AuthService.DeleteVkConnection:output_type -> v1.DeleteVkConnectionResponse
-	42, // 46: v1.AuthService.GetSessions:output_type -> v1.GetSessionsResponse
-	43, // 47: v1.AuthService.EndSessions:output_type -> v1.EndSessionsResponse
-	44, // 48: v1.AuthService.RequestPasswordReset:output_type -> v1.RequestPasswordResetResponse
-	45, // 49: v1.AuthService.ResetPassword:output_type -> v1.ResetPasswordResponse
-	46, // 50: v1.AuthService.ChangePassword:output_type -> v1.ChangePasswordResponse
-	47, // 51: v1.AuthService.GetVisibleNames:output_type -> v1.GetVisibleNamesResponse
-	48, // 52: v1.AuthService.CheckUsernameAvailability:output_type -> v1.CheckUsernameAvailabilityResponse
-	49, // 53: v1.AuthService.SetUsername:output_type -> v1.SetUsernameResponse
-	27, // [27:54] is the sub-list for method output_type
-	0,  // [0:27] is the sub-list for method input_type
+	0,  // 0: v1.AuthService.UpdateProfileDeletion:input_type -> v1.UpdateProfileDeletionRequest
+	1,  // 1: v1.AuthService.StartEmailBinding:input_type -> v1.StartEmailBindingRequest
+	2,  // 2: v1.AuthService.ConfirmEmailBinding:input_type -> v1.ConfirmEmailBindingRequest
+	3,  // 3: v1.AuthService.SignUp:input_type -> v1.SignUpRequest
+	4,  // 4: v1.AuthService.ActivateProfile:input_type -> v1.ActivateProfileRequest
+	5,  // 5: v1.AuthService.SignIn:input_type -> v1.SignInRequest
+	6,  // 6: v1.AuthService.GetAccessTokenPublicKey:input_type -> v1.GetAccessTokenPublicKeyRequest
+	7,  // 7: v1.AuthService.RefreshSession:input_type -> v1.RefreshSessionRequest
+	8,  // 8: v1.AuthService.SignOut:input_type -> v1.SignOutRequest
+	9,  // 9: v1.AuthService.GetAuthInfo:input_type -> v1.GetAuthInfoRequest
+	10, // 10: v1.AuthService.GetProfileDeletionStatus:input_type -> v1.GetProfileDeletionStatusRequest
+	11, // 11: v1.AuthService.DeleteProfile:input_type -> v1.DeleteProfileRequest
+	12, // 12: v1.AuthService.CancelProfileDeletion:input_type -> v1.CancelProfileDeletionRequest
+	13, // 13: v1.AuthService.RequestGoogleOAuth:input_type -> v1.RequestGoogleOAuthRequest
+	14, // 14: v1.AuthService.SignInGoogle:input_type -> v1.SignInGoogleRequest
+	15, // 15: v1.AuthService.SignInGoogleToken:input_type -> v1.SignInGoogleTokenRequest
+	16, // 16: v1.AuthService.ConnectGoogle:input_type -> v1.ConnectGoogleRequest
+	17, // 17: v1.AuthService.DeleteGoogleConnection:input_type -> v1.DeleteGoogleConnectionRequest
+	18, // 18: v1.AuthService.RequestVkOAuth:input_type -> v1.RequestVkOAuthRequest
+	19, // 19: v1.AuthService.SignInVk:input_type -> v1.SignInVkRequest
+	20, // 20: v1.AuthService.ConnectVk:input_type -> v1.ConnectVkRequest
+	21, // 21: v1.AuthService.DeleteVkConnection:input_type -> v1.DeleteVkConnectionRequest
+	22, // 22: v1.AuthService.GetSessions:input_type -> v1.GetSessionsRequest
+	23, // 23: v1.AuthService.EndSessions:input_type -> v1.EndSessionsRequest
+	24, // 24: v1.AuthService.RequestPasswordReset:input_type -> v1.RequestPasswordResetRequest
+	25, // 25: v1.AuthService.ResetPassword:input_type -> v1.ResetPasswordRequest
+	26, // 26: v1.AuthService.ChangePassword:input_type -> v1.ChangePasswordRequest
+	27, // 27: v1.AuthService.GetVisibleNames:input_type -> v1.GetVisibleNamesRequest
+	28, // 28: v1.AuthService.CheckUsernameAvailability:input_type -> v1.CheckUsernameAvailabilityRequest
+	29, // 29: v1.AuthService.SetUsername:input_type -> v1.SetUsernameRequest
+	30, // 30: v1.AuthService.UpdateProfileDeletion:output_type -> v1.UpdateProfileDeletionResponse
+	31, // 31: v1.AuthService.StartEmailBinding:output_type -> v1.StartEmailBindingResponse
+	32, // 32: v1.AuthService.ConfirmEmailBinding:output_type -> v1.ConfirmEmailBindingResponse
+	33, // 33: v1.AuthService.SignUp:output_type -> v1.SignUpResponse
+	34, // 34: v1.AuthService.ActivateProfile:output_type -> v1.ActivateProfileResponse
+	35, // 35: v1.AuthService.SignIn:output_type -> v1.SessionResponse
+	36, // 36: v1.AuthService.GetAccessTokenPublicKey:output_type -> v1.GetAccessTokenPublicKeyResponse
+	35, // 37: v1.AuthService.RefreshSession:output_type -> v1.SessionResponse
+	37, // 38: v1.AuthService.SignOut:output_type -> v1.SignOutResponse
+	38, // 39: v1.AuthService.GetAuthInfo:output_type -> v1.GetAuthInfoResponse
+	39, // 40: v1.AuthService.GetProfileDeletionStatus:output_type -> v1.GetProfileDeletionStatusResponse
+	40, // 41: v1.AuthService.DeleteProfile:output_type -> v1.DeleteProfileResponse
+	41, // 42: v1.AuthService.CancelProfileDeletion:output_type -> v1.CancelProfileDeletionResponse
+	42, // 43: v1.AuthService.RequestGoogleOAuth:output_type -> v1.RequestGoogleOAuthResponse
+	35, // 44: v1.AuthService.SignInGoogle:output_type -> v1.SessionResponse
+	35, // 45: v1.AuthService.SignInGoogleToken:output_type -> v1.SessionResponse
+	43, // 46: v1.AuthService.ConnectGoogle:output_type -> v1.ConnectGoogleResponse
+	44, // 47: v1.AuthService.DeleteGoogleConnection:output_type -> v1.DeleteGoogleConnectionResponse
+	45, // 48: v1.AuthService.RequestVkOAuth:output_type -> v1.RequestVkOAuthResponse
+	35, // 49: v1.AuthService.SignInVk:output_type -> v1.SessionResponse
+	46, // 50: v1.AuthService.ConnectVk:output_type -> v1.ConnectVkResponse
+	47, // 51: v1.AuthService.DeleteVkConnection:output_type -> v1.DeleteVkConnectionResponse
+	48, // 52: v1.AuthService.GetSessions:output_type -> v1.GetSessionsResponse
+	49, // 53: v1.AuthService.EndSessions:output_type -> v1.EndSessionsResponse
+	50, // 54: v1.AuthService.RequestPasswordReset:output_type -> v1.RequestPasswordResetResponse
+	51, // 55: v1.AuthService.ResetPassword:output_type -> v1.ResetPasswordResponse
+	52, // 56: v1.AuthService.ChangePassword:output_type -> v1.ChangePasswordResponse
+	53, // 57: v1.AuthService.GetVisibleNames:output_type -> v1.GetVisibleNamesResponse
+	54, // 58: v1.AuthService.CheckUsernameAvailability:output_type -> v1.CheckUsernameAvailabilityResponse
+	55, // 59: v1.AuthService.SetUsername:output_type -> v1.SetUsernameResponse
+	30, // [30:60] is the sub-list for method output_type
+	0,  // [0:30] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -201,6 +216,7 @@ func file_v1_auth_service_proto_init() {
 	file_v1_get_visible_names_proto_init()
 	file_v1_check_username_availability_proto_init()
 	file_v1_set_username_proto_init()
+	file_v1_account_workflows_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -26,6 +26,7 @@ type ResetPasswordRequest struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ResetCode     string                 `protobuf:"bytes,2,opt,name=resetCode,proto3" json:"resetCode,omitempty"`
 	NewPassword   string                 `protobuf:"bytes,3,opt,name=newPassword,proto3" json:"newPassword,omitempty"`
+	Token         string                 `protobuf:"bytes,4,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -81,6 +82,13 @@ func (x *ResetPasswordRequest) GetNewPassword() string {
 	return ""
 }
 
+func (x *ResetPasswordRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
 type ResetPasswordResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
@@ -129,11 +137,12 @@ var File_v1_reset_password_proto protoreflect.FileDescriptor
 
 const file_v1_reset_password_proto_rawDesc = "" +
 	"\n" +
-	"\x17v1/reset-password.proto\x12\x02v1\"f\n" +
+	"\x17v1/reset-password.proto\x12\x02v1\"|\n" +
 	"\x14ResetPasswordRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tresetCode\x18\x02 \x01(\tR\tresetCode\x12 \n" +
-	"\vnewPassword\x18\x03 \x01(\tR\vnewPassword\"1\n" +
+	"\vnewPassword\x18\x03 \x01(\tR\vnewPassword\x12\x14\n" +
+	"\x05token\x18\x04 \x01(\tR\x05token\"1\n" +
 	"\x15ResetPasswordResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessageB;Z9github.com/mephistolie/chefbook-backend-auth/api/proto/v1b\x06proto3"
 

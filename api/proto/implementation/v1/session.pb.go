@@ -25,6 +25,8 @@ const (
 type SessionResponse struct {
 	state                    protoimpl.MessageState `protogen:"open.v1"`
 	ProfileId                string                 `protobuf:"bytes,1,opt,name=profileId,proto3" json:"profileId,omitempty"`
+	SessionId                int64                  `protobuf:"varint,6,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	DeleteSharedData         bool                   `protobuf:"varint,7,opt,name=deleteSharedData,proto3" json:"deleteSharedData,omitempty"`
 	AccessToken              string                 `protobuf:"bytes,2,opt,name=accessToken,proto3" json:"accessToken,omitempty"`
 	RefreshToken             string                 `protobuf:"bytes,3,opt,name=refreshToken,proto3" json:"refreshToken,omitempty"`
 	ExpirationTimestamp      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expirationTimestamp,proto3" json:"expirationTimestamp,omitempty"`
@@ -70,6 +72,20 @@ func (x *SessionResponse) GetProfileId() string {
 	return ""
 }
 
+func (x *SessionResponse) GetSessionId() int64 {
+	if x != nil {
+		return x.SessionId
+	}
+	return 0
+}
+
+func (x *SessionResponse) GetDeleteSharedData() bool {
+	if x != nil {
+		return x.DeleteSharedData
+	}
+	return false
+}
+
 func (x *SessionResponse) GetAccessToken() string {
 	if x != nil {
 		return x.AccessToken
@@ -102,9 +118,11 @@ var File_v1_session_proto protoreflect.FileDescriptor
 
 const file_v1_session_proto_rawDesc = "" +
 	"\n" +
-	"\x10v1/session.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9b\x02\n" +
+	"\x10v1/session.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe5\x02\n" +
 	"\x0fSessionResponse\x12\x1c\n" +
-	"\tprofileId\x18\x01 \x01(\tR\tprofileId\x12 \n" +
+	"\tprofileId\x18\x01 \x01(\tR\tprofileId\x12\x1c\n" +
+	"\tsessionId\x18\x06 \x01(\x03R\tsessionId\x12*\n" +
+	"\x10deleteSharedData\x18\a \x01(\bR\x10deleteSharedData\x12 \n" +
 	"\vaccessToken\x18\x02 \x01(\tR\vaccessToken\x12\"\n" +
 	"\frefreshToken\x18\x03 \x01(\tR\frefreshToken\x12L\n" +
 	"\x13expirationTimestamp\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x13expirationTimestamp\x12V\n" +

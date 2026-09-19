@@ -59,3 +59,11 @@ func (Events) PostgresHealthCheckFailed(ctx context.Context, err error) {
 		ErrorType: safeErrorType(err, "postgres_error"),
 	})
 }
+
+func (Events) AccountDeletionBatchFailed(ctx context.Context, err error) {
+	log.LogWarn(ctx, log.Event{Event: "account.deletion.failed", Message: "Scheduled account deletion could not complete", Component: log.ComponentPostgres, Operation: "delete_due_account", ErrorType: safeErrorType(err, "postgres_error")})
+}
+
+func (Events) TemporaryStateCleanupFailed(ctx context.Context, err error) {
+	log.LogWarn(ctx, log.Event{Event: "auth.cleanup.failed", Message: "Expired authentication state cleanup could not complete", Component: log.ComponentPostgres, Operation: "cleanup_auth_state", ErrorType: safeErrorType(err, "postgres_error")})
+}

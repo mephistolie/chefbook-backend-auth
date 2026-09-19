@@ -24,9 +24,12 @@ const (
 
 type DeleteProfileRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
+	FlowBinding      string                 `protobuf:"bytes,20,opt,name=flowBinding,proto3" json:"flowBinding,omitempty"`
 	ProfileId        string                 `protobuf:"bytes,1,opt,name=profileId,proto3" json:"profileId,omitempty"`
 	Password         string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	DeleteSharedData bool                   `protobuf:"varint,3,opt,name=deleteSharedData,proto3" json:"deleteSharedData,omitempty"`
+	Credentials      *Reauthentication      `protobuf:"bytes,4,opt,name=credentials,proto3" json:"credentials,omitempty"`
+	RedirectUri      string                 `protobuf:"bytes,5,opt,name=redirectUri,proto3" json:"redirectUri,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -61,6 +64,13 @@ func (*DeleteProfileRequest) Descriptor() ([]byte, []int) {
 	return file_v1_delete_profile_proto_rawDescGZIP(), []int{0}
 }
 
+func (x *DeleteProfileRequest) GetFlowBinding() string {
+	if x != nil {
+		return x.FlowBinding
+	}
+	return ""
+}
+
 func (x *DeleteProfileRequest) GetProfileId() string {
 	if x != nil {
 		return x.ProfileId
@@ -82,9 +92,24 @@ func (x *DeleteProfileRequest) GetDeleteSharedData() bool {
 	return false
 }
 
+func (x *DeleteProfileRequest) GetCredentials() *Reauthentication {
+	if x != nil {
+		return x.Credentials
+	}
+	return nil
+}
+
+func (x *DeleteProfileRequest) GetRedirectUri() string {
+	if x != nil {
+		return x.RedirectUri
+	}
+	return ""
+}
+
 type DeleteProfileResponse struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	DeletionTimestamp *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=deletionTimestamp,proto3" json:"deletionTimestamp,omitempty"`
+	DeleteSharedData  bool                   `protobuf:"varint,2,opt,name=deleteSharedData,proto3" json:"deleteSharedData,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -126,17 +151,28 @@ func (x *DeleteProfileResponse) GetDeletionTimestamp() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *DeleteProfileResponse) GetDeleteSharedData() bool {
+	if x != nil {
+		return x.DeleteSharedData
+	}
+	return false
+}
+
 var File_v1_delete_profile_proto protoreflect.FileDescriptor
 
 const file_v1_delete_profile_proto_rawDesc = "" +
 	"\n" +
-	"\x17v1/delete-profile.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"|\n" +
-	"\x14DeleteProfileRequest\x12\x1c\n" +
+	"\x17v1/delete-profile.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1av1/account-workflows.proto\"\xf8\x01\n" +
+	"\x14DeleteProfileRequest\x12 \n" +
+	"\vflowBinding\x18\x14 \x01(\tR\vflowBinding\x12\x1c\n" +
 	"\tprofileId\x18\x01 \x01(\tR\tprofileId\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12*\n" +
-	"\x10deleteSharedData\x18\x03 \x01(\bR\x10deleteSharedData\"a\n" +
+	"\x10deleteSharedData\x18\x03 \x01(\bR\x10deleteSharedData\x126\n" +
+	"\vcredentials\x18\x04 \x01(\v2\x14.v1.ReauthenticationR\vcredentials\x12 \n" +
+	"\vredirectUri\x18\x05 \x01(\tR\vredirectUri\"\x8d\x01\n" +
 	"\x15DeleteProfileResponse\x12H\n" +
-	"\x11deletionTimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x11deletionTimestampB;Z9github.com/mephistolie/chefbook-backend-auth/api/proto/v1b\x06proto3"
+	"\x11deletionTimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x11deletionTimestamp\x12*\n" +
+	"\x10deleteSharedData\x18\x02 \x01(\bR\x10deleteSharedDataB;Z9github.com/mephistolie/chefbook-backend-auth/api/proto/v1b\x06proto3"
 
 var (
 	file_v1_delete_profile_proto_rawDescOnce sync.Once
@@ -154,15 +190,17 @@ var file_v1_delete_profile_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_v1_delete_profile_proto_goTypes = []any{
 	(*DeleteProfileRequest)(nil),  // 0: v1.DeleteProfileRequest
 	(*DeleteProfileResponse)(nil), // 1: v1.DeleteProfileResponse
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*Reauthentication)(nil),      // 2: v1.Reauthentication
+	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
 var file_v1_delete_profile_proto_depIdxs = []int32{
-	2, // 0: v1.DeleteProfileResponse.deletionTimestamp:type_name -> google.protobuf.Timestamp
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 0: v1.DeleteProfileRequest.credentials:type_name -> v1.Reauthentication
+	3, // 1: v1.DeleteProfileResponse.deletionTimestamp:type_name -> google.protobuf.Timestamp
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_v1_delete_profile_proto_init() }
@@ -170,6 +208,7 @@ func file_v1_delete_profile_proto_init() {
 	if File_v1_delete_profile_proto != nil {
 		return
 	}
+	file_v1_account_workflows_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

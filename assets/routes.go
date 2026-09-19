@@ -3,6 +3,7 @@ package assets
 const (
 	RootDirPath = "./assets"
 
+	EmailBindingMailTmplFilePath           = RootDirPath + "/mail/email_binding.html"
 	MailTemplatesDirPath                   = RootDirPath + "/mail"
 	ProfileActivationMailTmplFilePath      = MailTemplatesDirPath + "/profile_activation.html"
 	NewLoginFilePath                       = MailTemplatesDirPath + "/new_login.html"

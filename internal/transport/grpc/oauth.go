@@ -7,16 +7,23 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
 	"github.com/mephistolie/chefbook-backend-auth/internal/transport/grpc/dto"
 	"github.com/mephistolie/chefbook-backend-auth/internal/transport/utils/query"
+	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/flow"
 	"github.com/mephistolie/chefbook-backend-common/responses/fail"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
-func (s *AuthServer) RequestGoogleOAuth(_ context.Context, req *api.RequestGoogleOAuthRequest) (*api.RequestGoogleOAuthResponse, error) {
-	return &api.RequestGoogleOAuthResponse{Link: s.service.OAuth.GenerateGoogleLink(req.RedirectUrl)}, nil
+func (s *AuthServer) RequestGoogleOAuth(ctx context.Context, req *api.RequestGoogleOAuthRequest) (*api.RequestGoogleOAuthResponse, error) {
+	link, err := s.service.OAuth.GenerateGoogleLink(flow.WithBinding(ctx, req.FlowBinding), req.RedirectUrl)
+	if err != nil {
+		return nil, err
+	}
+	return &api.RequestGoogleOAuthResponse{Link: link, ExpirationTimestamp: timestamppb.New(time.Now().Add(flow.TTL))}, nil
 }
 
 func (s *AuthServer) SignInGoogle(ctx context.Context, req *api.SignInGoogleRequest) (*api.SessionResponse, error) {
 	tokens, err := s.service.Session.SignInGoogle(
-		ctx,
+		flow.WithBinding(ctx, req.FlowBinding),
 		entity.OAuthCredentials{
 			Code:  query.Decode(req.Code),
 			State: req.State,
@@ -49,11 +56,22 @@ func (s *AuthServer) ConnectGoogle(ctx context.Context, req *api.ConnectGoogleRe
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err := s.service.OAuth.ConnectGoogle(ctx, id, query.Decode(req.Code), req.State, req.RedirectUrl); err != nil {
+	var created bool
+	if req.IdToken != "" {
+		if req.Code != "" || req.State != "" {
+			return nil, fail.GrpcInvalidBody
+		}
+		created, err = s.service.OAuth.ConnectGoogleToken(ctx, id, req.IdToken)
+	} else {
+		if req.Code == "" || req.State == "" {
+			return nil, fail.GrpcInvalidBody
+		}
+		created, err = s.service.OAuth.ConnectGoogle(flow.WithBinding(ctx, req.FlowBinding), id, req.Code, req.State, req.RedirectUrl)
+	}
+	if err != nil {
 		return nil, err
 	}
-
-	return &api.ConnectGoogleResponse{Message: "Google profile connected"}, nil
+	return &api.ConnectGoogleResponse{Created: created}, nil
 }
 
 func (s *AuthServer) DeleteGoogleConnection(ctx context.Context, req *api.DeleteGoogleConnectionRequest) (*api.DeleteGoogleConnectionResponse, error) {
@@ -69,17 +87,17 @@ func (s *AuthServer) DeleteGoogleConnection(ctx context.Context, req *api.Delete
 	return &api.DeleteGoogleConnectionResponse{Message: "Google connection deleted"}, nil
 }
 
-func (s *AuthServer) RequestVkOAuth(_ context.Context, req *api.RequestVkOAuthRequest) (*api.RequestVkOAuthResponse, error) {
-	link, err := s.service.OAuth.GenerateVkLink(req.Display, req.ResponseType, req.RedirectUri)
+func (s *AuthServer) RequestVkOAuth(ctx context.Context, req *api.RequestVkOAuthRequest) (*api.RequestVkOAuthResponse, error) {
+	link, err := s.service.OAuth.GenerateVkLink(flow.WithBinding(ctx, req.FlowBinding), req.Display, req.ResponseType, req.RedirectUri)
 	if err != nil {
 		return nil, err
 	}
-	return &api.RequestVkOAuthResponse{Link: link}, nil
+	return &api.RequestVkOAuthResponse{Link: link, ExpirationTimestamp: timestamppb.New(time.Now().Add(flow.TTL))}, nil
 }
 
 func (s *AuthServer) SignInVk(ctx context.Context, req *api.SignInVkRequest) (*api.SessionResponse, error) {
 	tokens, err := s.service.Session.SignInVk(
-		ctx,
+		flow.WithBinding(ctx, req.FlowBinding),
 		entity.OAuthCredentials{
 			Code:  query.Decode(req.Code),
 			State: req.State,
@@ -103,11 +121,11 @@ func (s *AuthServer) ConnectVk(ctx context.Context, req *api.ConnectVkRequest) (
 		return nil, fail.GrpcInvalidBody
 	}
 
-	if err := s.service.OAuth.ConnectVk(ctx, id, query.Decode(req.Code), req.State, req.RedirectUri); err != nil {
+	created, err := s.service.OAuth.ConnectVk(flow.WithBinding(ctx, req.FlowBinding), id, req.Code, req.State, req.RedirectUri)
+	if err != nil {
 		return nil, err
 	}
-
-	return &api.ConnectVkResponse{Message: "VK profile connected"}, nil
+	return &api.ConnectVkResponse{Created: created}, nil
 }
 
 func (s *AuthServer) DeleteVkConnection(ctx context.Context, req *api.DeleteVkConnectionRequest) (*api.DeleteVkConnectionResponse, error) {

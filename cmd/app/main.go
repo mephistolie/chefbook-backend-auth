@@ -17,6 +17,16 @@ func main() {
 		Port:        fs.Int("port", 8080, "service port"),
 		LogsPath:    fs.String("logs-path", "", "logs file path"),
 
+		Security: config.Security{
+			HMACKey:          fs.String("auth-hmac-key", "", "base64-encoded stable HMAC key, minimum 32 bytes"),
+			EncryptionKey:    fs.String("auth-encryption-key", "", "base64-encoded stable AES-256 key, exactly 32 bytes"),
+			RPID:             fs.String("passkey-rp-id", "", "WebAuthn RP ID; empty disables passkeys"),
+			Origins:          fs.String("passkey-origins", "", "comma-separated exact WebAuthn HTTPS origins"),
+			OpaqueOrigins:    fs.String("passkey-opaque-origins", "", "comma-separated explicitly verified native origins"),
+			OAuthRedirects:   fs.String("oauth-redirects", "", "comma-separated allowlisted exact OAuth redirect URIs"),
+			PasswordResetURL: fs.String("password-reset-url", "", "HTTPS frontend password reset confirmation URL"),
+			EmailChangeURL:   fs.String("email-change-url", "", "HTTPS frontend email change confirmation URL"),
+		},
 		Auth: config.Auth{
 			SaltCost:              fs.Int("salt-cost", 10, "hash data salt cost"),
 			AccessTokenSigningKey: fs.String("access-token-signing-key", "", "access token signing key; leave empty for random"),
@@ -53,6 +63,7 @@ func main() {
 		},
 
 		Database: config.Database{
+			SSLMode:  fs.String("db-sslmode", "require", "PostgreSQL TLS mode; disable only for disposable local tests"),
 			Host:     fs.String("db-host", "localhost", "database host"),
 			Port:     fs.Int("db-port", 5432, "database port"),
 			User:     fs.String("db-user", "", "database user name"),

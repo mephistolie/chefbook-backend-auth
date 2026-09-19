@@ -17,6 +17,7 @@ type Config struct {
 	Port        *int
 	LogsPath    *string
 
+	Security        Security
 	Auth            Auth
 	OAuth           OAuth
 	ProfileDeletion ProfileDeletion
@@ -26,6 +27,12 @@ type Config struct {
 	Database Database
 	Amqp     Amqp
 	Smtp     Smtp
+}
+
+type Security struct {
+	HMACKey, EncryptionKey                           *string
+	RPID, Origins, OpaqueOrigins                     *string
+	OAuthRedirects, PasswordResetURL, EmailChangeURL *string
 }
 
 type Auth struct {
@@ -72,6 +79,7 @@ type Service struct {
 }
 
 type Database struct {
+	SSLMode  *string
 	Host     *string
 	Port     *int
 	User     *string

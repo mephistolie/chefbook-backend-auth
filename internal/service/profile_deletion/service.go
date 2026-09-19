@@ -10,6 +10,7 @@ import (
 	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/mail"
+	"github.com/mephistolie/chefbook-backend-auth/internal/service/reauthentication"
 	"github.com/mephistolie/chefbook-backend-common/hash"
 )
 
@@ -18,6 +19,7 @@ type Service struct {
 	mq          repository.MessageQueue
 	mail        *mail.Service
 	hashManager hash.Manager
+	reauth      *reauthentication.Service
 }
 
 func NewService(
@@ -25,12 +27,14 @@ func NewService(
 	mq repository.MessageQueue,
 	mailService *mail.Service,
 	hashManager hash.Manager,
+	reauth *reauthentication.Service,
 ) *Service {
 	return &Service{
 		repo:        repo,
 		mq:          mq,
 		mail:        mailService,
 		hashManager: hashManager,
+		reauth:      reauth,
 	}
 }
 
@@ -43,25 +47,35 @@ func (s *Service) GetInfo(ctx context.Context, userId uuid.UUID) (*time.Time, bo
 	return authInfo.DeletionTimestamp, false
 }
 
-func (s *Service) Request(ctx context.Context, userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error) {
-	authInfo, err := s.repo.GetAuthInfoById(ctx, userId)
+func (s *Service) Request(ctx context.Context, userId uuid.UUID, credentials entity.Reauthentication, deleteSharedData bool, redirect string) (entity.DeleteProfileRequest, error) {
+	if err := s.reauth.Check(ctx, userId, credentials, redirect); err != nil {
+		return entity.DeleteProfileRequest{}, err
+	}
+	info, err := s.repo.GetAuthInfoById(ctx, userId)
 	if err != nil {
-		return time.Time{}, authFail.GrpcUserNotFound
+		return entity.DeleteProfileRequest{}, err
 	}
-
-	if err = s.hashManager.Validate(password, authInfo.PasswordHash); err != nil {
-		authlog.Default.PasswordInvalid(ctx, userId.String())
-		return time.Time{}, authFail.GrpcInvalidPassword
+	if info.DeletionTimestamp != nil && !info.DeletionTimestamp.After(time.Now()) {
+		return entity.DeleteProfileRequest{}, authFail.GrpcDeletionExpired
 	}
-
-	timestamp, err := s.repo.RequestDeleteProfile(ctx, userId, deleteSharedData)
+	request, err := s.repo.RequestDeleteProfile(ctx, userId, deleteSharedData)
 	if err != nil {
-		return time.Time{}, err
-	} else {
-		go s.mail.SendProfileDeletionRequestMail(context.WithoutCancel(ctx), userId, authInfo.Email, timestamp, deleteSharedData)
+		return entity.DeleteProfileRequest{}, err
 	}
-
-	return timestamp, nil
+	if info.DeletionTimestamp == nil {
+		go s.mail.SendProfileDeletionRequestMail(context.WithoutCancel(ctx), userId, info.Email, request.Timestamp, request.WithSharedData)
+	}
+	return request, nil
+}
+func (s *Service) Update(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (entity.DeleteProfileRequest, error) {
+	info, err := s.repo.GetAuthInfoById(ctx, userId)
+	if err != nil {
+		return entity.DeleteProfileRequest{}, err
+	}
+	if info.IsBlocked {
+		return entity.DeleteProfileRequest{}, authFail.GrpcProfileIsBlocked
+	}
+	return s.repo.UpdateProfileDeletion(ctx, userId, deleteSharedData)
 }
 
 func (s *Service) ExecuteAll() {
@@ -80,7 +94,7 @@ func (s *Service) Execute(ctx context.Context, request entity.DeleteProfileReque
 	}
 
 	msg, err := s.repo.DeleteUser(ctx, request.UserId, request.WithSharedData)
-	if err == nil {
+	if err == nil && msg != nil {
 		s.mail.SendProfileDeletedMail(ctx, request.UserId, authInfo.Email)
 		_ = s.mq.PublishProfilesMessage(ctx, msg)
 	}
@@ -89,5 +103,12 @@ func (s *Service) Execute(ctx context.Context, request entity.DeleteProfileReque
 }
 
 func (s *Service) Cancel(ctx context.Context, userId uuid.UUID) error {
+	info, err := s.repo.GetAuthInfoById(ctx, userId)
+	if err != nil {
+		return err
+	}
+	if info.IsBlocked {
+		return authFail.GrpcProfileIsBlocked
+	}
 	return s.repo.CancelProfileDeletion(ctx, userId)
 }

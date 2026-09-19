@@ -1,17 +1,14 @@
-FROM golang:alpine as builder
+# Build from the chefbook-backend workspace root:
+# docker build -f services/auth/Dockerfile -t chefbook-auth .
+FROM golang:1.26.2-alpine AS builder
+WORKDIR /workspace/services/auth
+COPY services/auth ./
+COPY common/tokens /workspace/common/tokens
+COPY common/firebase /workspace/common/firebase
+RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o /out/auth ./cmd/app
 
-WORKDIR /build
-
-COPY go.mod go.sum ./
-COPY api /api
-RUN go mod download
-
-COPY . .
-
-RUN CGO_ENABLED=0 go build -ldflags "-s -w" -o /main cmd/app/main.go
-
-FROM alpine:latest
-
-COPY --from=builder main /bin/main
-COPY --from=builder build/assets /assets
-ENTRYPOINT ["/bin/main"]
+FROM alpine:3.23
+RUN apk add --no-cache ca-certificates && adduser -D -u 10001 auth
+COPY --from=builder /out/auth /usr/local/bin/auth
+USER auth
+ENTRYPOINT ["/usr/local/bin/auth"]

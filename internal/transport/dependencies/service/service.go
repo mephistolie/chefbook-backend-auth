@@ -10,10 +10,12 @@ import (
 	authlog "github.com/mephistolie/chefbook-backend-auth/internal/logging"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
+	emailService "github.com/mephistolie/chefbook-backend-auth/internal/service/email"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/mail"
 	oauthService "github.com/mephistolie/chefbook-backend-auth/internal/service/oauth"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/password"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/profile_deletion"
+	"github.com/mephistolie/chefbook-backend-auth/internal/service/reauthentication"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/session"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/username"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/ip"
@@ -28,6 +30,7 @@ import (
 )
 
 type Service struct {
+	Email           *emailService.Service
 	Session         Session
 	OAuth           OAuth
 	Password        Password
@@ -46,16 +49,17 @@ type Session interface {
 	Refresh(ctx context.Context, refreshToken, ip, userAgent string) (entity.Tokens, error)
 	SignOut(ctx context.Context, refreshToken string) error
 	GetAuthInfo(ctx context.Context, identifiers entity.UserIdentifiers) (entity.AuthInfo, error)
-	GetAll(ctx context.Context, userId uuid.UUID) []entity.SessionInfo
-	DeleteMultiple(ctx context.Context, userId uuid.UUID, sessionIds []int64)
+	GetAll(ctx context.Context, userId uuid.UUID) ([]entity.SessionInfo, error)
+	DeleteMultiple(ctx context.Context, userId uuid.UUID, sessionIds []int64) error
 }
 
 type OAuth interface {
-	GenerateGoogleLink(redirectUrl string) string
-	ConnectGoogle(ctx context.Context, userId uuid.UUID, code, state, redirectUri string) error
+	ConnectGoogleToken(context.Context, uuid.UUID, string) (bool, error)
+	GenerateGoogleLink(ctx context.Context, redirectUrl string) (string, error)
+	ConnectGoogle(ctx context.Context, userId uuid.UUID, code, state, redirectUri string) (bool, error)
 	DeleteGoogleConnection(ctx context.Context, userId uuid.UUID) error
-	GenerateVkLink(display, responseType, redirectUrl string) (string, error)
-	ConnectVk(ctx context.Context, userId uuid.UUID, code, state, redirectUri string) error
+	GenerateVkLink(ctx context.Context, display, responseType, redirectUrl string) (string, error)
+	ConnectVk(ctx context.Context, userId uuid.UUID, code, state, redirectUri string) (bool, error)
 	DeleteVkConnection(ctx context.Context, userId uuid.UUID) error
 }
 
@@ -73,7 +77,8 @@ type Username interface {
 
 type ProfileDeletion interface {
 	GetInfo(ctx context.Context, userId uuid.UUID) (*time.Time, bool)
-	Request(ctx context.Context, userId uuid.UUID, password string, deleteSharedData bool) (time.Time, error)
+	Request(ctx context.Context, userId uuid.UUID, credentials entity.Reauthentication, deleteSharedData bool, redirect string) (entity.DeleteProfileRequest, error)
+	Update(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (entity.DeleteProfileRequest, error)
 	ExecuteAll()
 	Execute(ctx context.Context, request entity.DeleteProfileRequest) error
 	Cancel(ctx context.Context, userId uuid.UUID) error
@@ -125,6 +130,8 @@ func New(
 		strconv.Itoa(oauthService.VkScope),
 		*cfg.OAuth.State,
 	)
+	googleProvider.StateStore = repo
+	vkProvider.StateStore = repo
 	oauthProviders := oauth.Providers{
 		Google: *googleProvider,
 		Vk:     *vkProvider,
@@ -139,11 +146,13 @@ func New(
 		}
 	}
 
+	email := emailService.New(repo, reauthentication.New(repo, oauthProviders, hashManager), mailService)
 	return &Service{
-		Session:         session.NewService(repo, grpc, mq, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth),
+		Email:           email,
+		Session:         session.NewService(repo, grpc, mq, *mailService, oauthProviders, hashManager, *tokenManager, ipInfoProvider, firebaseClient, cfg.Auth, email),
 		OAuth:           oauthService.NewService(repo, oauthProviders),
 		Password:        password.NewService(repo, *mailService, hashManager, cfg.Auth),
 		Username:        username.NewService(repo, *mailService),
-		ProfileDeletion: profile_deletion.NewService(repo, mq, mailService, hashManager),
+		ProfileDeletion: profile_deletion.NewService(repo, mq, mailService, hashManager, reauthentication.New(repo, oauthProviders, hashManager)),
 	}, nil
 }

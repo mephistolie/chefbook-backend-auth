@@ -4,6 +4,7 @@ package v1;
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
 message SignInVkRequest {
+  string flowBinding = 20;
   string code = 1;
   string state = 2;
   string redirectUri = 3;

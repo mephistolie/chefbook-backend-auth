@@ -1,9 +1,11 @@
 syntax = "proto3";
 package v1;
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
 message RequestVkOAuthRequest {
+  string flowBinding = 20;
   string display = 1;
   string responseType = 2;
   string redirectUri = 3;
@@ -11,4 +13,5 @@ message RequestVkOAuthRequest {
 
 message RequestVkOAuthResponse {
   string link = 1;
+  google.protobuf.Timestamp expirationTimestamp = 2;
 }

@@ -23,10 +23,12 @@ const (
 
 type ConnectGoogleRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	FlowBinding   string                 `protobuf:"bytes,20,opt,name=flowBinding,proto3" json:"flowBinding,omitempty"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
 	State         string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
 	RedirectUrl   string                 `protobuf:"bytes,4,opt,name=redirectUrl,proto3" json:"redirectUrl,omitempty"`
+	IdToken       string                 `protobuf:"bytes,5,opt,name=idToken,proto3" json:"idToken,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,6 +63,13 @@ func (*ConnectGoogleRequest) Descriptor() ([]byte, []int) {
 	return file_v1_connect_google_proto_rawDescGZIP(), []int{0}
 }
 
+func (x *ConnectGoogleRequest) GetFlowBinding() string {
+	if x != nil {
+		return x.FlowBinding
+	}
+	return ""
+}
+
 func (x *ConnectGoogleRequest) GetId() string {
 	if x != nil {
 		return x.Id
@@ -89,9 +98,17 @@ func (x *ConnectGoogleRequest) GetRedirectUrl() string {
 	return ""
 }
 
+func (x *ConnectGoogleRequest) GetIdToken() string {
+	if x != nil {
+		return x.IdToken
+	}
+	return ""
+}
+
 type ConnectGoogleResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Created       bool                   `protobuf:"varint,2,opt,name=created,proto3" json:"created,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -133,18 +150,28 @@ func (x *ConnectGoogleResponse) GetMessage() string {
 	return ""
 }
 
+func (x *ConnectGoogleResponse) GetCreated() bool {
+	if x != nil {
+		return x.Created
+	}
+	return false
+}
+
 var File_v1_connect_google_proto protoreflect.FileDescriptor
 
 const file_v1_connect_google_proto_rawDesc = "" +
 	"\n" +
-	"\x17v1/connect-google.proto\x12\x02v1\"r\n" +
-	"\x14ConnectGoogleRequest\x12\x0e\n" +
+	"\x17v1/connect-google.proto\x12\x02v1\"\xae\x01\n" +
+	"\x14ConnectGoogleRequest\x12 \n" +
+	"\vflowBinding\x18\x14 \x01(\tR\vflowBinding\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x14\n" +
 	"\x05state\x18\x03 \x01(\tR\x05state\x12 \n" +
-	"\vredirectUrl\x18\x04 \x01(\tR\vredirectUrl\"1\n" +
+	"\vredirectUrl\x18\x04 \x01(\tR\vredirectUrl\x12\x18\n" +
+	"\aidToken\x18\x05 \x01(\tR\aidToken\"K\n" +
 	"\x15ConnectGoogleResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessageB;Z9github.com/mephistolie/chefbook-backend-auth/api/proto/v1b\x06proto3"
+	"\amessage\x18\x01 \x01(\tR\amessage\x12\x18\n" +
+	"\acreated\x18\x02 \x01(\bR\acreatedB;Z9github.com/mephistolie/chefbook-backend-auth/api/proto/v1b\x06proto3"
 
 var (
 	file_v1_connect_google_proto_rawDescOnce sync.Once

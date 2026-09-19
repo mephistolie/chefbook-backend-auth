@@ -4,10 +4,18 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
+	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/flow"
 	"time"
 )
 
 type Data interface {
+	flow.Store
+	ConsumeReauthentication(context.Context, uuid.UUID, string) error
+	CleanupAuthWorkflows(context.Context) error
+	StartEmailBinding(context.Context, entity.EmailBinding) error
+	ConfirmEmailBinding(context.Context, string, string) (entity.EmailConfirmation, error)
+	DeliverEmail(context.Context, func(context.Context, entity.EmailDelivery) error) (bool, error)
+	GetPasswordResetUser(context.Context, string) (uuid.UUID, error)
 	CreateUser(ctx context.Context, credentials entity.CredentialsHash, activationCode *string, oauth entity.OAuth) (uuid.UUID, *entity.MessageData, error)
 	GetAuthInfoById(ctx context.Context, userId uuid.UUID) (entity.AuthInfo, error)
 	GetAuthInfoByEmail(ctx context.Context, email string) (entity.AuthInfo, error)
@@ -20,17 +28,17 @@ type Data interface {
 	SetPassword(ctx context.Context, userId uuid.UUID, passwordHash string) error
 	GetProfileActivationCode(ctx context.Context, userId uuid.UUID) (string, error)
 	ActivateProfile(ctx context.Context, userId uuid.UUID, code string) error
-	CreateSession(ctx context.Context, session entity.SessionInput) error
-	GetSessions(ctx context.Context, userId uuid.UUID) []entity.SessionRawInfo
-	UpdateSession(ctx context.Context, session entity.SessionInput, oldRefreshToken string) error
+	CreateSession(ctx context.Context, session entity.SessionInput) (int64, error)
+	GetSessions(ctx context.Context, userId uuid.UUID) ([]entity.SessionRawInfo, error)
+	UpdateSession(ctx context.Context, session entity.SessionInput, oldRefreshToken string) (int64, error)
 	DeleteSession(ctx context.Context, refreshToken string) error
-	DeleteSessions(ctx context.Context, userId uuid.UUID, sessionIds []int64)
-	DeleteAllSessions(ctx context.Context, userId uuid.UUID)
+	DeleteSessions(ctx context.Context, userId uuid.UUID, sessionIds []int64) error
+	DeleteAllSessions(ctx context.Context, userId uuid.UUID) error
 	DeleteOutdatedSessions(ctx context.Context, userId uuid.UUID, sessionsThreshold int)
 
-	ConnectGoogle(ctx context.Context, userId uuid.UUID, googleId string) error
+	ConnectGoogle(ctx context.Context, userId uuid.UUID, googleId string) (bool, error)
 	DeleteGoogleConnection(ctx context.Context, userId uuid.UUID) error
-	ConnectVk(ctx context.Context, userId uuid.UUID, vkId int64) error
+	ConnectVk(ctx context.Context, userId uuid.UUID, vkId int64) (bool, error)
 	DeleteVkConnection(ctx context.Context, userId uuid.UUID) error
 
 	IsFirebaseProfileConnected(ctx context.Context, firebaseId string) bool
@@ -38,7 +46,8 @@ type Data interface {
 
 	GetProfilesToDelete(ctx context.Context) []entity.DeleteProfileRequest
 	GetDeleteProfileRequest(ctx context.Context, userId uuid.UUID) (entity.DeleteProfileRequest, error)
-	RequestDeleteProfile(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (time.Time, error)
+	RequestDeleteProfile(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (entity.DeleteProfileRequest, error)
+	UpdateProfileDeletion(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (entity.DeleteProfileRequest, error)
 	CancelProfileDeletion(ctx context.Context, userId uuid.UUID) error
 	DeleteUser(ctx context.Context, userId uuid.UUID, deleteSharedData bool) (*entity.MessageData, error)
 

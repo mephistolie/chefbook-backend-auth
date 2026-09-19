@@ -12,8 +12,11 @@ const (
 )
 
 func ValidateEmail(email string) error {
-	_, err := mail.ParseAddress(email)
-	return err
+	address, err := mail.ParseAddress(email)
+	if err != nil || address.Address != email || address.Name != "" {
+		return fail.GrpcInvalidEmail
+	}
+	return nil
 }
 
 func ValidatePassword(password string) error {

@@ -26,7 +26,10 @@ type SessionRawInfo struct {
 	AccessTime time.Time
 }
 
+type SessionClient struct{ Name, Platform, Type string }
+
 type SessionInfo struct {
+	Client      SessionClient
 	SessionId   int64
 	UserId      uuid.UUID
 	Ip          string

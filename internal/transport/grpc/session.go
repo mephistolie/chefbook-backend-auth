@@ -118,7 +118,10 @@ func (s *AuthServer) GetSessions(ctx context.Context, req *api.GetSessionsReques
 		return nil, fail.GrpcInvalidBody
 	}
 
-	sessions := s.service.Session.GetAll(ctx, userId)
+	sessions, err := s.service.Session.GetAll(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
 
 	return dto.NewGetSessionsResponse(sessions), nil
 }
@@ -129,7 +132,9 @@ func (s *AuthServer) EndSessions(ctx context.Context, req *api.EndSessionsReques
 		return nil, fail.GrpcInvalidBody
 	}
 
-	s.service.Session.DeleteMultiple(ctx, userId, req.Sessions)
+	if err := s.service.Session.DeleteMultiple(ctx, userId, req.Sessions); err != nil {
+		return nil, err
+	}
 
 	return &api.EndSessionsResponse{Message: "sessions deleted"}, nil
 }

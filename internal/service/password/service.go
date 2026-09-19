@@ -2,6 +2,8 @@ package password
 
 import (
 	"context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,7 +40,13 @@ func NewService(
 
 func (s *Service) RequestReset(ctx context.Context, email, username *string, resetLinkPattern string) error {
 	authInfo, err := s.repo.GetAuthInfoByIdentifiers(ctx, entity.UserIdentifiers{Email: email, Username: username})
-	if err != nil || !authInfo.IsActivated {
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil
+		}
+		return err
+	}
+	if !authInfo.IsActivated || authInfo.IsBlocked || authInfo.DeletionTimestamp != nil {
 		return nil
 	}
 
@@ -53,6 +61,23 @@ func (s *Service) RequestReset(ctx context.Context, email, username *string, res
 }
 
 func (s *Service) Reset(ctx context.Context, userId uuid.UUID, resetCode, newPassword string) error {
+	if userId == uuid.Nil {
+		var err error
+		userId, err = s.repo.GetPasswordResetUser(ctx, resetCode)
+		if err != nil {
+			return err
+		}
+	}
+	info, err := s.repo.GetAuthInfoById(ctx, userId)
+	if err != nil {
+		return err
+	}
+	if info.IsBlocked {
+		return authFail.GrpcProfileIsBlocked
+	}
+	if info.DeletionTimestamp != nil {
+		return authFail.GrpcAccountDeleting
+	}
 	passwordHash, err := s.hashManager.Hash(newPassword)
 	if err != nil {
 		authlog.Default.PasswordHashFailed(ctx, err)
@@ -67,10 +92,22 @@ func (s *Service) Change(ctx context.Context, userId uuid.UUID, oldPassword, new
 		return authFail.GrpcUserNotFound
 	}
 
+	if authInfo.IsBlocked {
+		return authFail.GrpcProfileIsBlocked
+	}
+	if authInfo.DeletionTimestamp != nil {
+		return authFail.GrpcAccountDeleting
+	}
+	if s.hashManager.Validate(newPassword, authInfo.PasswordHash) == nil {
+		return nil
+	}
+	if authInfo.PasswordHash == "" {
+		return authFail.GrpcReauthentication
+	}
 	if len(authInfo.PasswordHash) > 0 {
 		if err = s.hashManager.Validate(oldPassword, authInfo.PasswordHash); err != nil {
 			authlog.Default.PasswordInvalid(ctx, userId.String())
-			return authFail.GrpcInvalidPassword
+			return authFail.GrpcReauthentication
 		}
 	}
 

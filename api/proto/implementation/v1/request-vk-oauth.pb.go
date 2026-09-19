@@ -9,6 +9,7 @@ package v1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -23,6 +24,7 @@ const (
 
 type RequestVkOAuthRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	FlowBinding   string                 `protobuf:"bytes,20,opt,name=flowBinding,proto3" json:"flowBinding,omitempty"`
 	Display       string                 `protobuf:"bytes,1,opt,name=display,proto3" json:"display,omitempty"`
 	ResponseType  string                 `protobuf:"bytes,2,opt,name=responseType,proto3" json:"responseType,omitempty"`
 	RedirectUri   string                 `protobuf:"bytes,3,opt,name=redirectUri,proto3" json:"redirectUri,omitempty"`
@@ -60,6 +62,13 @@ func (*RequestVkOAuthRequest) Descriptor() ([]byte, []int) {
 	return file_v1_request_vk_oauth_proto_rawDescGZIP(), []int{0}
 }
 
+func (x *RequestVkOAuthRequest) GetFlowBinding() string {
+	if x != nil {
+		return x.FlowBinding
+	}
+	return ""
+}
+
 func (x *RequestVkOAuthRequest) GetDisplay() string {
 	if x != nil {
 		return x.Display
@@ -82,10 +91,11 @@ func (x *RequestVkOAuthRequest) GetRedirectUri() string {
 }
 
 type RequestVkOAuthResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Link          string                 `protobuf:"bytes,1,opt,name=link,proto3" json:"link,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Link                string                 `protobuf:"bytes,1,opt,name=link,proto3" json:"link,omitempty"`
+	ExpirationTimestamp *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expirationTimestamp,proto3" json:"expirationTimestamp,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *RequestVkOAuthResponse) Reset() {
@@ -125,17 +135,26 @@ func (x *RequestVkOAuthResponse) GetLink() string {
 	return ""
 }
 
+func (x *RequestVkOAuthResponse) GetExpirationTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpirationTimestamp
+	}
+	return nil
+}
+
 var File_v1_request_vk_oauth_proto protoreflect.FileDescriptor
 
 const file_v1_request_vk_oauth_proto_rawDesc = "" +
 	"\n" +
-	"\x19v1/request-vk-oauth.proto\x12\x02v1\"w\n" +
-	"\x15RequestVkOAuthRequest\x12\x18\n" +
+	"\x19v1/request-vk-oauth.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x99\x01\n" +
+	"\x15RequestVkOAuthRequest\x12 \n" +
+	"\vflowBinding\x18\x14 \x01(\tR\vflowBinding\x12\x18\n" +
 	"\adisplay\x18\x01 \x01(\tR\adisplay\x12\"\n" +
 	"\fresponseType\x18\x02 \x01(\tR\fresponseType\x12 \n" +
-	"\vredirectUri\x18\x03 \x01(\tR\vredirectUri\",\n" +
+	"\vredirectUri\x18\x03 \x01(\tR\vredirectUri\"z\n" +
 	"\x16RequestVkOAuthResponse\x12\x12\n" +
-	"\x04link\x18\x01 \x01(\tR\x04linkB;Z9github.com/mephistolie/chefbook-backend-auth/api/proto/v1b\x06proto3"
+	"\x04link\x18\x01 \x01(\tR\x04link\x12L\n" +
+	"\x13expirationTimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x13expirationTimestampB;Z9github.com/mephistolie/chefbook-backend-auth/api/proto/v1b\x06proto3"
 
 var (
 	file_v1_request_vk_oauth_proto_rawDescOnce sync.Once
@@ -153,13 +172,15 @@ var file_v1_request_vk_oauth_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_v1_request_vk_oauth_proto_goTypes = []any{
 	(*RequestVkOAuthRequest)(nil),  // 0: v1.RequestVkOAuthRequest
 	(*RequestVkOAuthResponse)(nil), // 1: v1.RequestVkOAuthResponse
+	(*timestamppb.Timestamp)(nil),  // 2: google.protobuf.Timestamp
 }
 var file_v1_request_vk_oauth_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: v1.RequestVkOAuthResponse.expirationTimestamp:type_name -> google.protobuf.Timestamp
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_v1_request_vk_oauth_proto_init() }

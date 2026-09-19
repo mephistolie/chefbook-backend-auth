@@ -2,6 +2,10 @@ package session
 
 import (
 	"context"
+	"errors"
+	"github.com/mephistolie/chefbook-backend-common/firebase"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/google/uuid"
 	"github.com/mephistolie/chefbook-backend-auth/internal/entity"
@@ -14,9 +18,12 @@ func (s *Service) importFirebaseProfile(ctx context.Context, email, password str
 	if s.firebase == nil {
 		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
 	}
-	firebaseProfile, err := s.firebase.SignIn(email, password)
+	firebaseProfile, err := s.firebase.SignInWithContext(ctx, email, password)
 	if err != nil {
-		return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
+		if errors.Is(err, firebase.ErrInvalidCredentials) {
+			return entity.AuthInfo{}, authFail.GrpcInvalidCredentials
+		}
+		return entity.AuthInfo{}, status.Error(codes.Unavailable, "firebase unavailable")
 	}
 	authlog.Default.FirebaseImportStarted(ctx)
 
@@ -61,6 +68,9 @@ func (s *Service) importFirebaseProfile(ctx context.Context, email, password str
 }
 
 func (s *Service) connectFirebaseProfile(ctx context.Context, userId uuid.UUID, email string) error {
+	if s.firebase == nil {
+		return nil
+	}
 	profile, err := s.firebase.GetProfileByEmail(ctx, email)
 	if err != nil {
 		return fail.GrpcUnknown

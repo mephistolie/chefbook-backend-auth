@@ -91,7 +91,7 @@ func (s *Service) SendProfileActivationMail(ctx context.Context, userId uuid.UUI
 	}
 	mailValues := profileActivationMailValues{
 		ActivationCode: code,
-		ActivationLink: fmt.Sprintf(linkPattern, userId, code),
+		ActivationLink: fmt.Sprintf(linkPattern, code),
 	}
 	if err := payload.SetHtmlBody(assets.ProfileActivationMailTmplFilePath, mailValues); err != nil {
 		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
@@ -134,7 +134,7 @@ func (s *Service) SendResetPasswordMail(ctx context.Context, userId uuid.UUID, e
 		Subject: "ChefBook Profile Password Reset",
 	}
 	mailValues := passwordResetValues{
-		ResetLink: fmt.Sprintf(linkPattern, userId, code),
+		ResetLink: fmt.Sprintf(linkPattern, code),
 	}
 	if err := payload.SetHtmlBody(assets.PasswordResetMailTmplFilePath, mailValues); err != nil {
 		authlog.Default.MailTemplateRenderFailed(ctx, eventData, err)
@@ -216,4 +216,26 @@ func (s *Service) sendMessage(ctx context.Context, payload mail.Payload, eventDa
 	if err := s.sender.Send(payload, s.sendAttempts); err != nil {
 		authlog.Default.MailDeliveryFailed(ctx, eventData, err)
 	}
+}
+
+// SendEmailBinding is called by the durable local delivery worker; failures are retried.
+func (s *Service) SendEmailBinding(ctx context.Context, d entity.EmailDelivery) error {
+	subject := "ChefBook: confirm your email"
+	if d.Stage == "old" {
+		subject = "ChefBook: approve email change"
+	}
+	payload := mail.Payload{To: d.Email, Subject: subject}
+	instruction := "Confirm this email address for your ChefBook account."
+	if d.Stage == "old" {
+		instruction = "Approve changing your ChefBook email address. We will then send a separate confirmation to the new address."
+	}
+	values := struct{ Instruction, ConfirmationLink string }{instruction, fmt.Sprintf(d.LinkPattern, d.Token)}
+	if err := payload.SetHtmlBody(assets.EmailBindingMailTmplFilePath, values); err != nil {
+		return err
+	}
+	if s.IsDevEnv {
+		payload.Subject = "[DEV] " + payload.Subject
+		payload.Body = "DEV\n" + payload.Body
+	}
+	return s.sender.Send(payload, s.sendAttempts)
 }

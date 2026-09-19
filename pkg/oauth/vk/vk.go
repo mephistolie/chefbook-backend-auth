@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth/flow"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"io"
 	"net/http"
 	"net/url"
@@ -47,6 +50,7 @@ type AccessTokenResponse struct {
 }
 
 type OAuthProvider struct {
+	StateStore   flow.Store
 	client       http.Client
 	clientId     string
 	clientSecret string
@@ -64,7 +68,7 @@ func NewOAuthProvider(clientId, clientSecret, scope, state string) *OAuthProvide
 	}
 }
 
-func (p *OAuthProvider) CreateOAuthLink(params OAuthParams) (string, error) {
+func (p *OAuthProvider) CreateOAuthLink(ctx context.Context, params OAuthParams) (string, error) {
 	var display = displayPage
 	if contains(acceptableDisplays, params.Display) {
 		display = params.Display
@@ -84,14 +88,18 @@ func (p *OAuthProvider) CreateOAuthLink(params OAuthParams) (string, error) {
 	urlParams.Add(displayParam, display)
 	urlParams.Add(scopeParam, p.scope)
 	urlParams.Add(responseTypeParam, responseType)
-	urlParams.Add(stateParam, p.state)
+	state, err := p.StateStore.CreateOAuthState(ctx, "vk", params.RedirectUri, flow.Binding(ctx))
+	if err != nil {
+		return "", err
+	}
+	urlParams.Add(stateParam, state)
 	baseUrl.RawQuery = urlParams.Encode()
 	return baseUrl.String(), nil
 }
 
 func (p *OAuthProvider) GetAccessToken(ctx context.Context, code, state string, redirectUri string) (*AccessTokenResponse, error) {
-	if p.state != state {
-		return nil, errors.New("invalid state")
+	if err := p.StateStore.ConsumeOAuthState(ctx, "vk", state, redirectUri, flow.Binding(ctx)); err != nil {
+		return nil, err
 	}
 
 	requestUrl, err := p.createGetAccessTokenUrl(code, redirectUri)
@@ -105,17 +113,29 @@ func (p *OAuthProvider) GetAccessToken(ctx context.Context, code, state string, 
 	}
 
 	res, err := p.client.Do(req)
-	if err != nil || res.StatusCode != 200 {
-		return nil, errors.New("error vk response")
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, "vk unavailable")
+	}
+	if res.StatusCode >= 500 || res.StatusCode == 429 {
+		res.Body.Close()
+		return nil, status.Error(codes.Unavailable, "vk unavailable")
+	}
+	if res.StatusCode != 200 {
+		res.Body.Close()
+		return nil, errors.New("invalid vk response")
 	}
 
-	bodyBytes, err := io.ReadAll(res.Body)
+	defer res.Body.Close()
+	bodyBytes, err := io.ReadAll(io.LimitReader(res.Body, 65536))
 	if err != nil {
 		return nil, err
 	}
 	var resBody AccessTokenResponse
 	if err := json.Unmarshal(bodyBytes, &resBody); err != nil {
 		return nil, err
+	}
+	if resBody.UserId <= 0 || resBody.AccessToken == "" {
+		return nil, errors.New("invalid VK identity")
 	}
 	return &resBody, nil
 }

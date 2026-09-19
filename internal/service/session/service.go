@@ -4,6 +4,7 @@ import (
 	"github.com/mephistolie/chefbook-backend-auth/internal/config"
 	"github.com/mephistolie/chefbook-backend-auth/internal/repository/grpc"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/dependencies/repository"
+	emailService "github.com/mephistolie/chefbook-backend-auth/internal/service/email"
 	"github.com/mephistolie/chefbook-backend-auth/internal/service/mail"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/ip"
 	"github.com/mephistolie/chefbook-backend-auth/pkg/oauth"
@@ -19,6 +20,7 @@ const (
 )
 
 type Service struct {
+	email                *emailService.Service
 	repo                 repository.Data
 	grpc                 *grpc.Repository
 	mq                   repository.MessageQueue
@@ -44,8 +46,10 @@ func NewService(
 	ipInfoProvider ip.InfoProvider,
 	firebase *firebase.Client,
 	cfg config.Auth,
+	email *emailService.Service,
 ) *Service {
 	return &Service{
+		email:                email,
 		repo:                 repo,
 		grpc:                 grpc,
 		mq:                   mq,

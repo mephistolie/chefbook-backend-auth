@@ -4,12 +4,15 @@ package v1;
 option go_package = "github.com/mephistolie/chefbook-backend-auth/api/proto/v1";
 
 message ConnectGoogleRequest {
+  string flowBinding = 20;
   string id = 1;
   string code = 2;
   string state = 3;
   string redirectUrl = 4;
+  string idToken = 5;
 }
 
 message ConnectGoogleResponse {
   string message = 1;
+  bool created = 2;
 }
